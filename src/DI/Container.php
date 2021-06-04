@@ -184,6 +184,8 @@ class Container implements ContainerInterface
         $definition = $this->config[$TypeClass] ?? null;
         if ($definition instanceof FactoryDefinition) {
             $instance = $definition();
+        } elseif ($definition instanceof $TypeClass) {
+            $instance = $definition;
         } else {
             $instance = new $TypeClass();
         }
