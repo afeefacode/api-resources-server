@@ -102,6 +102,12 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         $data = $this->data;
         unset($data['id']);
         unset($data['type']);
+
+        if (isset($data['author'])) {
+            $data['author_id'] = $data['author']['id'];
+            unset($data['author']);
+        }
+
         return $data;
     }
 
