@@ -52,9 +52,6 @@ class ResolveContext implements ContainerAwareInterface
         return $this->meta;
     }
 
-    /**
-     * @param RelationResolver[] $relationResolvers
-     */
     public function getSelectFields(string $typeName = null): array
     {
         if (!isset($this->relationResolvers)) {
@@ -116,7 +113,7 @@ class ResolveContext implements ContainerAwareInterface
     protected function getTypeByName(string $typeName): Type
     {
         return $this->container->call(function (TypeClassMap $typeClassMap) use ($typeName) {
-            $TypeClass = $typeClassMap->getClass($typeName) ?? Type::class;
+            $TypeClass = $typeClassMap->get($typeName) ?? Type::class;
             return $this->container->get($TypeClass);
         });
     }

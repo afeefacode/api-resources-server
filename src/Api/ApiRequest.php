@@ -71,6 +71,12 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         return $this;
     }
 
+    public function params(array $params): ApiRequest
+    {
+        $this->params = $params;
+        return $this;
+    }
+
     public function getAction(): Action
     {
         return $this->api->getAction($this->resourceName, $this->actionName);
@@ -79,6 +85,14 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     public function filter(string $name, string $value): ApiRequest
     {
         $this->filters[$name] = $value;
+        return $this;
+    }
+
+    public function filters(array $filters): ApiRequest
+    {
+        foreach ($filters as $name => $value) {
+            $this->filters[$name] = $value;
+        }
         return $this;
     }
 

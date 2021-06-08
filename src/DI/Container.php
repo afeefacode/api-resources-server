@@ -2,15 +2,9 @@
 
 namespace Afeefa\ApiResources\DI;
 
-use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackArgumentException;
-use Afeefa\ApiResources\Exception\Exceptions\MissingTypeHintException;
 use Afeefa\ApiResources\Exception\Exceptions\NotACallbackException;
-use Afeefa\ApiResources\Exception\Exceptions\NotATypeOrCallbackException;
-use Afeefa\ApiResources\Exception\Exceptions\TooManyCallbackArgumentsException;
 use Closure;
 use Psr\Container\ContainerInterface;
-use ReflectionFunction;
-use ReflectionNamedType;
 
 class Container implements ContainerInterface
 {
@@ -37,14 +31,11 @@ class Container implements ContainerInterface
      */
     public function get($classOrCallback, Closure $resolveCallback = null): object
     {
-        [$TypeClass, $callback] = $this->classOrCallback($classOrCallback);
+        [$TypeClass, $callback] = classOrCallback($classOrCallback);
         if ($TypeClass) {
             $Types = [$TypeClass];
         } else {
-            $Types = $this->getCallbackArgumentTypes($callback);
-            if (!count($Types)) {
-                throw new MissingCallbackArgumentException('Get callback does not provide arguments.');
-            }
+            $Types = getCallbackArgumentTypes($callback, 1); // min 1 max *
         }
 
         $arguments = [];
@@ -90,7 +81,7 @@ class Container implements ContainerInterface
     public function call($callback, Closure $resolveCallback = null, Closure $resolveCallback2 = null)
     {
         $callback = $this->callback($callback);
-        $TypeClasses = $this->getCallbackArgumentTypes($callback);
+        $TypeClasses = getCallbackArgumentTypes($callback); // min 0 max *
         $resolveCallbackExpectsResolver = $resolveCallback && $this->argumentIsResolver($resolveCallback);
 
         $argumentsMap = array_column(
@@ -170,14 +161,9 @@ class Container implements ContainerInterface
 
     private function createInstance($classOrCallback, Closure $resolveCallback = null, $register = false): object
     {
-        [$TypeClass, $callback] = $this->classOrCallback($classOrCallback);
+        [$TypeClass, $callback] = classOrCallback($classOrCallback);
         if ($callback) {
-            $TypeClasses = $this->getCallbackArgumentTypes($classOrCallback);
-            if (!count($TypeClasses)) {
-                throw new MissingCallbackArgumentException('Create callback does not provide an argument.');
-            } elseif (count($TypeClasses) > 1) {
-                throw new TooManyCallbackArgumentsException('Create callback may only provide 1 argument.');
-            }
+            $TypeClasses = getCallbackArgumentTypes($classOrCallback, 1, 1); // min 1 max 1
             $TypeClass = $TypeClasses[0];
         }
 
@@ -225,21 +211,6 @@ class Container implements ContainerInterface
         return new DependencyResolver();
     }
 
-    private function classOrCallback($classOrCallback): array
-    {
-        if ($classOrCallback instanceof Closure) {
-            return [null, $classOrCallback];
-        } elseif (is_callable($classOrCallback)) {
-            return [null, Closure::fromCallable($classOrCallback)];
-        }
-
-        if (!is_string($classOrCallback) || !class_exists($classOrCallback)) {
-            throw new NotATypeOrCallbackException('Argument is not a type nor a valid callback.');
-        }
-
-        return [$classOrCallback, null];
-    }
-
     private function callback($callback): Closure
     {
         if ($callback instanceof Closure) {
@@ -252,7 +223,7 @@ class Container implements ContainerInterface
 
     private function argumentIsResolver(Closure $callback): bool
     {
-        $TypeClasses = $this->getCallbackArgumentTypes($callback);
+        $TypeClasses = getCallbackArgumentTypes($callback); // min 0 max *
         return (count($TypeClasses) === 1 && $TypeClasses[0] === DependencyResolver::class);
     }
 
@@ -261,24 +232,5 @@ class Container implements ContainerInterface
         if (!isset($this->entries[$TypeClass])) {
             $this->entries[$TypeClass] = $instance;
         }
-    }
-
-    private function getCallbackArgumentTypes(Closure $callback): array
-    {
-        $argumentTypes = [];
-
-        $f = new ReflectionFunction($callback);
-        $params = $f->getParameters();
-
-        foreach ($params as $param) {
-            $type = $param->getType();
-            if ($type instanceof ReflectionNamedType) {
-                $argumentTypes[] = $type->getName();
-                continue;
-            }
-            throw new MissingTypeHintException("Callback variable \${$param->getName()} does provide a type hint.");
-        }
-
-        return $argumentTypes;
     }
 }

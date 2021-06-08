@@ -14,7 +14,7 @@ use Afeefa\ApiResources\Exception\Exceptions\TooManyCallbackArgumentsException;
 use Afeefa\ApiResources\Tests\DI\Fixtures\TestModel;
 use Afeefa\ApiResources\Tests\DI\Fixtures\TestService;
 use Afeefa\ApiResources\Tests\DI\Fixtures\TestService2;
-
+use Afeefa\ApiResources\Tests\DI\Fixtures\TestService3;
 use PHPUnit\Framework\TestCase;
 
 class ContainerTest extends TestCase
@@ -34,6 +34,8 @@ class ContainerTest extends TestCase
 
     public function test_create_with_config()
     {
+        $service3 = new TestService3();
+
         $config = [
             TestService::class => factory(function () {
                 $service = new TestService();
@@ -45,30 +47,39 @@ class ContainerTest extends TestCase
                 $service = new TestService();
                 $service->name = 'My new Service2';
                 return $service;
-            })
+            }),
+
+            TestService3::class => $service3
         ];
 
         $container = new Container($config);
 
         $this->assertTrue($container->has(Container::class));
         $this->assertFalse($container->has(TestService::class));
+        $this->assertFalse($container->has(TestService2::class));
+        $this->assertFalse($container->has(TestService3::class));
 
         $service = $container->create(TestService::class);
 
-        $this->assertSame('My new Service', $service->name);
+        $this->assertEquals('My new Service', $service->name);
 
-        $service2 = $container->create(TestService::class);
+        $serviceAgain = $container->create(TestService::class);
 
-        $this->assertNotSame($service, $service2);
-        $this->assertSame('My new Service', $service2->name);
+        $this->assertNotSame($service, $serviceAgain);
+        $this->assertEquals('My new Service', $serviceAgain->name);
 
-        $service3 = $container->get(TestService2::class);
+        $service2 = $container->get(TestService2::class);
 
-        $this->assertSame('My new Service2', $service3->name);
+        $this->assertEquals('My new Service2', $service2->name);
 
-        $service4 = $container->get(TestService2::class);
+        $service2Again = $container->get(TestService2::class);
 
-        $this->assertSame('My new Service2', $service4->name);
+        $this->assertEquals('My new Service2', $service2Again->name);
+
+        $service3Again = $container->get(TestService3::class);
+
+        $this->assertSame($service3, $service3Again);
+        $this->assertEquals('TestService3', $service3Again->name);
     }
 
     public function test_create_with_config2()
@@ -247,7 +258,7 @@ class ContainerTest extends TestCase
     public function test_get_with_callback_closure_missing_argument()
     {
         $this->expectException(MissingCallbackArgumentException::class);
-        $this->expectExceptionMessage('Get callback does not provide arguments.');
+        $this->expectExceptionMessage('Callback must provide more than 0 arguments.');
 
         $container = new Container();
 
@@ -402,7 +413,7 @@ class ContainerTest extends TestCase
     public function test_create_with_callback_closure_multiple_arguments()
     {
         $this->expectException(TooManyCallbackArgumentsException::class);
-        $this->expectExceptionMessage('Create callback may only provide 1 argument.');
+        $this->expectExceptionMessage('Callback may only provide 1 argument.');
 
         $container = new Container();
 

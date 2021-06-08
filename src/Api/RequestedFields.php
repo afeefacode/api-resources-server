@@ -21,7 +21,7 @@ class RequestedFields implements ContainerAwareInterface, JsonSerializable
 
     public function typeClass(string $TypeClass): RequestedFields
     {
-        $this->type = $this->getTypeByClass($TypeClass);
+        $this->type = $this->container->get($TypeClass);
         return $this;
     }
 
@@ -127,16 +127,10 @@ class RequestedFields implements ContainerAwareInterface, JsonSerializable
         return $normalizedFields;
     }
 
-    protected function getTypeByClass(string $TypeClass = null): Type
-    {
-        $TypeClass = $TypeClass ?: $this->TypeClass;
-        return $this->container->get($TypeClass);
-    }
-
     protected function getTypeClassByName(string $typeName = null): string
     {
         return $this->container->call(function (TypeClassMap $typeClassMap) use ($typeName) {
-            return $typeClassMap->getClass($typeName);
+            return $typeClassMap->get($typeName);
         });
     }
 

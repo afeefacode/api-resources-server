@@ -4,14 +4,14 @@ namespace Afeefa\ApiResources\DB;
 
 class TypeClassMap
 {
-    protected array $map;
+    protected array $map = [];
 
-    public function __construct(array $map)
+    public function add(string $type, string $TypeClass): void
     {
-        $this->map = $map;
+        $this->map[$type] = $TypeClass;
     }
 
-    public function getClass(string $type): ?string
+    public function get(string $type): ?string
     {
         return $this->map[$type] ?? null;
     }

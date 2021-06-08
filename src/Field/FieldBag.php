@@ -4,6 +4,7 @@ namespace Afeefa\ApiResources\Field;
 
 use Afeefa\ApiResources\Api\TypeRegistry;
 use Afeefa\ApiResources\Bag\Bag;
+use Afeefa\ApiResources\DB\TypeClassMap;
 use Closure;
 
 /**
@@ -50,6 +51,10 @@ class FieldBag extends Bag
                 ->allowed(true)
                 ->relatedTypeClass($RelatedTypeClass);
             $this->set($name, $relation);
+        });
+
+        $this->container->get(function (TypeClassMap $typeClassMap) use ($RelatedTypeClass) {
+            $typeClassMap->add($RelatedTypeClass::$type, $RelatedTypeClass);
         });
 
         return $this;

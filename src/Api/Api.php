@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Api;
 
 use Afeefa\ApiResources\Action\Action;
+use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\Resource\ResourceBag;
@@ -47,11 +48,12 @@ class Api implements ContainerAwareInterface
         return $request->dispatch();
     }
 
-    public function getSchemaJson(TypeRegistry $typeRegistry): array
+    public function getSchemaJson(TypeRegistry $typeRegistry, TypeClassMap $typeClassMap): array
     {
         $resources = $this->resources->toSchemaJson();
 
         // $typeRegistry->dumpEntries();
+        // debug_dump($typeClassMap);
         // $this->container->dumpEntries();
 
         $types = [];

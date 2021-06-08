@@ -3,6 +3,8 @@
 namespace Afeefa\ApiResources\Resource;
 
 use Afeefa\ApiResources\Bag\Bag;
+use function Afeefa\ApiResources\DI\classOrCallback;
+use function Afeefa\ApiResources\DI\getCallbackArgumentType;
 
 /**
  * @method Resource get(string $name)
@@ -10,12 +12,16 @@ use Afeefa\ApiResources\Bag\Bag;
  */
 class ResourceBag extends Bag
 {
+    protected array $definitions = [];
+
     public function add($classOrCallback): ResourceBag
     {
-        $this->container->create($classOrCallback, function (Resource $resource) {
-            $this->set($resource::$type, $resource);
-        });
+        [$ResourceClass, $callback] = classOrCallback($classOrCallback);
+        if ($callback) {
+            $ResourceClass = getCallbackArgumentType($callback);
+        }
 
+        $this->setDefinition($ResourceClass::$type, $classOrCallback);
         return $this;
     }
 }
