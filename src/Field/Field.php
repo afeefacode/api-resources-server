@@ -120,7 +120,7 @@ class Field extends BagEntry
             return $callback;
         }
 
-        throw new NotACallbackException("Resolve callback for field {$this->field} is not callable.");
+        throw new NotACallbackException("Resolve callback for field {$this->name} is not callable.");
     }
 
     public function clone(): Field

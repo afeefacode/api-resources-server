@@ -13,7 +13,7 @@ class ResolveContext implements ContainerAwareInterface
 {
     use ContainerAwareTrait;
 
-    protected Type $type;
+    // protected Type $type;
 
     protected RequestedFields $requestedFields;
 
@@ -24,11 +24,16 @@ class ResolveContext implements ContainerAwareInterface
 
     protected array $meta = [];
 
-    public function type(Type $type): ResolveContext
-    {
-        $this->type = $type;
-        return $this;
-    }
+    // public function type(Type $type): ResolveContext
+    // {
+    //     $this->type = $type;
+    //     return $this;
+    // }
+
+    // public function getType(): Type
+    // {
+    //     return $this->type;
+    // }
 
     public function requestedFields(RequestedFields $requestedFields): ResolveContext
     {
@@ -157,6 +162,7 @@ class ResolveContext implements ContainerAwareInterface
                         throw new InvalidConfigurationException("Resolve callback for relation {$fieldName} on type {$type::$type} must receive a RelationResolver as argument.");
                     }
 
+                    $relationResolver->ownerType($type);
                     $relationResolver->relation($relation);
                     $relationResolver->requestedFields($requestedFields->getNestedField($fieldName));
                     $relationResolvers[$fieldName] = $relationResolver;

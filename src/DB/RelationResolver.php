@@ -5,6 +5,7 @@ namespace Afeefa\ApiResources\DB;
 use Afeefa\ApiResources\Api\RequestedFields;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\ModelInterface;
+use Afeefa\ApiResources\Type\Type;
 use Closure;
 
 class RelationResolver extends DataResolver
@@ -13,21 +14,44 @@ class RelationResolver extends DataResolver
 
     protected RequestedFields $requestedFields;
 
+    protected Type $ownerType;
+
     /**
      * @var ModelInterface[]
      */
     protected array $owners = [];
 
-    protected array $ownerIdFields = [];
+    /**
+     * Closure or array
+     */
+    protected $ownerIdFields;
+
+    protected ?Closure $initCallback = null;
 
     protected ?Closure $loadCallback = null;
 
     protected ?Closure $mapCallback = null;
 
+    public function ownerType(Type $ownerType): RelationResolver
+    {
+        $this->ownerType = $ownerType;
+        return $this;
+    }
+
+    public function getOwnerType(): Type
+    {
+        return $this->ownerType;
+    }
+
     public function relation(Relation $relation): RelationResolver
     {
         $this->relation = $relation;
         return $this;
+    }
+
+    public function getRelation(): Relation
+    {
+        return $this->relation;
     }
 
     public function requestedFields(RequestedFields $fields): RelationResolver
@@ -36,7 +60,7 @@ class RelationResolver extends DataResolver
         return $this;
     }
 
-    public function ownerIdFields(array $ownerIdFields): RelationResolver
+    public function ownerIdFields($ownerIdFields): RelationResolver
     {
         $this->ownerIdFields = $ownerIdFields;
         return $this;
@@ -44,7 +68,11 @@ class RelationResolver extends DataResolver
 
     public function getOwnerIdFields(): array
     {
-        return $this->ownerIdFields;
+        if ($this->ownerIdFields instanceof Closure) {
+            return ($this->ownerIdFields)() ?? [];
+        }
+
+        return $this->ownerIdFields ?? [];
     }
 
     public function addOwner(ModelInterface $owner): void
@@ -58,6 +86,12 @@ class RelationResolver extends DataResolver
     public function getOwners(): array
     {
         return $this->owners;
+    }
+
+    public function init(Closure $callback): RelationResolver
+    {
+        $this->initCallback = $callback;
+        return $this;
     }
 
     public function load(Closure $callback): RelationResolver
@@ -79,6 +113,12 @@ class RelationResolver extends DataResolver
         $resolveContext = $this
             ->resolveContext()
             ->requestedFields($requestedFields);
+
+        // init
+
+        if (isset($this->initCallback)) {
+            ($this->initCallback)();
+        }
 
         // query db
 
@@ -105,6 +145,7 @@ class RelationResolver extends DataResolver
         if ($this->relation->isSingle()) {
             $models = array_values($objects);
         } else {
+            // $models = array_values($objects);
             $models = array_merge(...array_values($objects)); // flatten
         }
 

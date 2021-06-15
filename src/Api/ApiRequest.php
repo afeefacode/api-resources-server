@@ -160,7 +160,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
         $this->container->call(
             $resolveCallback,
-            function (DependencyResolver $r) use ($actionResolver) {
+            function (DependencyResolver $r) use ($actionResolver) { // don't create a new action resolver
                 if ($r->isOf(ActionResolver::class)) {
                     $r->fix($actionResolver);
                 }
