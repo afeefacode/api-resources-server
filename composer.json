@@ -1,6 +1,6 @@
 {
     "name": "afeefa/api-resources-server",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -15,7 +15,8 @@
     "require-dev": {
         "phpunit/phpunit": "^9.5",
         "catfan/medoo": "^1.7",
-        "afeefa/debug-dump-log": "^0"
+        "afeefa/debug-dump-log": "^0",
+        "illuminate/database": "^8.46"
     },
     "autoload": {
         "psr-4": {

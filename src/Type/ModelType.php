@@ -8,6 +8,8 @@ class ModelType extends Type
 {
     public static string $type = 'Afeefa.ModelType';
 
+    public static string $ModelClass;
+
     protected FieldBag $updateFields;
 
     protected FieldBag $createFields;

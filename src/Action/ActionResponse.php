@@ -31,13 +31,13 @@ class ActionResponse implements ToSchemaJsonInterface, ContainerAwareInterface
         return $this->TypeClass;
     }
 
-    public function types(array $TypeClasses)
+    public function typeClasses(array $TypeClasses): ActionResponse
     {
         $this->TypeClasses = $TypeClasses;
         return $this;
     }
 
-    public function list()
+    public function list(): ActionResponse
     {
         $this->list = true;
         return $this;
@@ -50,6 +50,10 @@ class ActionResponse implements ToSchemaJsonInterface, ContainerAwareInterface
         $json = [
             'type' => $this->TypeClass::$type
         ];
+
+        if ($this->list) {
+            $json['list'] = true;
+        }
 
         return $json;
     }

@@ -18,9 +18,19 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
 
     protected FieldBag $fields;
 
-    public static function listOf(string $TypeClass): string
+    public static function list(string $TypeClass): TypeMeta
     {
-        return $TypeClass;
+        return (new TypeMeta())->typeClass($TypeClass)->list();
+    }
+
+    public static function create(string $TypeClass): TypeMeta
+    {
+        return (new TypeMeta())->typeClass($TypeClass)->create();
+    }
+
+    public static function update(string $TypeClass): TypeMeta
+    {
+        return (new TypeMeta())->typeClass($TypeClass)->update();
     }
 
     public function created(): void

@@ -9,6 +9,7 @@ use Afeefa\ApiResources\Exception\Exceptions\NotACallbackException;
 use Afeefa\ApiResources\Exception\Exceptions\NotATypeException;
 use Afeefa\ApiResources\Filter\Filter;
 use Afeefa\ApiResources\Filter\FilterBag;
+use Afeefa\ApiResources\Type\TypeMeta;
 use Closure;
 
 class Action extends BagEntry
@@ -49,13 +50,25 @@ class Action extends BagEntry
         return $this;
     }
 
-    public function input(string $TypeClass, Closure $callback = null): Action
+    public function input($TypeClassOrMeta, Closure $callback = null): Action
     {
+        $this->input = $this->container->create(ActionInput::class);
+
+        if ($TypeClassOrMeta instanceof TypeMeta) {
+            $typeMeta = $TypeClassOrMeta;
+            $TypeClass = $TypeClassOrMeta->TypeClass;
+
+            $this->input
+                ->list($typeMeta->list)
+                ->create($typeMeta->create)
+                ->update($typeMeta->update);
+        } else {
+            $TypeClass = $TypeClassOrMeta;
+        }
+
         if (!class_exists($TypeClass)) {
             throw new NotATypeException('Value for input $TypeClass is not a type.');
         }
-
-        $this->input = $this->container->create(ActionInput::class);
 
         $this->input->typeClass($TypeClass);
 
@@ -88,9 +101,18 @@ class Action extends BagEntry
         return $this->filters->get($name);
     }
 
-    public function response($TypeClassOrClasses, Closure $callback = null): Action
+    public function response($TypeClassOrClassesOrMeta, Closure $callback = null): Action
     {
         $this->response = $this->container->create(ActionResponse::class);
+
+        if ($TypeClassOrClassesOrMeta instanceof TypeMeta) {
+            $typeMeta = $TypeClassOrClassesOrMeta;
+            $TypeClassOrClasses = $typeMeta->TypeClass;
+
+            $this->response->list($typeMeta->list);
+        } else {
+            $TypeClassOrClasses = $TypeClassOrClassesOrMeta;
+        }
 
         if (is_array($TypeClassOrClasses)) {
             foreach ($TypeClassOrClasses as $TypeClass) {
@@ -98,7 +120,7 @@ class Action extends BagEntry
                     throw new NotATypeException('Value for response $TypeClassOrClasses is not a list of types.');
                 }
             }
-            $this->response->types($TypeClassOrClasses);
+            $this->response->typeClasses($TypeClassOrClasses);
         } elseif (is_string($TypeClassOrClasses)) {
             if (!class_exists($TypeClassOrClasses)) {
                 throw new NotATypeException('Value for response $TypeClassOrClasses is not a type.');
