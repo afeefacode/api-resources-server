@@ -15,10 +15,10 @@ class ModelType extends ApiResourcesModelType
         $this->addDefaultRelationResolvers($this->fields);
     }
 
-    protected function getEloquentRelationResolver(string $ModelClass): ModelResolver
+    protected function getEloquentRelationResolver(ModelType $type): ModelResolver
     {
         return (new ModelResolver())
-            ->modelClass($ModelClass);
+            ->type($type);
     }
 
     protected function addDefaultRelationResolvers(FieldBag $fields)
@@ -26,10 +26,8 @@ class ModelType extends ApiResourcesModelType
         foreach (array_values($fields->getEntries()) as $entry) {
             if ($entry instanceof Relation) {
                 if (!$entry->hasResolver()) {
-                    $relationName = $entry->getName();
-                    $owner = new static::$ModelClass();
-                    $relation = $owner->$relationName();
-                    $entry->resolve([$this->getEloquentRelationResolver($relation->getRelated()), 'relation']);
+                    $type = $entry->getRelatedTypeInstance();
+                    $entry->resolve([$this->getEloquentRelationResolver($type), 'relation']);
                 }
             }
         }

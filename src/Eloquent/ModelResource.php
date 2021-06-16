@@ -51,8 +51,9 @@ class ModelResource extends Resource
 
     protected function getEloquentResolver(): ModelResolver
     {
+        $type = $this->container->get($this->ModelTypeClass);
         return (new ModelResolver())
-            ->modelClass($this->ModelTypeClass::$ModelClass)
+            ->type($type)
             ->search(function (string $keyword, Builder $query) {
                 $this->search($keyword, $query);
             });

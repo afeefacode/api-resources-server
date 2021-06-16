@@ -5,21 +5,23 @@ namespace Afeefa\ApiResources\Eloquent;
 use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\DB\RelationResolver;
 use Afeefa\ApiResources\DB\ResolveContext;
-use Afeefa\ApiResources\Type\ModelType;
 use Closure;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Builder as EloquentBuilder;
 
 class ModelResolver
 {
+    protected ModelType $type;
     protected string $ModelClass;
     protected string $relationName;
 
     protected Closure $searchFunction;
 
-    public function modelClass(string $ModelClass): ModelResolver
+    public function type(ModelType $type): ModelResolver
     {
-        $this->ModelClass = $ModelClass;
+        $this->type = $type;
+        $this->ModelClass = $type::$ModelClass;
         return $this;
     }
 
@@ -78,7 +80,16 @@ class ModelResolver
                 $usedFilters['page'] = $page;
                 $usedFilters['page_size'] = $pageSize;
 
-                $households = $query->select($selectFields)->get()->all();
+                // select $selectFields before counts, since withCount()
+                // will add a '*' column by default, which we don't want.
+                $query->select($selectFields);
+
+                $relationCounts = $this->getRelationCounts($c);
+                if (count($relationCounts)) {
+                    $query->withCount($relationCounts);
+                }
+
+                $households = $query->get()->all();
 
                 $c->meta([
                     'count_scope' => $countScope,
@@ -98,10 +109,25 @@ class ModelResolver
                 $request = $r->getRequest();
                 $selectFields = $c->getSelectFields();
 
+                $relatedTable = (new $this->type::$ModelClass())->getTable();
+                $selectFields = array_map(function ($field) use ($relatedTable) {
+                    return $relatedTable . '.' . $field;
+                }, $selectFields);
+
+                /** @var EloquentBuilder */
                 $query = $this->ModelClass::query();
 
-                return $query->where('id', $request->getParam('id'))
-                    ->select($selectFields)
+                // select $selectFields before counts, since withCount()
+                // will add a '*' column by default, which we don't want.
+                $query->select($selectFields);
+
+                $relationCounts = $this->getRelationCounts($c);
+                if (count($relationCounts)) {
+                    $query->withCount($relationCounts);
+                }
+
+                return $query
+                    ->where('id', $request->getParam('id'))
                     ->first();
             });
     }
@@ -164,11 +190,44 @@ class ModelResolver
                     $selectFields[] = $eloquentRelation->getForeignKeyName();
                 }
 
+                $relationCounts = $this->getRelationCountsOfRelation($r, $c);
+
                 $builder = new Builder($owner);
-                $relatedModels = $builder->afeefaEagerLoadRelation($owners, $relationName, $selectFields);
+                $relatedModels = $builder->afeefaEagerLoadRelation($owners, $relationName, $selectFields, $relationCounts);
 
                 return $relatedModels->all();
             });
+    }
+
+    private function getRelationCounts(ResolveContext $c): array
+    {
+        $relationCounts = [];
+        $requestedFieldNames = $c->getRequestedFields()->getFieldNames();
+        foreach ($requestedFieldNames as $fieldName) {
+            if (preg_match('/^count_(.+)/', $fieldName, $matches)) {
+                $countRelationName = $matches[1];
+                if ($this->type->hasRelation($countRelationName)) {
+                    $relationCounts[] = $countRelationName . ' as count_' . $countRelationName;
+                }
+            }
+        }
+        return $relationCounts;
+    }
+
+    private function getRelationCountsOfRelation(RelationResolver $r, ResolveContext $c): array
+    {
+        $requestedFieldNames = $c->getRequestedFields()->getFieldNames();
+        $relatedType = $r->getRelation()->getRelatedTypeInstance();
+        $relationCounts = [];
+        foreach ($requestedFieldNames as $fieldName) {
+            if (preg_match('/^count_(.+)/', $fieldName, $matches)) {
+                $countRelationName = $matches[1];
+                if ($relatedType->hasRelation($countRelationName)) {
+                    $relationCounts = [$countRelationName . ' as count_' . $countRelationName];
+                }
+            }
+        }
+        return $relationCounts;
     }
 
     private function getEloquentRelation(RelationResolver $r): array
