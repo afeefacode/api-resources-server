@@ -170,6 +170,25 @@ class ModelResolver
             });
     }
 
+    public function delete(ActionResolver $r)
+    {
+        $r
+            ->load(function () use ($r) {
+                $request = $r->getRequest();
+
+                $query = $this->ModelClass::query();
+
+                $model = $query->where('id', $request->getParam('id'))
+                    ->first();
+
+                if ($model) {
+                    $model->delete();
+                }
+
+                return null;
+            });
+    }
+
     public function relation(RelationResolver $r)
     {
         $r
