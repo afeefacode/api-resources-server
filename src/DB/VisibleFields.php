@@ -23,7 +23,7 @@ class VisibleFields implements ContainerAwareInterface
     /**
      * @param ModelInterface[] $models
      */
-    public function makeVisible(array $models): void
+    public function makeVisible(iterable $models): void
     {
         $this->setVisibleFields($models);
     }
@@ -31,7 +31,7 @@ class VisibleFields implements ContainerAwareInterface
     /**
      * @param ModelInterface[] $models
      */
-    protected function setVisibleFields(array $models, RequestedFields $fields = null): void
+    protected function setVisibleFields(iterable $models, RequestedFields $fields = null): void
     {
         $fields = $fields ?: $this->requestedFields;
 
@@ -45,7 +45,7 @@ class VisibleFields implements ContainerAwareInterface
                         $this->setVisibleFields([$model->$fieldName], $fields->getNestedField($fieldName));
                     }
                 } else {
-                    if (is_array($model->$fieldName)) {
+                    if (is_iterable($model->$fieldName)) {
                         $this->setVisibleFields($model->$fieldName, $fields->getNestedField($fieldName));
                     }
                 }

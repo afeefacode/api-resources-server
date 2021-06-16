@@ -32,6 +32,8 @@ class RelationResolver extends DataResolver
 
     protected ?Closure $mapCallback = null;
 
+    protected ?Closure $flattenCallback = null;
+
     public function ownerType(Type $ownerType): RelationResolver
     {
         $this->ownerType = $ownerType;
@@ -106,6 +108,12 @@ class RelationResolver extends DataResolver
         return $this;
     }
 
+    public function flatten(Closure $callback): RelationResolver
+    {
+        $this->flattenCallback = $callback;
+        return $this;
+    }
+
     public function fetch()
     {
         $requestedFields = $this->requestedFields;
@@ -127,26 +135,28 @@ class RelationResolver extends DataResolver
 
         // map results to owners
 
-        $mapCallback = $this->mapCallback;
-        $relationName = $this->relation->getName();
+        if (isset($this->mapCallback)) {
+            $mapCallback = $this->mapCallback;
+            $relationName = $this->relation->getName();
 
-        foreach ($this->owners as $owner) {
-            $value = $mapCallback($objects, $owner);
-            $owner->apiResourcesSetRelation($relationName, $value);
+            foreach ($this->owners as $owner) {
+                $value = $mapCallback($objects, $owner);
+                $owner->apiResourcesSetRelation($relationName, $value);
+            }
         }
 
-        // no objects -> no relations
+        // no objects -> no relations to resolve
+
         if (!count($objects)) {
             return;
         }
 
         // resolve sub relations
 
-        if ($this->relation->isSingle()) {
-            $models = array_values($objects);
+        if (isset($this->flattenCallback)) {
+            $models = ($this->flattenCallback)($objects);
         } else {
-            // $models = array_values($objects);
-            $models = array_merge(...array_values($objects)); // flatten
+            $models = array_values($objects);
         }
 
         foreach ($resolveContext->getRelationResolvers() as $relationResolver) {

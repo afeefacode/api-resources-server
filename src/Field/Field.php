@@ -102,6 +102,11 @@ class Field extends BagEntry
         return $this;
     }
 
+    public function hasResolver(): bool
+    {
+        return isset($this->resolveCallback);
+    }
+
     public function getResolve(): ?Closure
     {
         $callback = $this->resolveCallback;

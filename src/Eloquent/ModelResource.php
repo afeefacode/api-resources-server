@@ -49,7 +49,7 @@ class ModelResource extends Resource
     {
     }
 
-    protected function getModelResolver(): ModelResolver
+    protected function getEloquentResolver(): ModelResolver
     {
         return (new ModelResolver())
             ->modelClass($this->ModelTypeClass::$ModelClass)
@@ -68,7 +68,7 @@ class ModelResource extends Resource
 
                 ->response(Type::list($this->ModelTypeClass))
 
-                ->resolve([$this->getModelResolver(), 'list']);
+                ->resolve([$this->getEloquentResolver(), 'list']);
         });
 
         $actions->add('get', function (Action $action) {
@@ -79,7 +79,7 @@ class ModelResource extends Resource
 
                 ->response($this->ModelTypeClass)
 
-                ->resolve([$this->getModelResolver(), 'get']);
+                ->resolve([$this->getEloquentResolver(), 'get']);
         });
 
         $actions->add('create', function (Action $action) {
@@ -88,7 +88,7 @@ class ModelResource extends Resource
 
                 ->response($this->ModelTypeClass)
 
-                ->resolve([$this->getModelResolver(), 'create']);
+                ->resolve([$this->getEloquentResolver(), 'create']);
         });
 
         $actions->add('update', function (Action $action) {
@@ -101,7 +101,7 @@ class ModelResource extends Resource
 
                 ->response($this->ModelTypeClass)
 
-                ->resolve([$this->getModelResolver(), 'update']);
+                ->resolve([$this->getEloquentResolver(), 'update']);
         });
 
         $actions->add('delete', function (Action $action) {
@@ -112,7 +112,7 @@ class ModelResource extends Resource
 
                 ->response($this->ModelTypeClass)
 
-                ->resolve([$this->getModelResolver(), 'delete']);
+                ->resolve([$this->getEloquentResolver(), 'delete']);
         });
     }
 }

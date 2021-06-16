@@ -29,6 +29,7 @@ class Model extends EloquentModel implements ModelInterface
     public function jsonSerialize()
     {
         $json = [];
+
         foreach ($this->getAttributes() as $name => $value) {
             if (in_array($name, $this->visibleFields)) {
                 if ($name === 'type') {
@@ -40,6 +41,12 @@ class Model extends EloquentModel implements ModelInterface
                 if ($name === 'id') {
                     $json['type'] = static::$type;
                 }
+            }
+        }
+
+        foreach ($this->getRelations() as $name => $value) {
+            if (in_array($name, $this->visibleFields)) {
+                $json[$name] = $value;
             }
         }
         return $json;

@@ -5,21 +5,27 @@ namespace Afeefa\ApiResources\Eloquent;
 use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\DB\RelationResolver;
 use Afeefa\ApiResources\DB\ResolveContext;
-use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Type\ModelType;
 use Closure;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\Relation;
 
 class ModelResolver
 {
     protected string $ModelClass;
+    protected string $relationName;
+
     protected Closure $searchFunction;
 
     public function modelClass(string $ModelClass): ModelResolver
     {
         $this->ModelClass = $ModelClass;
+        return $this;
+    }
+
+    public function relationName(string $relationName): ModelResolver
+    {
+        $this->relationName = $relationName;
         return $this;
     }
 
@@ -142,92 +148,41 @@ class ModelResolver
     {
         $r
             ->ownerIdFields(function () use ($r) {
-                $eloquentRelation = $this->getEloquentRelation($r);
-                if ($eloquentRelation instanceof BelongsTo) {
+                // select field on the owner prior loading the relation
+                $eloquentRelation = $this->getEloquentRelation($r)[2];
+                if ($eloquentRelation instanceof BelongsTo) { // reference to the related in the owner table
                     return [$eloquentRelation->getForeignKeyName()];
                 }
             })
 
             ->load(function (array $owners, ResolveContext $c) use ($r) {
-                $eloquentRelation = $this->getEloquentRelation($r);
+                [$owner, $relationName, $eloquentRelation] = $this->getEloquentRelation($r);
 
-                $ownerIdField = 'id';
-                if ($eloquentRelation instanceof BelongsTo) {
-                    $ownerIdField = $eloquentRelation->getForeignKeyName();
-                }
-
-                $RelatedModelClass = $this->ModelClass;
-
-                /** @var ModelInterface[] $owners */
+                // select field on the relation prior matching the related to its owner
                 $selectFields = $c->getSelectFields();
-
-                if ($eloquentRelation instanceof HasMany) {
+                if ($eloquentRelation instanceof HasMany) { // reference to the owner in the related table
                     $selectFields[] = $eloquentRelation->getForeignKeyName();
                 }
 
-                $ownerIds = array_unique(
-                    array_map(function (ModelInterface $owner) use ($ownerIdField) {
-                        return $owner->$ownerIdField;
-                    }, $owners)
-                );
+                $builder = new Builder($owner);
+                $relatedModels = $builder->afeefaEagerLoadRelation($owners, $relationName, $selectFields);
 
-                $localIdField = 'id';
-                if ($eloquentRelation instanceof HasMany) {
-                    $localIdField = $eloquentRelation->getForeignKeyName();
-                }
-
-                $models = $RelatedModelClass::select($selectFields)
-                    ->whereIn($localIdField, $ownerIds)
-                    ->get();
-
-                $objects = [];
-                foreach ($models as $model) {
-                    if ($eloquentRelation instanceof HasMany) {
-                        $objects[$model->$localIdField][] = $model;
-                    } else {
-                        $objects[$model->$localIdField] = $model;
-                    }
-                }
-                return $objects;
-            })
-
-            ->map(function (array $objects, ModelInterface $owner) use ($r) {
-                $eloquentRelation = $this->getEloquentRelation($r);
-
-                $ownerIdField = 'id';
-                if ($eloquentRelation instanceof BelongsTo) {
-                    $ownerIdField = $eloquentRelation->getForeignKeyName();
-                }
-
-                $localIdField = 'id';
-                if ($eloquentRelation instanceof HasMany) {
-                    $localIdField = $eloquentRelation->getForeignKeyName();
-                }
-
-                $key = $owner->$ownerIdField;
-
-                $modelOrModels = $objects[$key] ?? null;
-                if (!$modelOrModels) {
-                    if ($eloquentRelation instanceof HasMany) {
-                        return [];
-                    }
-                    return null;
-                }
-                return $modelOrModels;
+                return $relatedModels->all();
             });
     }
 
-    private function getEloquentRelation(RelationResolver $r): Relation
+    private function getEloquentRelation(RelationResolver $r): array
     {
         $relationName = $r->getRelation()->getName();
 
         /** @var ModelType */
         $ownerType = $r->getOwnerType();
         $OwnerClass = $ownerType::$ModelClass;
+        $owner = new $OwnerClass();
 
-        $eloquentRelation = (new $OwnerClass())->$relationName();
+        $eloquentRelation = $owner->$relationName();
 
-        return $eloquentRelation;
+        return [$owner, $relationName, $eloquentRelation];
     }
 
     private function pageToLimit(int $page, int $pageSize, int $countAll): array
