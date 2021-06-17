@@ -86,7 +86,12 @@ class ResolveContext implements ContainerAwareInterface
 
         foreach ($requestedFields->getFieldNames() as $fieldName) {
             if ($type->hasAttribute($fieldName)) {
-                $selectFields[] = $fieldName;
+                $attribute = $type->getAttribute($fieldName);
+                if ($attribute->hasDependingAttributes()) {
+                    $selectFields = array_merge($selectFields, $attribute->getDependingAttributes());
+                } else {
+                    $selectFields[] = $fieldName;
+                }
             }
 
             if ($type->hasRelation($fieldName)) {

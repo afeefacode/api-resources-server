@@ -11,6 +11,11 @@ class Model extends EloquentModel implements ModelInterface
 
     protected $visibleFields = [];
 
+    public function getTypeAttribute()
+    {
+        return static::$type;
+    }
+
     public function apiResourcesGetType(): string
     {
         return static::$type;
@@ -30,25 +35,10 @@ class Model extends EloquentModel implements ModelInterface
     {
         $json = [];
 
-        foreach ($this->getAttributes() as $name => $value) {
-            if (in_array($name, $this->visibleFields)) {
-                if ($name === 'type') {
-                    continue;
-                }
-
-                $json[$name] = $value;
-
-                if ($name === 'id') {
-                    $json['type'] = static::$type;
-                }
-            }
+        foreach ($this->visibleFields as $visibleFieldName) {
+            $json[$visibleFieldName] = $this->$visibleFieldName;
         }
 
-        foreach ($this->getRelations() as $name => $value) {
-            if (in_array($name, $this->visibleFields)) {
-                $json[$name] = $value;
-            }
-        }
         return $json;
     }
 }

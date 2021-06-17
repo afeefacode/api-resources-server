@@ -47,6 +47,21 @@ class RequestedFields implements ContainerAwareInterface, JsonSerializable
     }
 
     /**
+     * @return Attribute[]
+     */
+    public function getAttributes(): array
+    {
+        $type = $this->type;
+        $attributes = [];
+        foreach ($this->getFieldNames() as $fieldName) {
+            if ($type->hasAttribute($fieldName)) {
+                $attributes[$fieldName] = $type->getAttribute($fieldName);
+            }
+        }
+        return $attributes;
+    }
+
+    /**
      * @return Relation[]
      */
     public function getRelations(): array

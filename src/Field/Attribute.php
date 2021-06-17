@@ -12,4 +12,21 @@ namespace Afeefa\ApiResources\Field;
 */
 class Attribute extends Field
 {
+    protected array $dependingAttributes;
+
+    public function select($attributeOrAttributes): Attribute
+    {
+        $this->dependingAttributes = is_array($attributeOrAttributes) ? $attributeOrAttributes : [$attributeOrAttributes];
+        return $this;
+    }
+
+    public function getDependingAttributes(): array
+    {
+        return $this->dependingAttributes;
+    }
+
+    public function hasDependingAttributes(): bool
+    {
+        return isset($this->dependingAttributes);
+    }
 }
