@@ -17,7 +17,7 @@ class LinkOneValidator extends Validator
     protected function rules(RuleBag $rules): void
     {
         $rules->add('filled')
-            ->message('{{ fieldName }} sollte einen Wert enthalten.')
+            ->message('{{ fieldLabel }} sollte einen Wert enthalten.')
             ->validate(function (?string $value, bool $filled) {
                 if ($filled && !$value) {
                     return false;

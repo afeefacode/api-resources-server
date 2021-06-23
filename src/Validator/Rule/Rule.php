@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Bag\BagEntry;
 
 class Rule extends BagEntry
 {
-    protected string $message = '{{ fieldName }} ist ungültig.';
+    protected string $message = '{{ fieldLabel }} ist ungültig.';
 
     protected $validate;
 

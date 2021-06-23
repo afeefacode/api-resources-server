@@ -59,10 +59,15 @@ class Filter extends BagEntry
         return $this->default;
     }
 
-    public function options(array $options)
+    public function options(array $options): Filter
     {
         $this->options = $options;
         return $this;
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
     }
 
     public function toSchemaJson(): array
@@ -92,7 +97,7 @@ class Filter extends BagEntry
         return $json;
     }
 
-    protected function setup()
+    protected function setup(): void
     {
     }
 }

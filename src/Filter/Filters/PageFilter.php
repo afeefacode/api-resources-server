@@ -8,7 +8,7 @@ class PageFilter extends Filter
 {
     public static string $type = 'Afeefa.PageFilter';
 
-    protected function setup()
+    protected function setup(): void
     {
         $this->default(1);
     }

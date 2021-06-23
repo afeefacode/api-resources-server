@@ -5,6 +5,7 @@ namespace Afeefa\ApiResources\Eloquent;
 use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\DB\RelationResolver;
 use Afeefa\ApiResources\DB\ResolveContext;
+use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
 use Closure;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -66,12 +67,16 @@ class ModelResolver
 
                 // pagination
 
+                /** @var PageSizeFilter */
                 $pageSizeFilter = $r->getAction()->getFilter('page_size');
 
                 $page = $filters['page'] ?? 1;
-                $pageSize = $filters['page_size'] ?? $pageSizeFilter->getDefaultValue();
+                $pageSize = $filters['page_size'] ?? null;
+                if (!$pageSizeFilter->hasPageSize($pageSize)) {
+                    $pageSize = $pageSizeFilter->getDefaultValue();
+                }
 
-                [$offset, $pageSize] = $this->pageToLimit($page, $pageSize, $countSearch);
+                [$offset, $pageSize, $page] = $this->pageToLimit($page, $pageSize, $countSearch);
 
                 $query
                     ->limit($pageSize)

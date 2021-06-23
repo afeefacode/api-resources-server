@@ -13,7 +13,13 @@ class PageSizeFilter extends Filter
         return parent::options($pageSizes);
     }
 
-    protected function setup()
+    public function hasPageSize(int $pageSize = null): bool
+    {
+        $options = parent::getOptions();
+        return in_array($pageSize, $options);
+    }
+
+    protected function setup(): void
     {
         $this
             ->options([15])

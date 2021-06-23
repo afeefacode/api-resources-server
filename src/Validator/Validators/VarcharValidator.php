@@ -32,7 +32,7 @@ class VarcharValidator extends Validator
     protected function rules(RuleBag $rules): void
     {
         $rules->add('filled')
-            ->message('{{ fieldName }} sollte einen Wert enthalten.')
+            ->message('{{ fieldLabel }} sollte einen Wert enthalten.')
             ->validate(function (?string $value, bool $filled) {
                 if ($filled && !$value) {
                     return false;
@@ -41,7 +41,7 @@ class VarcharValidator extends Validator
             });
 
         $rules->add('min')
-            ->message('{{ fieldName }} sollte mindestens {{ param }} Zeichen beinhalten.')
+            ->message('{{ fieldLabel }} sollte mindestens {{ param }} Zeichen beinhalten.')
             ->validate(function (?string $value, bool $filled, ?int $min) {
                 if ($min === null) {
                     return true;
@@ -56,7 +56,7 @@ class VarcharValidator extends Validator
             });
 
         $rules->add('max')
-            ->message('{{ fieldName }} sollte maximal {{ param }} Zeichen beinhalten.')
+            ->message('{{ fieldLabel }} sollte maximal {{ param }} Zeichen beinhalten.')
             ->validate(function (?string $value, ?int $max) {
                 if ($max === null) {
                     return true;
@@ -68,7 +68,7 @@ class VarcharValidator extends Validator
             });
 
         $rules->add('regex')
-            ->message('{{ fieldName }} sollte ein gültiger Wert sein.')
+            ->message('{{ fieldLabel }} sollte ein gültiger Wert sein.')
             ->validate(function (?string $value, ?string $regex) {
                 if ($regex === null) {
                     return true;
