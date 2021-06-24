@@ -6,6 +6,7 @@ use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\DB\RelationResolver;
 use Afeefa\ApiResources\DB\ResolveContext;
+use Afeefa\ApiResources\Filter\Filters\OrderFilter;
 use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
 use Closure;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,7 @@ class ModelResolver
     protected string $relationName;
 
     protected Closure $searchFunction;
+    protected Closure $orderFunction;
 
     public function type(ModelType $type): ModelResolver
     {
@@ -39,13 +41,24 @@ class ModelResolver
         return $this;
     }
 
+    public function order(Closure $orderFunction): ModelResolver
+    {
+        $this->orderFunction = $orderFunction;
+        return $this;
+    }
+
     public function list(ActionResolver $r)
     {
         $r
             ->load(function (ResolveContext $c) use ($r) {
                 $request = $r->getRequest();
+                $action = $r->getAction();
                 $filters = $request->getFilters();
-                $selectFields = $c->getSelectFields();
+
+                $table = (new $this->ModelClass())->getTable();
+                $selectFields = array_map(function ($field) use ($table) {
+                    return $table . '.' . $field;
+                }, $c->getSelectFields());
 
                 $usedFilters = [];
 
@@ -69,7 +82,7 @@ class ModelResolver
                 // pagination
 
                 /** @var PageSizeFilter */
-                $pageSizeFilter = $r->getAction()->getFilter('page_size');
+                $pageSizeFilter = $action->getFilter('page_size');
 
                 $page = $filters['page'] ?? 1;
                 $pageSize = $filters['page_size'] ?? null;
@@ -90,12 +103,35 @@ class ModelResolver
                 // will add a '*' column by default, which we don't want.
                 $query->select($selectFields);
 
+                // counts
+
                 $relationCounts = $this->getRelationCounts($c);
                 if (count($relationCounts)) {
                     $query->withCount($relationCounts);
                 }
 
-                $households = $query->get()->all();
+                // order
+
+                if ($action->hasFilter('order')) {
+                    /** @var OrderFilter */
+                    $oderFilter = $action->getFilter('order');
+                    $order = $filters['order'] ?? [];
+                    if (!$oderFilter->hasField($order)) {
+                        $order = $oderFilter->getDefaultValue();
+                    }
+
+                    foreach ($order as $field => $direction) {
+                        ($this->orderFunction)($field, $direction, $query);
+
+                        $usedFilters['order'] = [
+                            $field => $direction
+                        ];
+                    }
+                }
+
+                // get
+
+                $models = $query->get()->all();
 
                 $c->meta([
                     'count_scope' => $countScope,
@@ -104,7 +140,7 @@ class ModelResolver
                     'used_filters' => $usedFilters
                 ]);
 
-                return $households;
+                return $models;
             });
     }
 

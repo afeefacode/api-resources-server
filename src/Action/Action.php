@@ -96,6 +96,11 @@ class Action extends BagEntry
         return $this;
     }
 
+    public function hasFilter(string $name): bool
+    {
+        return $this->filters->has($name);
+    }
+
     public function getFilter(string $name): Filter
     {
         return $this->filters->get($name);

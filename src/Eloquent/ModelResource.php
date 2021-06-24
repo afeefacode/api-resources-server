@@ -9,6 +9,7 @@ use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\Fields\IdAttribute;
 use Afeefa\ApiResources\Filter\FilterBag;
 use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
+use Afeefa\ApiResources\Filter\Filters\OrderFilter;
 use Afeefa\ApiResources\Filter\Filters\PageFilter;
 use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
 use Afeefa\ApiResources\Resource\Resource;
@@ -43,10 +44,23 @@ class ModelResource extends Resource
         });
 
         $filters->add('page', PageFilter::class);
+
+        $filters->add('order', function (OrderFilter $filter) {
+            $filter
+                ->fields([
+                    'id' => [OrderFilter::DESC, OrderFilter::ASC]
+                ])
+                ->default(['id' => OrderFilter::ASC]);
+        });
     }
 
     protected function search(string $keyword, Builder $query): void
     {
+    }
+
+    protected function order(string $field, string $direction, Builder $query): void
+    {
+        $query->orderBy($field, $direction);
     }
 
     protected function getEloquentResolver(): ModelResolver
@@ -56,6 +70,9 @@ class ModelResource extends Resource
             ->type($type)
             ->search(function (string $keyword, Builder $query) {
                 $this->search($keyword, $query);
+            })
+            ->order(function (string $field, string $direction, Builder $query) {
+                $this->order($field, $direction, $query);
             });
     }
 

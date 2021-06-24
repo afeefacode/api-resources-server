@@ -16,4 +16,21 @@ class OrderFilter extends Filter
     {
         return parent::options($fields);
     }
+
+    public function field($field, $directions): OrderFilter
+    {
+        $this->options[$field] = $directions;
+        return $this;
+    }
+
+    public function hasField(array $field): bool
+    {
+        $field = array_keys($field)[0] ?? null;
+        foreach (array_keys($this->options) as $existingField) {
+            if ($field === $existingField) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
