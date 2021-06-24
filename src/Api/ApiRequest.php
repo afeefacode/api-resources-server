@@ -8,6 +8,7 @@ use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\ApiException;
+use Afeefa\ApiResources\Resource\Resource;
 use JsonSerializable;
 
 class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, JsonSerializable
@@ -16,7 +17,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     protected Api $api;
 
-    protected string $resourceName;
+    protected string $resourceType;
 
     protected string $actionName;
 
@@ -32,8 +33,8 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     {
         $input = json_decode(file_get_contents('php://input'), true);
 
-        $this->resourceName = $input['resource'] ?? '';
-        if (!$this->resourceName) {
+        $this->resourceType = $input['resource'] ?? '';
+        if (!$this->resourceType) {
             throw new ApiException('No resource field');
         }
 
@@ -53,9 +54,9 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         return $this;
     }
 
-    public function resourceName(string $resourceName): ApiRequest
+    public function resourceType(string $resourceType): ApiRequest
     {
-        $this->resourceName = $resourceName;
+        $this->resourceType = $resourceType;
         return $this;
     }
 
@@ -77,9 +78,14 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         return $this;
     }
 
+    public function getResource(): Resource
+    {
+        return $this->api->getResource($this->resourceType);
+    }
+
     public function getAction(): Action
     {
-        return $this->api->getAction($this->resourceName, $this->actionName);
+        return $this->api->getAction($this->resourceType, $this->actionName);
     }
 
     public function filter(string $name, string $value): ApiRequest
@@ -173,7 +179,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     public function toSchemaJson(): array
     {
         $json = [
-            'resource' => $this->resourceName,
+            'resource' => $this->resourceType,
             'action' => $this->actionName,
             'fields' => $this->fields
         ];
@@ -188,7 +194,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     public function jsonSerialize()
     {
         $json = [
-            'resource' => $this->resourceName,
+            'resource' => $this->resourceType,
             'action' => $this->actionName,
             'fields' => $this->fields,
             'filters' => $this->filters,

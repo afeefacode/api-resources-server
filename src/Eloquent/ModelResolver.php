@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Eloquent;
 
+use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\DB\RelationResolver;
 use Afeefa\ApiResources\DB\ResolveContext;
@@ -154,7 +155,12 @@ class ModelResolver
 
                 $model->update($data);
 
-                return $model;
+                $getResult = $r->forward(function (ApiRequest $apiRequest) {
+                    $apiRequest
+                        ->resourceType($apiRequest->getResource()->getType())
+                        ->actionName('get');
+                });
+                return $getResult['data'];
             });
     }
 
@@ -171,7 +177,15 @@ class ModelResolver
                 $model->fill($data);
                 $model->save();
 
-                return $model->fresh();
+                $model = $model->fresh();
+
+                $getResult = $r->forward(function (ApiRequest $apiRequest) use ($model) {
+                    $apiRequest
+                        ->resourceType($apiRequest->getResource()->getType())
+                        ->actionName('get')
+                        ->params(['id' => $model->id]);
+                });
+                return $getResult['data'];
             });
     }
 

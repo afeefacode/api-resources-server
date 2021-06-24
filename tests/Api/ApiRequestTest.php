@@ -102,7 +102,7 @@ class ApiRequestTest extends TestCase
 
         $result = $api->request(function (ApiRequest $request) use ($count, $fields) {
             $request = $request
-                ->resourceName(TestResource::$type)
+                ->resourceType(TestResource::$type)
                 ->actionName('get_types');
 
             if ($count !== null) {

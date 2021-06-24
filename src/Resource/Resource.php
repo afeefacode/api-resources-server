@@ -23,6 +23,11 @@ class Resource extends BagEntry
         $this->actions($this->actions);
     }
 
+    public function getType(): string
+    {
+        return static::$type;
+    }
+
     public function getAction(string $name): Action
     {
         return $this->actions->get($name);

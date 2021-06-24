@@ -42,7 +42,7 @@ class ActionResolver extends DataResolver
         return $this;
     }
 
-    public function fetch()
+    public function fetch(): array
     {
         $requestedFields = $this->request->getFields();
 
@@ -85,5 +85,12 @@ class ActionResolver extends DataResolver
             'input' => json_decode(file_get_contents('php://input'), true),
             'request' => $this->request
         ];
+    }
+
+    public function forward(Closure $callback): array
+    {
+        $request = $this->getRequest();
+        $callback($this->getRequest());
+        return $request->dispatch();
     }
 }

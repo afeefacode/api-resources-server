@@ -6,6 +6,7 @@ use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
+use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Resource\ResourceBag;
 use Closure;
 
@@ -22,6 +23,11 @@ class Api implements ContainerAwareInterface
 
         $this->resources = $this->container->create(ResourceBag::class);
         $this->resources($this->resources);
+    }
+
+    public function getResource(string $resourceType): Resource
+    {
+        return $this->resources->get($resourceType);
     }
 
     public function getAction(string $resourceType, string $actionName): Action
