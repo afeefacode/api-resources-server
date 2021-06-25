@@ -13,7 +13,7 @@ class BooleanFilter extends Filter
         return parent::options($values);
     }
 
-    protected function setup()
+    protected function setup(): void
     {
         $this->options([true]);
     }

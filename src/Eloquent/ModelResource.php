@@ -37,14 +37,6 @@ class ModelResource extends Resource
     {
         $filters->add('q', KeywordFilter::class);
 
-        $filters->add('page_size', function (PageSizeFilter $filter) {
-            $filter
-                ->pageSizes([15, 30, 50])
-                ->default(15);
-        });
-
-        $filters->add('page', PageFilter::class);
-
         $filters->add('order', function (OrderFilter $filter) {
             $filter
                 ->fields([
@@ -52,6 +44,14 @@ class ModelResource extends Resource
                 ])
                 ->default(['id' => OrderFilter::ASC]);
         });
+
+        $filters->add('page_size', function (PageSizeFilter $filter) {
+            $filter
+                ->pageSizes([15, 30, 50])
+                ->default(15);
+        });
+
+        $filters->add('page', PageFilter::class);
     }
 
     protected function search(string $keyword, Builder $query): void
@@ -61,6 +61,10 @@ class ModelResource extends Resource
     protected function order(string $field, string $direction, Builder $query): void
     {
         $query->orderBy($field, $direction);
+    }
+
+    protected function filter(string $name, string $value, Builder $query): void
+    {
     }
 
     protected function getEloquentResolver(): ModelResolver
@@ -73,6 +77,9 @@ class ModelResource extends Resource
             })
             ->order(function (string $field, string $direction, Builder $query) {
                 $this->order($field, $direction, $query);
+            })
+            ->filter(function (string $name, string $value, Builder $query) {
+                $this->filter($name, $value, $query);
             });
     }
 

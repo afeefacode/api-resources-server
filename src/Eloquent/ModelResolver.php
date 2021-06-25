@@ -6,8 +6,13 @@ use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\DB\RelationResolver;
 use Afeefa\ApiResources\DB\ResolveContext;
+use Afeefa\ApiResources\Field\Fields\LinkOneRelation;
+use Afeefa\ApiResources\Field\Relation;
+use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
+use Afeefa\ApiResources\Filter\Filters\PageFilter;
 use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
+use Attribute;
 use Closure;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,6 +26,7 @@ class ModelResolver
 
     protected Closure $searchFunction;
     protected Closure $orderFunction;
+    protected Closure $filterFunction;
 
     public function type(ModelType $type): ModelResolver
     {
@@ -47,6 +53,12 @@ class ModelResolver
         return $this;
     }
 
+    public function filter(Closure $filterFunction): ModelResolver
+    {
+        $this->filterFunction = $filterFunction;
+        return $this;
+    }
+
     public function list(ActionResolver $r)
     {
         $r
@@ -66,6 +78,24 @@ class ModelResolver
 
                 $countScope = $countFilters = $query->count();
                 $countSearch = $countFilters;
+
+                // other filters
+
+                $coreFilters = [
+                    KeywordFilter::class,
+                    OrderFilter::class,
+                    PageFilter::class,
+                    PageSizeFilter::class
+                ];
+
+                foreach ($filters as $name => $value) {
+                    if ($action->hasFilter($name)) {
+                        $actionFilter = $action->getFilter($name);
+                        if (!in_array(get_class($actionFilter), $coreFilters)) {
+                            ($this->filterFunction)($name, $value, $query);
+                        }
+                    }
+                }
 
                 // search
 
@@ -168,9 +198,11 @@ class ModelResolver
                     $query->withCount($relationCounts);
                 }
 
-                return $query
-                    ->where('id', $request->getParam('id'))
-                    ->first();
+                if ($request->hasParam('id')) {
+                    $query->where('id', $request->getParam('id'));
+                }
+
+                return $query->first();
             });
     }
 
@@ -187,9 +219,25 @@ class ModelResolver
                 $model = $query->where('id', $request->getParam('id'))
                     ->first();
 
-                $model->fillable(array_keys($data));
+                $updates = [];
+                foreach ($data as $key => $value) {
+                    if ($this->type->hasUpdateField($key)) {
+                        $field = $this->type->getUpdateField($key);
+                        if ($field instanceof Attribute) {
+                            $updates[$key] = $value;
+                        }
 
-                $model->update($data);
+                        if ($field instanceof Relation) {
+                            if ($field instanceof LinkOneRelation) {
+                                $model->$key()->associate($value['id']);
+                            }
+                        }
+                    }
+                }
+
+                $model->fillable(array_keys($updates));
+
+                $model->update($updates);
 
                 $getResult = $r->forward(function (ApiRequest $apiRequest) {
                     $apiRequest

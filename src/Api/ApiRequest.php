@@ -112,6 +112,11 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         return $this->params;
     }
 
+    public function hasParam(string $name)
+    {
+        return isset($this->params[$name]);
+    }
+
     public function getParam(string $name)
     {
         return $this->params[$name];
@@ -122,12 +127,6 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         $data = $this->data;
         unset($data['id']);
         unset($data['type']);
-
-        if (isset($data['author'])) {
-            $data['author_id'] = $data['author']['id'];
-            unset($data['author']);
-        }
-
         return $data;
     }
 

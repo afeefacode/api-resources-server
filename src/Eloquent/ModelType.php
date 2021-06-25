@@ -17,8 +17,7 @@ class ModelType extends ApiResourcesModelType
 
     protected function getEloquentRelationResolver(ModelType $type): ModelResolver
     {
-        return (new ModelResolver())
-            ->type($type);
+        return (new ModelResolver())->type($type);
     }
 
     protected function addDefaultRelationResolvers(FieldBag $fields)
