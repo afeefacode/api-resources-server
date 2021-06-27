@@ -65,6 +65,7 @@ class ModelResource extends Resource
 
     protected function filter(string $name, string $value, Builder $query): void
     {
+        $query->where($name, $value);
     }
 
     protected function getEloquentResolver(): ModelResolver

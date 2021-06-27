@@ -6,13 +6,13 @@ use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\DB\RelationResolver;
 use Afeefa\ApiResources\DB\ResolveContext;
+use Afeefa\ApiResources\Field\Attribute;
 use Afeefa\ApiResources\Field\Fields\LinkOneRelation;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
 use Afeefa\ApiResources\Filter\Filters\PageFilter;
 use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
-use Attribute;
 use Closure;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -76,7 +76,7 @@ class ModelResolver
 
                 $query = $this->ModelClass::query();
 
-                $countScope = $countFilters = $query->count();
+                $countScope = $countFilters = $countSearch = $query->count();
                 $countSearch = $countFilters;
 
                 // other filters
@@ -88,13 +88,20 @@ class ModelResolver
                     PageSizeFilter::class
                 ];
 
+                $filterUsed = false;
+
                 foreach ($filters as $name => $value) {
                     if ($action->hasFilter($name)) {
                         $actionFilter = $action->getFilter($name);
                         if (!in_array(get_class($actionFilter), $coreFilters)) {
                             ($this->filterFunction)($name, $value, $query);
+                            $filterUsed = true;
                         }
                     }
+                }
+
+                if ($filterUsed) {
+                    $countFilters = $countSearch = $query->count();
                 }
 
                 // search
