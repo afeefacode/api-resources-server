@@ -24,9 +24,10 @@ class ModelResolver
     protected string $ModelClass;
     protected string $relationName;
 
+    protected Closure $scopeFunction;
+    protected Closure $filterFunction;
     protected Closure $searchFunction;
     protected Closure $orderFunction;
-    protected Closure $filterFunction;
 
     public function type(ModelType $type): ModelResolver
     {
@@ -38,6 +39,18 @@ class ModelResolver
     public function relationName(string $relationName): ModelResolver
     {
         $this->relationName = $relationName;
+        return $this;
+    }
+
+    public function scope(Closure $scopeFunction): ModelResolver
+    {
+        $this->scopeFunction = $scopeFunction;
+        return $this;
+    }
+
+    public function filter(Closure $filterFunction): ModelResolver
+    {
+        $this->filterFunction = $filterFunction;
         return $this;
     }
 
@@ -53,12 +66,6 @@ class ModelResolver
         return $this;
     }
 
-    public function filter(Closure $filterFunction): ModelResolver
-    {
-        $this->filterFunction = $filterFunction;
-        return $this;
-    }
-
     public function list(ActionResolver $r)
     {
         $r
@@ -66,6 +73,7 @@ class ModelResolver
                 $request = $r->getRequest();
                 $action = $r->getAction();
                 $filters = $request->getFilters();
+                $scopes = $request->getScopes();
 
                 $table = (new $this->ModelClass())->getTable();
                 $selectFields = array_map(function ($field) use ($table) {
@@ -76,10 +84,17 @@ class ModelResolver
 
                 $query = $this->ModelClass::query();
 
-                $countScope = $countFilters = $countSearch = $query->count();
-                $countSearch = $countFilters;
+                // scopes
 
-                // other filters
+                foreach ($scopes as $name => $value) {
+                    if ($action->hasScope($name)) {
+                        ($this->scopeFunction)($name, $value, $query);
+                    }
+                }
+
+                $countScope = $countFilters = $countSearch = $query->count();
+
+                // filters
 
                 $coreFilters = [
                     KeywordFilter::class,

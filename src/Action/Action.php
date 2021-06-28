@@ -20,6 +20,8 @@ class Action extends BagEntry
 
     protected ActionInput $input;
 
+    protected FilterBag $scopes;
+
     protected FilterBag $filters;
 
     protected ActionResponse $response;
@@ -104,6 +106,24 @@ class Action extends BagEntry
     public function getFilter(string $name): Filter
     {
         return $this->filters->get($name);
+    }
+
+    public function scopes(Closure $callback): Action
+    {
+        $this->container->create($callback, function (FilterBag $scopes) {
+            $this->scopes = $scopes;
+        });
+        return $this;
+    }
+
+    public function hasScope(string $name): bool
+    {
+        return $this->scopes->has($name);
+    }
+
+    public function getScope(string $name): Filter
+    {
+        return $this->scopes->get($name);
     }
 
     public function response($TypeClassOrClassesOrMeta, Closure $callback = null): Action
@@ -200,6 +220,10 @@ class Action extends BagEntry
 
         if (isset($this->input)) {
             $json['input'] = $this->input->toSchemaJson();
+        }
+
+        if (isset($this->scopes)) {
+            $json['scopes'] = $this->scopes->toSchemaJson();
         }
 
         if (isset($this->filters)) {

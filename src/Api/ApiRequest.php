@@ -21,6 +21,8 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     protected string $actionName;
 
+    protected array $scopes = [];
+
     protected array $filters = [];
 
     protected array $params = [];
@@ -43,11 +45,13 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
             throw new ApiException('No action field');
         }
 
-        $this->fields($input['fields'] ?? []);
+        $this->params = $input['params'] ?? [];
+
+        $this->scopes = $input['scopes'] ?? [];
 
         $this->filters = $input['filters'] ?? [];
 
-        $this->params = $input['params'] ?? [];
+        $this->fields($input['fields'] ?? []);
 
         $this->data = $input['data'] ?? [];
 
@@ -88,6 +92,40 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         return $this->api->getAction($this->resourceType, $this->actionName);
     }
 
+    public function getParams(): array
+    {
+        return $this->params;
+    }
+
+    public function hasParam(string $name)
+    {
+        return isset($this->params[$name]);
+    }
+
+    public function getParam(string $name)
+    {
+        return $this->params[$name];
+    }
+
+    public function scope(string $name, string $value): ApiRequest
+    {
+        $this->scopes[$name] = $value;
+        return $this;
+    }
+
+    public function scopes(array $scopes): ApiRequest
+    {
+        foreach ($scopes as $name => $value) {
+            $this->scopes[$name] = $value;
+        }
+        return $this;
+    }
+
+    public function getScopes(): array
+    {
+        return $this->scopes;
+    }
+
     public function filter(string $name, string $value): ApiRequest
     {
         $this->filters[$name] = $value;
@@ -105,21 +143,6 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     public function getFilters(): array
     {
         return $this->filters;
-    }
-
-    public function getParams(): array
-    {
-        return $this->params;
-    }
-
-    public function hasParam(string $name)
-    {
-        return isset($this->params[$name]);
-    }
-
-    public function getParam(string $name)
-    {
-        return $this->params[$name];
     }
 
     public function getData(): array
@@ -195,9 +218,10 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         $json = [
             'resource' => $this->resourceType,
             'action' => $this->actionName,
-            'fields' => $this->fields,
-            'filters' => $this->filters,
             'params' => $this->params,
+            'scopes' => $this->scopes,
+            'filters' => $this->filters,
+            'fields' => $this->fields,
             'data' => $this->data,
         ];
         return $json;

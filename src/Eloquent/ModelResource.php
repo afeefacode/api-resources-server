@@ -33,6 +33,10 @@ class ModelResource extends Resource
         parent::created();
     }
 
+    protected function scopes(FilterBag $filters): void
+    {
+    }
+
     protected function filters(FilterBag $filters): void
     {
         $filters->add('q', KeywordFilter::class);
@@ -54,6 +58,16 @@ class ModelResource extends Resource
         $filters->add('page', PageFilter::class);
     }
 
+    protected function scope(string $name, string $value, Builder $query): void
+    {
+        $query->where($name, $value);
+    }
+
+    protected function filter(string $name, string $value, Builder $query): void
+    {
+        $query->where($name, $value);
+    }
+
     protected function search(string $keyword, Builder $query): void
     {
     }
@@ -61,11 +75,6 @@ class ModelResource extends Resource
     protected function order(string $field, string $direction, Builder $query): void
     {
         $query->orderBy($field, $direction);
-    }
-
-    protected function filter(string $name, string $value, Builder $query): void
-    {
-        $query->where($name, $value);
     }
 
     protected function getEloquentResolver(): ModelResolver
@@ -81,6 +90,9 @@ class ModelResource extends Resource
             })
             ->filter(function (string $name, string $value, Builder $query) {
                 $this->filter($name, $value, $query);
+            })
+            ->scope(function (string $name, string $value, Builder $query) {
+                $this->scope($name, $value, $query);
             });
     }
 
@@ -88,6 +100,10 @@ class ModelResource extends Resource
     {
         $actions->add('list', function (Action $action) {
             $action
+                ->scopes(function (FilterBag $scopes) {
+                    $this->scopes($scopes);
+                })
+
                 ->filters(function (FilterBag $filters) {
                     $this->filters($filters);
                 })
