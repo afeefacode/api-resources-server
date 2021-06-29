@@ -6,6 +6,7 @@ use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
+use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
 use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Resource\ResourceBag;
 use Closure;
@@ -15,10 +16,16 @@ class Api implements ContainerAwareInterface
     use ContainerAwareTrait;
     use ToSchemaJsonTrait;
 
+    public static string $type;
+
     protected ResourceBag $resources;
 
     public function created(): void
     {
+        if (!static::$type) {
+            throw new MissingTypeException('Missing type for api of class ' . static::class . '.');
+        };
+
         $this->container->registerAlias($this, self::class);
 
         $this->resources = $this->container->create(ResourceBag::class);
@@ -75,6 +82,7 @@ class Api implements ContainerAwareInterface
         }
 
         return [
+            'type' => static::$type,
             'resources' => $resources,
             'types' => $types,
             'validators' => $validators

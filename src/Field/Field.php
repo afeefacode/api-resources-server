@@ -2,6 +2,8 @@
 
 namespace Afeefa\ApiResources\Field;
 
+use Afeefa\ApiResources\Api\Api;
+use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Api\ToSchemaJsonTrait;
 use Afeefa\ApiResources\Api\TypeRegistry;
 use Afeefa\ApiResources\Bag\BagEntry;
@@ -26,6 +28,8 @@ class Field extends BagEntry
 
     protected bool $allowed = false;
 
+    protected Closure $optionsRequestCallback;
+
     /**
      * @var string|callable|Closure
      */
@@ -47,6 +51,11 @@ class Field extends BagEntry
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function optionsRequest(Closure $callback)
+    {
+        $this->optionsRequestCallback = $callback;
     }
 
     public function validate(Closure $callback): Field
@@ -149,6 +158,15 @@ class Field extends BagEntry
 
         if ($this->required) {
             $json['required'] = true;
+        }
+
+        if (isset($this->optionsRequestCallback)) {
+            $api = $this->container->get(Api::class);
+            $request = $this->container->create(function (ApiRequest $request) use ($api) {
+                $request->api($api);
+                ($this->optionsRequestCallback)($request);
+            });
+            $json['options_request'] = $request->toSchemaJson();
         }
 
         if ($this->validator) {

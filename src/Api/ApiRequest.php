@@ -201,10 +201,15 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     public function toSchemaJson(): array
     {
         $json = [
+            'api' => $this->api::$type,
             'resource' => $this->resourceType,
             'action' => $this->actionName,
             'fields' => $this->fields
         ];
+
+        if (count($this->scopes)) {
+            $json['scopes'] = $this->scopes;
+        }
 
         if (count($this->filters)) {
             $json['filters'] = $this->filters;
@@ -216,6 +221,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     public function jsonSerialize()
     {
         $json = [
+            'api' => $this->api::$type,
             'resource' => $this->resourceType,
             'action' => $this->actionName,
             'params' => $this->params,

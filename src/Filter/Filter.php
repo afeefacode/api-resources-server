@@ -16,7 +16,7 @@ class Filter extends BagEntry
 
     protected array $options;
 
-    protected Closure $requestCallback;
+    protected Closure $optionsRequestCallback;
 
     protected $default;
 
@@ -31,9 +31,10 @@ class Filter extends BagEntry
         $this->setup();
     }
 
-    public function request(Closure $callback)
+    public function optionsRequest(Closure $callback): Filter
     {
-        $this->requestCallback = $callback;
+        $this->optionsRequestCallback = $callback;
+        return $this;
     }
 
     public function name(string $name): Filter
@@ -84,14 +85,13 @@ class Filter extends BagEntry
             $json['options'] = $this->options;
         }
 
-        if (isset($this->requestCallback)) {
-            $callback = $this->requestCallback;
+        if (isset($this->optionsRequestCallback)) {
             $api = $this->container->get(Api::class);
             $request = $this->container->create(function (ApiRequest $request) use ($api, $callback) {
                 $request->api($api);
-                $callback($request);
+                ($this->optionsRequestCallback)($request);
             });
-            $json['request'] = $request->toSchemaJson();
+            $json['options_request'] = $request->toSchemaJson();
         }
 
         return $json;

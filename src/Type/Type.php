@@ -72,9 +72,14 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
     public function toSchemaJson(): array
     {
         return [
-            // 'type' => static::$type,
+            'translations' => $this->translations(),
             'fields' => $this->fields->toSchemaJson()
         ];
+    }
+
+    protected function translations(): array
+    {
+        return [];
     }
 
     protected function fields(FieldBag $fields): void
