@@ -16,6 +16,7 @@ use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
 use Closure;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Query\Builder as EloquentBuilder;
 
 class ModelResolver
@@ -331,6 +332,9 @@ class ModelResolver
                 // select field on the relation prior matching the related to its owner
                 $selectFields = $c->getSelectFields();
                 if ($eloquentRelation instanceof HasMany) { // reference to the owner in the related table
+                    $selectFields[] = $eloquentRelation->getForeignKeyName();
+                }
+                if ($eloquentRelation instanceof HasOne) { // reference to the owner in the related table
                     $selectFields[] = $eloquentRelation->getForeignKeyName();
                 }
 
