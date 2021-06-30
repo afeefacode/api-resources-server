@@ -57,17 +57,22 @@ class Model implements ModelInterface, JsonSerializable
     public function jsonSerialize()
     {
         $json = [];
+
+        if ($this->id ?? null) {
+            $json['id'] = $this->id;
+        }
+
+        if ($this->type ?? null) {
+            $json['type'] = $this->type;
+        }
+
         foreach ($this as $name => $value) {
             if (in_array($name, $this->visibleFields)) {
-                if ($name === 'type') {
+                if ($name === 'id' || $name === 'type') {
                     continue;
                 }
 
                 $json[$name] = $value;
-
-                if ($name === 'id') {
-                    $json['type'] = $this->type;
-                }
             }
         }
         return $json;

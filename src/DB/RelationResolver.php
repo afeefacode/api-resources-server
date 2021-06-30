@@ -3,6 +3,8 @@
 namespace Afeefa\ApiResources\DB;
 
 use Afeefa\ApiResources\Api\RequestedFields;
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Type\Type;
@@ -131,7 +133,14 @@ class RelationResolver extends DataResolver
         // query db
 
         $loadCallback = $this->loadCallback;
+        if (!$loadCallback) {
+            throw new MissingCallbackException('resolve callback needs to implement a load() method.');
+        }
         $objects = $loadCallback($this->owners, $resolveContext);
+
+        if (!is_iterable($objects) || !is_countable($objects)) {
+            throw new InvalidConfigurationException('load() method of a relation resolver must return iterable+countable objects.');
+        }
 
         // map results to owners
 
@@ -157,6 +166,10 @@ class RelationResolver extends DataResolver
             $models = ($this->flattenCallback)($objects);
         } else {
             $models = array_values($objects);
+            // nested array
+            if (is_array($models[0] ?? null)) {
+                $models = array_merge(...$models);
+            }
         }
 
         foreach ($resolveContext->getRelationResolvers() as $relationResolver) {

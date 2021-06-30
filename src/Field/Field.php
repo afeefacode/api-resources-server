@@ -121,7 +121,7 @@ class Field extends BagEntry
         $callback = $this->resolveCallback;
 
         if (!$callback) {
-            throw new InvalidConfigurationException("Field {$this->name} does not have a field resolver.");
+            throw new InvalidConfigurationException("Relation {$this->name} does not have a relation resolver.");
         }
 
         if (is_array($callback) && is_string($callback[0])) { // static class -> create instance
