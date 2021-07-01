@@ -349,8 +349,8 @@ class ModelResolver
 
     private function getRelationCounts(ResolveContext $c): array
     {
-        $relationCounts = [];
         $requestedFieldNames = $c->getRequestedFields()->getFieldNames();
+        $relationCounts = [];
         foreach ($requestedFieldNames as $fieldName) {
             if (preg_match('/^count_(.+)/', $fieldName, $matches)) {
                 $countRelationName = $matches[1];
@@ -371,7 +371,7 @@ class ModelResolver
             if (preg_match('/^count_(.+)/', $fieldName, $matches)) {
                 $countRelationName = $matches[1];
                 if ($relatedType->hasRelation($countRelationName)) {
-                    $relationCounts = [$countRelationName . ' as count_' . $countRelationName];
+                    $relationCounts[] = $countRelationName . ' as count_' . $countRelationName;
                 }
             }
         }

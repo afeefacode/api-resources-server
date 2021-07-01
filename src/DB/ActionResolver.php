@@ -61,6 +61,15 @@ class ActionResolver extends DataResolver
         if ($hasResult) {
             $models = $isList ? $modelOrModels : [$modelOrModels];
 
+            // resolve attributes
+
+            foreach ($resolveContext->getAttributeResolvers() as $attributeResolver) {
+                foreach ($models as $model) {
+                    $attributeResolver->addOwner($model);
+                }
+                $attributeResolver->fetch();
+            }
+
             // resolve relations
 
             foreach ($resolveContext->getRelationResolvers() as $relationResolver) {

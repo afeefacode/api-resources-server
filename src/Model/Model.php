@@ -44,6 +44,11 @@ class Model implements ModelInterface, JsonSerializable
         return $this->type;
     }
 
+    public function apiResourcesSetAttribute(string $name, $value): void
+    {
+        $this->$name = $value;
+    }
+
     public function apiResourcesSetRelation(string $name, $value): void
     {
         $this->$name = $value;

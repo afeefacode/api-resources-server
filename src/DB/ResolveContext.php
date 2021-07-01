@@ -18,22 +18,16 @@ class ResolveContext implements ContainerAwareInterface
     protected RequestedFields $requestedFields;
 
     /**
+     * @var AttributeResolver[]
+     */
+    protected array $attributeResolvers;
+
+    /**
      * @var RelationResolver[]
      */
     protected array $relationResolvers;
 
     protected array $meta = [];
-
-    // public function type(Type $type): ResolveContext
-    // {
-    //     $this->type = $type;
-    //     return $this;
-    // }
-
-    // public function getType(): Type
-    // {
-    //     return $this->type;
-    // }
 
     public function requestedFields(RequestedFields $requestedFields): ResolveContext
     {
@@ -69,6 +63,21 @@ class ResolveContext implements ContainerAwareInterface
         return $this->calculateSelectFields($type, $requestedFields);
     }
 
+    /**
+     * @return AttributeResolver[]
+     */
+    public function getAttributeResolvers(): array
+    {
+        if (!isset($this->attributeResolvers)) {
+            $this->createAttributeResolvers();
+        }
+
+        return $this->attributeResolvers;
+    }
+
+    /**
+     * @return RelationResolver[]
+     */
     public function getRelationResolvers(): array
     {
         if (!isset($this->relationResolvers)) {
@@ -90,7 +99,9 @@ class ResolveContext implements ContainerAwareInterface
                 if ($attribute->hasDependingAttributes()) {
                     $selectFields = array_merge($selectFields, $attribute->getDependingAttributes());
                 } else {
-                    $selectFields[] = $fieldName;
+                    if (!$attribute->hasResolver()) { // let resolvers provide value
+                        $selectFields[] = $fieldName;
+                    }
                 }
             }
 
@@ -178,5 +189,54 @@ class ResolveContext implements ContainerAwareInterface
         }
 
         $this->relationResolvers = $relationResolvers;
+    }
+
+    /**
+     * @return AttributeResolver[]
+     */
+    protected function createAttributeResolvers()
+    {
+        $requestedFields = $this->requestedFields;
+        $type = $requestedFields->getType();
+
+        $attributeResolvers = [];
+        foreach ($requestedFields->getFieldNames() as $fieldName) {
+            if ($type->hasAttribute($fieldName)) {
+                $attribute = $type->getAttribute($fieldName);
+                if ($attribute->hasResolver()) {
+                    $resolveCallback = $attribute->getResolve();
+                    /** @var AttributeResolver */
+                    $attributeResolver = null;
+
+                    $this->container->call(
+                        $resolveCallback,
+                        function (DependencyResolver $r) {
+                            if ($r->isOf(AttributeResolver::class)) {
+                                $r->create();
+                            }
+                        },
+                        function () use (&$attributeResolver) {
+                            $arguments = func_get_args();
+                            foreach ($arguments as $argument) {
+                                if ($argument instanceof AttributeResolver) {
+                                    $attributeResolver = $argument;
+                                }
+                            }
+                        }
+                    );
+
+                    if (!$attributeResolver) {
+                        throw new InvalidConfigurationException("Resolve callback for attribute {$fieldName} on type {$type::$type} must receive a AttributeResolver as argument.");
+                    }
+
+                    // $attributeResolver->ownerType($type);
+                    $attributeResolver->attribute($attribute);
+                    // $attributeResolver->requestedFields($requestedFields->getNestedField($fieldName));
+                    $attributeResolvers[$fieldName] = $attributeResolver;
+                }
+            }
+        }
+
+        $this->attributeResolvers = $attributeResolvers;
     }
 }

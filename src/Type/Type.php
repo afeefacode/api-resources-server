@@ -54,9 +54,13 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
         return $this->hasField($name) && $this->getField($name) instanceof Attribute;
     }
 
-    public function getAttribute(string $name): Attribute
+    public function getAttribute(string $name): ?Attribute
     {
-        return $this->getField($name);
+        $field = $this->getField($name);
+        if ($field instanceof Attribute) {
+            return $field;
+        }
+        return null;
     }
 
     public function hasRelation(string $name): bool
@@ -64,9 +68,13 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
         return $this->hasField($name) && $this->getField($name) instanceof Relation;
     }
 
-    public function getRelation(string $name): Relation
+    public function getRelation(string $name): ?Relation
     {
-        return $this->getField($name);
+        $field = $this->getField($name);
+        if ($field instanceof Relation) {
+            return $field;
+        }
+        return null;
     }
 
     public function toSchemaJson(): array

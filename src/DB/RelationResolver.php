@@ -160,7 +160,7 @@ class RelationResolver extends DataResolver
             return;
         }
 
-        // resolve sub relations
+        // resolve attributes and sub relations
 
         if (isset($this->flattenCallback)) {
             $models = ($this->flattenCallback)($objects);
@@ -170,6 +170,13 @@ class RelationResolver extends DataResolver
             if (is_array($models[0] ?? null)) {
                 $models = array_merge(...$models);
             }
+        }
+
+        foreach ($resolveContext->getAttributeResolvers() as $attributeResolver) {
+            foreach ($models as $model) {
+                $attributeResolver->addOwner($model);
+            }
+            $attributeResolver->fetch();
         }
 
         foreach ($resolveContext->getRelationResolvers() as $relationResolver) {

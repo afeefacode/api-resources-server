@@ -11,6 +11,10 @@ class Model extends EloquentModel implements ModelInterface
 
     protected $visibleFields = [];
 
+    protected $casts = [
+        'id' => 'string'
+    ];
+
     public function getTypeAttribute()
     {
         return static::$type;
@@ -19,6 +23,11 @@ class Model extends EloquentModel implements ModelInterface
     public function apiResourcesGetType(): string
     {
         return static::$type;
+    }
+
+    public function apiResourcesSetAttribute(string $name, $value): void
+    {
+        $this->$name = $value;
     }
 
     public function apiResourcesSetRelation(string $name, $value): void

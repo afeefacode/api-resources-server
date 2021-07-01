@@ -105,7 +105,7 @@ class Field extends BagEntry
     /**
      * @param string|callable|Closure $classOrCallback
      */
-    public function resolve($classOrCallback): Relation
+    public function resolve($classOrCallback): Field
     {
         $this->resolveCallback = $classOrCallback;
         return $this;
