@@ -280,8 +280,26 @@ class ModelResolver
                 $data = $request->getData();
 
                 $model = new $this->ModelClass();
-                $model->fillable(array_keys($data));
-                $model->fill($data);
+
+                $updates = [];
+                foreach ($data as $key => $value) {
+                    if ($this->type->hasCreateField($key)) {
+                        $field = $this->type->getCreateField($key);
+                        if ($field instanceof Attribute) {
+                            $updates[$key] = $value;
+                        }
+
+                        if ($field instanceof Relation && $value) {
+                            if ($field instanceof LinkOneRelation) {
+                                $model->$key()->associate($value['id']);
+                            }
+                        }
+                    }
+                }
+
+                $model->fillable(array_keys($updates));
+                $model->fill($updates);
+
                 $model->save();
 
                 $model = $model->fresh();

@@ -40,6 +40,16 @@ class ModelType extends Type
         return $this->updateFields->get($name);
     }
 
+    public function hasCreateField(string $name): bool
+    {
+        return $this->createFields->has($name);
+    }
+
+    public function getCreateField(string $name): Field
+    {
+        return $this->createFields->get($name);
+    }
+
     public function toSchemaJson(): array
     {
         $json = parent::toSchemaJson();
