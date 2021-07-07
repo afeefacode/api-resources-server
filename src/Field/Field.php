@@ -146,6 +146,9 @@ class Field extends BagEntry
             if ($this->validator) {
                 $field->validator($this->validator->clone());
             }
+            if (isset($this->optionsRequestCallback)) {
+                $field->optionsRequest($this->optionsRequestCallback);
+            }
         });
     }
 

@@ -252,7 +252,8 @@ class ModelResolver
 
                         if ($field instanceof Relation) {
                             if ($field instanceof LinkOneRelation) {
-                                $model->$key()->associate($value['id']);
+                                $id = $value['id'] ?? null;
+                                $model->$key()->associate($id);
                             }
                         }
                     }
