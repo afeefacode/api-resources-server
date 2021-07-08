@@ -7,6 +7,7 @@ use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\DB\RelationResolver;
 use Afeefa\ApiResources\DB\ResolveContext;
 use Afeefa\ApiResources\Field\Attribute;
+use Afeefa\ApiResources\Field\Fields\HasManyRelation;
 use Afeefa\ApiResources\Field\Fields\LinkOneRelation;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
@@ -331,6 +332,97 @@ class ModelResolver
                 }
 
                 return null;
+            });
+    }
+
+    public function add_related(ActionResolver $r)
+    {
+        $r
+            ->load(function (ResolveContext $c) use ($r) {
+                $request = $r->getRequest();
+
+                $data = $request->getData();
+
+                $query = $this->ModelClass::query();
+
+                $model = $query->where('id', $request->getParam('id'))
+                    ->first();
+
+                foreach ($data as $key => $value) {
+                    if ($this->type->hasUpdateField($key)) {
+                        $field = $this->type->getUpdateField($key);
+
+                        if ($field instanceof Relation) {
+                            if ($field instanceof HasManyRelation) {
+                                $eloquentRelation = $model->$key();
+
+                                $relatedModel = $eloquentRelation->where([
+                                    'client_id' => $model->id,
+                                    'counselor_id' => $data['client_counselors'][0]['counselor']['id']
+                                ])->first();
+
+                                if ($relatedModel) {
+                                    continue;
+                                }
+
+                                $relatedModel = $eloquentRelation->getRelated();
+                                $relatedModel->client_id = $model->id;
+                                $relatedModel->counselor_id = $data['client_counselors'][0]['counselor']['id'];
+                                $relatedModel->save();
+                            }
+                        }
+                    }
+                }
+
+                $getResult = $r->forward(function (ApiRequest $apiRequest) {
+                    $apiRequest
+                        ->resourceType($apiRequest->getResource()->getType())
+                        ->actionName('get');
+                });
+                return $getResult['data'];
+            });
+    }
+
+    public function delete_related(ActionResolver $r)
+    {
+        $r
+            ->load(function (ResolveContext $c) use ($r) {
+                $request = $r->getRequest();
+
+                $data = $request->getData();
+
+                $query = $this->ModelClass::query();
+
+                $model = $query->where('id', $request->getParam('id'))
+                    ->first();
+
+                foreach ($data as $key => $value) {
+                    if ($this->type->hasUpdateField($key)) {
+                        $field = $this->type->getUpdateField($key);
+
+                        if ($field instanceof Relation) {
+                            if ($field instanceof HasManyRelation) {
+                                $eloquentRelation = $model->$key();
+
+                                $relatedModel = $eloquentRelation->where([
+                                    'client_id' => $model->id,
+                                    'counselor_id' => $data['client_counselors'][0]['counselor']['id']
+                                ])->first();
+
+                                if ($relatedModel) {
+                                    $relatedModel->delete();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $getResult = $r->forward(function (ApiRequest $apiRequest) {
+                    $apiRequest
+                        ->resourceType($apiRequest->getResource()->getType())
+                        ->actionName('get');
+                });
+                return $getResult['data'];
             });
     }
 

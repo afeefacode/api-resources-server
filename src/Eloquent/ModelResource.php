@@ -156,5 +156,27 @@ class ModelResource extends Resource
 
                 ->resolve([$this->getEloquentResolver(), 'delete']);
         });
+
+        $actions->add('add_related', function (Action $action) {
+            $action
+                ->params(function (ActionParams $params) {
+                    $params->attribute('id', IdAttribute::class);
+                })
+
+                ->response($this->ModelTypeClass)
+
+                ->resolve([$this->getEloquentResolver(), 'add_related']);
+        });
+
+        $actions->add('delete_related', function (Action $action) {
+            $action
+                ->params(function (ActionParams $params) {
+                    $params->attribute('id', IdAttribute::class);
+                })
+
+                ->response($this->ModelTypeClass)
+
+                ->resolve([$this->getEloquentResolver(), 'delete_related']);
+        });
     }
 }
