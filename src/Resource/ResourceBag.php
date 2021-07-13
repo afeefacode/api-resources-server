@@ -8,7 +8,7 @@ use function Afeefa\ApiResources\DI\getCallbackArgumentType;
 
 /**
  * @method Resource get(string $name)
- * @method Resource[] entries()
+ * @method Resource[] getEntries()
  */
 class ResourceBag extends Bag
 {

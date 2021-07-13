@@ -35,6 +35,11 @@ class ModelType extends Type
         return $this->updateFields->has($name);
     }
 
+    public function getUpdateFields(): FieldBag
+    {
+        return $this->updateFields;
+    }
+
     public function getUpdateField(string $name): Field
     {
         return $this->updateFields->get($name);
@@ -43,6 +48,11 @@ class ModelType extends Type
     public function hasCreateField(string $name): bool
     {
         return $this->createFields->has($name);
+    }
+
+    public function getCreateFields(): FieldBag
+    {
+        return $this->createFields;
     }
 
     public function getCreateField(string $name): Field

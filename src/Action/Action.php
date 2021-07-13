@@ -189,7 +189,7 @@ class Action extends BagEntry
 
     public function getResolve(): ?Closure
     {
-        $callback = $this->resolveCallback;
+        $callback = $this->resolveCallback ?? null;
 
         if (!$callback) {
             throw new InvalidConfigurationException("Action {$this->name} does not have a field resolver.");

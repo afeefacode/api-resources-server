@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Bag\Bag;
 
 /**
  * @method Filter get(string $name)
- * @method Filter[] entries()
+ * @method Filter[] getEntries()
  */
 class FilterBag extends Bag
 {

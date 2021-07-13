@@ -9,6 +9,9 @@ namespace Afeefa\ApiResources\Field;
  * @method Attribute required(bool $required = true)
  * @method Attribute allowed()
  * @method Attribute resolve(string|callable|Closure $classOrCallback)
+ * @method Attribute resolveSave(string|callable|Closure $classOrCallback)
+ * @method Attribute resolveParam(string $key, $value)
+ * @method Attribute resolveParams(array $params)
 */
 class Attribute extends Field
 {

@@ -42,7 +42,7 @@ class ActionResolver extends DataResolver
         return $this;
     }
 
-    public function fetch(): array
+    public function resolve(): array
     {
         $requestedFields = $this->request->getFields();
 
@@ -99,7 +99,7 @@ class ActionResolver extends DataResolver
     public function forward(Closure $callback): array
     {
         $request = $this->getRequest();
-        $callback($this->getRequest());
+        $callback($request);
         return $request->dispatch();
     }
 }

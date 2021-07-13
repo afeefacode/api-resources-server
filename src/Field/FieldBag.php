@@ -9,7 +9,7 @@ use Closure;
 
 /**
  * @method Field get(string $name)
- * @method Field[] entries()
+ * @method Field[] getEntries()
  */
 class FieldBag extends Bag
 {
@@ -62,6 +62,14 @@ class FieldBag extends Bag
 
     public function allow(array $names): FieldBag
     {
+        // disallow own fields of this bag
+        foreach (array_values($this->getEntries()) as $field) {
+            if (!in_array($field->getName(), $names)) {
+                $field->allowed(false);
+            }
+        }
+
+        // allow all allowed fields
         foreach ($names as $name) {
             $this->get($name)->allowed(true);
         }

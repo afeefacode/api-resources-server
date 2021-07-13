@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Bag\Bag;
 
 /**
  * @method Rule get(string $name)
- * @method Rule[] entries()
+ * @method Rule[] getEntries()
  */
 class RuleBag extends Bag
 {
