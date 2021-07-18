@@ -67,7 +67,7 @@ class ActionResolver extends DataResolver
                 foreach ($models as $model) {
                     $attributeResolver->addOwner($model);
                 }
-                $attributeResolver->fetch();
+                $attributeResolver->resolve();
             }
 
             // resolve relations
@@ -76,7 +76,7 @@ class ActionResolver extends DataResolver
                 foreach ($models as $model) {
                     $relationResolver->addOwner($model);
                 }
-                $relationResolver->fetch();
+                $relationResolver->resolve();
             }
 
             // mark visible fields
@@ -94,12 +94,5 @@ class ActionResolver extends DataResolver
             'input' => json_decode(file_get_contents('php://input'), true),
             'request' => $this->request
         ];
-    }
-
-    public function forward(Closure $callback): array
-    {
-        $request = $this->getRequest();
-        $callback($request);
-        return $request->dispatch();
     }
 }

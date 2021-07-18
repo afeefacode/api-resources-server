@@ -2,20 +2,26 @@
 
 namespace Afeefa\ApiResources\DB;
 
+use Afeefa\ApiResources\Api\FieldsToSave;
+use Afeefa\ApiResources\Api\Operation;
 use Afeefa\ApiResources\Api\RequestedFields;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Type\Type;
 
 class ResolveContext implements ContainerAwareInterface
 {
     use ContainerAwareTrait;
 
-    // protected Type $type;
-
     protected RequestedFields $requestedFields;
+
+    /**
+     * @var FieldsToSave|FieldsToSave[]
+     */
+    protected $fieldsToSave;
 
     /**
      * @var AttributeResolver[]
@@ -26,6 +32,11 @@ class ResolveContext implements ContainerAwareInterface
      * @var RelationResolver[]
      */
     protected array $relationResolvers;
+
+    /**
+     * @var SaveRelationResolver[]
+     */
+    protected array $saveRelationResolvers;
 
     protected array $meta = [];
 
@@ -38,6 +49,23 @@ class ResolveContext implements ContainerAwareInterface
     public function getRequestedFields(): RequestedFields
     {
         return $this->requestedFields;
+    }
+
+    /**
+     * @param FieldsToSave|FieldsToSave[] $fieldsToSave
+     */
+    public function fieldsToSave($fieldsToSave): ResolveContext
+    {
+        $this->fieldsToSave = $fieldsToSave;
+        return $this;
+    }
+
+    /**
+     * @return FieldsToSave|FieldsToSave[]
+     */
+    public function getFieldsToSave()
+    {
+        return $this->fieldsToSave;
     }
 
     public function meta(array $meta): ResolveContext
@@ -63,6 +91,15 @@ class ResolveContext implements ContainerAwareInterface
         return $this->calculateSelectFields($type, $requestedFields);
     }
 
+    public function getSaveFields(): array
+    {
+        if (!isset($this->saveRelationResolvers)) {
+            $this->createSaveRelationResolvers();
+        }
+
+        return $this->calculateSaveFields($this->fieldsToSave);
+    }
+
     /**
      * @return AttributeResolver[]
      */
@@ -85,6 +122,18 @@ class ResolveContext implements ContainerAwareInterface
         }
 
         return $this->relationResolvers;
+    }
+
+    /**
+     * @return SaveRelationResolver[]
+     */
+    public function getSaveRelationResolvers(): array
+    {
+        if (!isset($this->saveRelationResolvers)) {
+            $this->createSaveRelationResolvers();
+        }
+
+        return $this->saveRelationResolvers;
     }
 
     protected function calculateSelectFields(Type $type, RequestedFields $requestedFields): array
@@ -131,6 +180,42 @@ class ResolveContext implements ContainerAwareInterface
         return $selectFields;
     }
 
+    protected function calculateSaveFields(FieldsToSave $fieldsToSave): array
+    {
+        $type = $fieldsToSave->getType();
+        $saveRelationResolvers = $this->saveRelationResolvers;
+
+        $saveFields = [];
+
+        foreach ($fieldsToSave->getFields() as $fieldName => $value) {
+            // value is a scalar
+            if ($this->hasSaveAttribute($type, $fieldsToSave->getOperation(), $fieldName)) {
+                $attribute = $type->getAttribute($fieldName);
+                if (!$attribute->hasResolver()) { // let resolvers provide value
+                    $saveFields[$fieldName] = $value;
+                }
+            }
+
+            // value is a FieldsToSave or null
+            if ($this->hasSaveRelation($type, $fieldsToSave->getOperation(), $fieldName)) {
+                $relation = $this->getSaveRelation($type, $fieldsToSave->getOperation(), $fieldName);
+
+                $saveRelationResolver = $saveRelationResolvers[$fieldName];
+                $ownerIdFields = $saveRelationResolver->getOwnerIdFields();
+                foreach ($ownerIdFields as $ownerIdField) {
+                    if ($relation->isSingle() && !$value) {
+                        $saveFields[$ownerIdField] = null;
+                    } else {
+                        // TODO set type field as id field if necessary
+                        $saveFields[$ownerIdField] = $value->getId();
+                    }
+                }
+            }
+        }
+
+        return $saveFields;
+    }
+
     protected function getTypeByName(string $typeName): Type
     {
         return $this->container->call(function (TypeClassMap $typeClassMap) use ($typeName) {
@@ -153,21 +238,21 @@ class ResolveContext implements ContainerAwareInterface
                 $relation = $type->getRelation($fieldName);
                 $resolveCallback = $relation->getResolve();
 
-                /** @var RelationResolver */
+                /** @var GetRelationResolver */
                 $relationResolver = null;
 
                 if ($resolveCallback) {
                     $this->container->call(
                         $resolveCallback,
                         function (DependencyResolver $r) {
-                            if ($r->isOf(RelationResolver::class)) {
+                            if ($r->isOf(GetRelationResolver::class)) {
                                 $r->create();
                             }
                         },
                         function () use (&$relationResolver) {
                             $arguments = func_get_args();
                             foreach ($arguments as $argument) {
-                                if ($argument instanceof RelationResolver) {
+                                if ($argument instanceof GetRelationResolver) {
                                     $relationResolver = $argument;
                                 }
                             }
@@ -189,6 +274,59 @@ class ResolveContext implements ContainerAwareInterface
         }
 
         $this->relationResolvers = $relationResolvers;
+    }
+
+    /**
+     * @return SaveRelationResolver[]
+     */
+    protected function createSaveRelationResolvers()
+    {
+        $fieldsToSave = $this->fieldsToSave;
+        $type = $fieldsToSave->getType();
+        $operation = $fieldsToSave->getOperation();
+
+        $saveRelationResolvers = [];
+        foreach ($fieldsToSave->getFieldNames() as $fieldName) {
+            if ($this->hasSaveRelation($type, $operation, $fieldName)) {
+                $relation = $this->getSaveRelation($type, $operation, $fieldName);
+                $resolveCallback = $relation->getSaveResolve();
+
+                /** @var SaveRelationResolver */
+                $saveRelationResolver = null;
+
+                if ($resolveCallback) {
+                    $this->container->call(
+                        $resolveCallback,
+                        function (DependencyResolver $r) {
+                            if ($r->isOf(SaveRelationResolver::class)) {
+                                $r->create();
+                            }
+                        },
+                        function () use (&$saveRelationResolver) {
+                            $arguments = func_get_args();
+                            foreach ($arguments as $argument) {
+                                if ($argument instanceof SaveRelationResolver) {
+                                    $saveRelationResolver = $argument;
+                                }
+                            }
+                        }
+                    );
+
+                    if (!$saveRelationResolver) {
+                        throw new InvalidConfigurationException("Resolve callback for save relation {$fieldName} on type {$type::$type} must receive a SaveRelationResolver as argument.");
+                    }
+
+                    $saveRelationResolver->ownerType($type);
+                    $saveRelationResolver->relation($relation);
+                    $saveRelationResolver->fieldsToSave($fieldsToSave->getNestedField($fieldName));
+                    $saveRelationResolvers[$fieldName] = $saveRelationResolver;
+                } else {
+                    throw new InvalidConfigurationException("Relation {$fieldName} on type {$type::$type} does not have a save relation resolver.");
+                }
+            }
+        }
+
+        $this->saveRelationResolvers = $saveRelationResolvers;
     }
 
     /**
@@ -238,5 +376,23 @@ class ResolveContext implements ContainerAwareInterface
         }
 
         $this->attributeResolvers = $attributeResolvers;
+    }
+
+    protected function hasSaveAttribute(Type $type, string $operation, string $name): bool
+    {
+        $method = $operation === Operation::UPDATE ? 'Update' : 'Create';
+        return $type->{'has' . $method . 'Attribute'}($name);
+    }
+
+    protected function hasSaveRelation(Type $type, string $operation, string $name): bool
+    {
+        $method = $operation === Operation::UPDATE ? 'Update' : 'Create';
+        return $type->{'has' . $method . 'Relation'}($name);
+    }
+
+    protected function getSaveRelation(Type $type, string $operation, string $name): Relation
+    {
+        $method = $operation === Operation::UPDATE ? 'Update' : 'Create';
+        return $type->{'get' . $method . 'Relation'}($name);
     }
 }

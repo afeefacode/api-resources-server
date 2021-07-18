@@ -2,7 +2,6 @@
 
 namespace Afeefa\ApiResources\Type;
 
-use Afeefa\ApiResources\Field\Field;
 use Afeefa\ApiResources\Field\FieldBag;
 
 class ModelType extends Type
@@ -30,34 +29,14 @@ class ModelType extends Type
         $this->createFields($this->createFields);
     }
 
-    public function hasUpdateField(string $name): bool
-    {
-        return $this->updateFields->has($name);
-    }
-
     public function getUpdateFields(): FieldBag
     {
         return $this->updateFields;
     }
 
-    public function getUpdateField(string $name): Field
-    {
-        return $this->updateFields->get($name);
-    }
-
-    public function hasCreateField(string $name): bool
-    {
-        return $this->createFields->has($name);
-    }
-
     public function getCreateFields(): FieldBag
     {
         return $this->createFields;
-    }
-
-    public function getCreateField(string $name): Field
-    {
-        return $this->createFields->get($name);
     }
 
     public function toSchemaJson(): array

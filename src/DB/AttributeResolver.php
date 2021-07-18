@@ -32,9 +32,10 @@ class AttributeResolver extends DataResolver
         return $this->attribute;
     }
 
-    public function addOwner(ModelInterface $owner): void
+    public function addOwner(ModelInterface $owner): AttributeResolver
     {
         $this->owners[] = $owner;
+        return $this;
     }
 
     /**
@@ -57,7 +58,7 @@ class AttributeResolver extends DataResolver
         return $this;
     }
 
-    public function fetch()
+    public function resolve()
     {
         $resolveContext = $this->resolveContext();
 

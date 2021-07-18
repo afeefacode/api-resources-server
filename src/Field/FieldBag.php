@@ -31,6 +31,11 @@ class FieldBag extends Bag
         return parent::get($name, $callback);
     }
 
+    public function getRelation(string $name, Closure $callback = null): Relation
+    {
+        return $this->get($name, $callback);
+    }
+
     public function attribute(string $name, $classOrCallback): FieldBag
     {
         $this->container->create($classOrCallback, function (Attribute $attribute) use ($name) {
@@ -71,6 +76,22 @@ class FieldBag extends Bag
 
         // allow all allowed fields
         foreach ($names as $name) {
+            if (!$this->has($name)) {
+                if (preg_match('/^(.+)#(add|delete|update)$/', $name, $matches)) {
+                    $baseRelationName = $matches[1];
+                    $adds = $matches[2] === 'add';
+                    $deletes = $matches[2] === 'delete';
+                    $updates = $matches[2] === 'update';
+                    $relation = $this->getRelation($baseRelationName)
+                        ->clone()
+                        ->allowed(true)
+                        ->updatesItems($updates)
+                        ->addsItems($adds)
+                        ->deletesItems($deletes);
+                    $this->set($name, $relation);
+                    continue;
+                }
+            }
             $this->get($name)->allowed(true);
         }
         return $this;

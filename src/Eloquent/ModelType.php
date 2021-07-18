@@ -13,11 +13,8 @@ class ModelType extends ApiResourcesModelType
         parent::created();
 
         $this->addDefaultRelationResolvers($this->fields);
-    }
-
-    protected function getEloquentRelationResolver(ModelType $type): ModelRelationResolver
-    {
-        return (new ModelRelationResolver())->type($type);
+        $this->addDefaultSaveRelationResolvers($this->updateFields);
+        $this->addDefaultSaveRelationResolvers($this->createFields);
     }
 
     protected function addDefaultRelationResolvers(FieldBag $fields)
@@ -25,8 +22,18 @@ class ModelType extends ApiResourcesModelType
         foreach (array_values($fields->getEntries()) as $entry) {
             if ($entry instanceof Relation) {
                 if (!$entry->hasResolver()) {
-                    $type = $entry->getRelatedTypeInstance();
-                    $entry->resolve([$this->getEloquentRelationResolver($type), 'relation']);
+                    $entry->resolve([ModelRelationResolver::class, 'get_relation']);
+                }
+            }
+        }
+    }
+
+    protected function addDefaultSaveRelationResolvers(FieldBag $fields)
+    {
+        foreach (array_values($fields->getEntries()) as $entry) {
+            if ($entry instanceof Relation) {
+                if (!$entry->hasSaveResolver()) {
+                    $entry->resolveSave([ModelRelationResolver::class, 'save_relation']);
                 }
             }
         }

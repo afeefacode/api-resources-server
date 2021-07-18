@@ -6,15 +6,11 @@ use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\DB\MutationResolver;
 use Afeefa\ApiResources\DB\ResolveContext;
-use Afeefa\ApiResources\Field\Attribute;
-use Afeefa\ApiResources\Field\Fields\LinkOneRelation;
-use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
 use Afeefa\ApiResources\Filter\Filters\PageFilter;
 use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
 use Closure;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as EloquentBuilder;
 
 class ModelResolver
@@ -233,140 +229,52 @@ class ModelResolver
             ->save(function (ResolveContext $c) use ($r) {
                 $request = $r->getRequest();
 
-                $data = $request->getData();
-
                 $query = $this->ModelClass::query();
 
-                $model = $query->where('id', $request->getParam('id'))
+                $model = $query
+                    ->where('id', $request->getParam('id'))
                     ->first();
 
-                $updates = [];
-                foreach ($data as $key => $value) {
-                    if ($this->type->hasUpdateField($key)) {
-                        $field = $this->type->getUpdateField($key);
-                        if ($field instanceof Attribute) {
-                            $updates[$key] = $value;
-                        }
+                $updates = $c->getSaveFields();
 
-                        if ($field instanceof Relation) {
-                            $relation = $field;
-
-                            if ($relation->hasSaveResolver()) {
-                                $saveResolve = $relation->getSaveResolve();
-                                $saveResolve($model, $value);
-                                continue;
-                            }
-
-                            $eloquentRelationName = $relation->hasResolveParam('eloquent_relation')
-                                ? $relation->getResolveParam('eloquent_relation')
-                                : $relation->getName();
-                            $eloquentRelation = $model->$eloquentRelationName();
-
-                            if ($relation instanceof LinkOneRelation) {
-                                $id = $value['id'] ?? null;
-                                $model->$key()->associate($id);
-                            }
-
-                            if ($eloquentRelation instanceof HasMany) {
-                                $relatedSets = $value;
-
-                                foreach ($relatedSets as $relatedSet) {
-                                    /** @var ModelType */
-                                    $relatedType = $relation->getRelatedTypeInstance();
-                                    $relatedModel = $eloquentRelation->getRelated();
-                                    $foreignKeyName = $eloquentRelation->getForeignKeyName();
-                                    $createFields = $relatedType->getCreateFields();
-
-                                    $requiredRelatedFields = [];
-                                    foreach ($createFields->getEntries() as $name => $field) {
-                                        if ($field->isRequired()) {
-                                            if ($field instanceof Relation) {
-                                                $requiredEloquentRelation = $relatedModel->$name();
-                                                $keyName = $requiredEloquentRelation->getForeignKeyName();
-                                                if ($keyName !== $foreignKeyName) {
-                                                    $requiredRelatedFields[$keyName] = $relatedSet[$name]['id'] ?? '-1';
-                                                } else {
-                                                    $requiredRelatedFields[$keyName] = $model->id;
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    if ($relation->shallAddItems()) {
-                                        if ($eloquentRelation->where($requiredRelatedFields)->exists()) {
-                                            continue;
-                                        }
-
-                                        $relatedModel = $eloquentRelation->getRelated();
-                                        $relatedModel->fillable(array_keys($requiredRelatedFields));
-                                        $relatedModel->fill($requiredRelatedFields);
-                                        $relatedModel->save();
-                                    } elseif ($relation->shallDeleteItems()) {
-                                        $relatedModel = $eloquentRelation->where($requiredRelatedFields)->first();
-
-                                        if ($relatedModel) {
-                                            $relatedModel->delete();
-                                        }
-                                    } else {
-                                        $test = 'null';
-                                        // set items
-                                    }
-                                }
-                            }
-                        }
-                    }
+                if (!empty($updates)) {
+                    $model->fillable(array_keys($updates));
+                    $model->update($updates);
                 }
 
-                $model->fillable(array_keys($updates));
-                $model->update($updates);
+                return $model;
+            })
 
-                $getResult = $r->forward(function (ApiRequest $apiRequest) {
-                    $apiRequest
-                        ->resourceType($apiRequest->getResource()->getType())
-                        ->actionName('get');
-                });
-                return $getResult['data'];
+            ->forward(function (ApiRequest $apiRequest) {
+                $apiRequest
+                    ->resourceType($apiRequest->getResource()->getType())
+                    ->actionName('get');
             });
     }
 
     public function create(MutationResolver $r)
     {
         $r
-            ->save(function () use ($r) {
-                $request = $r->getRequest();
-
-                $data = $request->getData();
-
+            ->save(function (ResolveContext $c) {
                 $model = new $this->ModelClass();
 
-                $updates = [];
-                foreach ($data as $key => $value) {
-                    if ($this->type->hasCreateField($key)) {
-                        $field = $this->type->getCreateField($key);
-                        if ($field instanceof Attribute) {
-                            $updates[$key] = $value;
-                        }
+                $updates = $c->getSaveFields();
 
-                        if ($field instanceof Relation && $value) {
-                            if ($field instanceof LinkOneRelation) {
-                                $model->$key()->associate($value['id']);
-                            }
-                        }
-                    }
+                if (!empty($updates)) {
+                    $model->fillable(array_keys($updates));
+                    $model->fill($updates);
                 }
 
-                $model->fillable(array_keys($updates));
-                $model->fill($updates);
                 $model->save();
-                $model = $model->fresh();
 
-                $getResult = $r->forward(function (ApiRequest $apiRequest) use ($model) {
-                    $apiRequest
-                        ->resourceType($apiRequest->getResource()->getType())
-                        ->actionName('get')
-                        ->params(['id' => $model->id]);
-                });
-                return $getResult['data'];
+                return $model;
+            })
+
+            ->forward(function (ApiRequest $apiRequest, Model $model) {
+                $apiRequest
+                    ->resourceType($apiRequest->getResource()->getType())
+                    ->actionName('get')
+                    ->params(['id' => $model->id]);
             });
     }
 
@@ -389,7 +297,7 @@ class ModelResolver
             });
     }
 
-    private function getRelationCounts(ResolveContext $c): array
+    protected function getRelationCounts(ResolveContext $c): array
     {
         $requestedFieldNames = $c->getRequestedFields()->getFieldNames();
         $relationCounts = [];
@@ -404,7 +312,7 @@ class ModelResolver
         return $relationCounts;
     }
 
-    private function pageToLimit(int $page, int $pageSize, int $countAll): array
+    protected function pageToLimit(int $page, int $pageSize, int $countAll): array
     {
         $numPages = ceil($countAll / $pageSize);
         $page = max(1, min($numPages, $page));

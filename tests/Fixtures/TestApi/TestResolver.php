@@ -3,7 +3,6 @@
 namespace Afeefa\ApiResources\Tests\Fixtures\TestApi;
 
 use Afeefa\ApiResources\DB\ActionResolver;
-use Afeefa\ApiResources\DB\ResolveContext;
 use Afeefa\ApiResources\Model\Model;
 
 class TestResolver
@@ -11,7 +10,7 @@ class TestResolver
     public function get_types(ActionResolver $r)
     {
         $r
-            ->load(function (ResolveContext $c) use ($r) {
+            ->load(function () use ($r) {
                 $request = $r->getRequest();
                 $requestedFields = $request->getFields();
                 $filters = $request->getFilters();

@@ -32,6 +32,8 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     protected RequestedFields $fields;
 
+    protected FieldsToSave $fieldsToSave;
+
     public function fromInput(): ApiRequest
     {
         $input = json_decode(file_get_contents('php://input'), true);
@@ -53,6 +55,8 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         $this->filters = $input['filters'] ?? [];
 
         $this->fields($input['fields'] ?? []);
+
+        $this->fieldsToSave($input['data'] ?? []);
 
         $this->data = $input['data'] ?? [];
 
@@ -146,14 +150,6 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         return $this->filters;
     }
 
-    public function getData(): array
-    {
-        $data = $this->data;
-        unset($data['id']);
-        unset($data['type']);
-        return $data;
-    }
-
     public function fields(array $fields): ApiRequest
     {
         $this->fields = $this->container->create(function (RequestedFields $requestedFields) use ($fields) {
@@ -169,6 +165,30 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     public function getFields(): RequestedFields
     {
         return $this->fields;
+    }
+
+    public function fieldsToSave(array $fields): ApiRequest
+    {
+        $this->fieldsToSave = $this->container->create(function (FieldsToSave $fieldsToSave) use ($fields) {
+            $TypeClass = $this->getAction()->getResponse()->getTypeClass();
+            $operation = $this->hasParam('id') ? Operation::UPDATE : Operation::CREATE;
+
+            $fieldsToSave
+                ->typeClass($TypeClass)
+                ->operation($operation)
+                ->fields($fields);
+
+            if ($operation === Operation::UPDATE) {
+                $fieldsToSave->id($this->getParam('id'));
+            }
+        });
+
+        return $this;
+    }
+
+    public function getFieldsToSave(): FieldsToSave
+    {
+        return $this->fieldsToSave;
     }
 
     public function dispatch()
@@ -239,7 +259,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
             'scopes' => $this->scopes,
             'filters' => $this->filters,
             'fields' => $this->fields,
-            'data' => $this->data,
+            'fieldsToSave' => $this->fieldsToSave
         ];
         return $json;
     }

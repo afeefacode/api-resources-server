@@ -30,6 +30,8 @@ class Field extends BagEntry
 
     protected Closure $optionsRequestCallback;
 
+    protected array $options = [];
+
     protected array $resolveParams = [];
 
     /**
@@ -65,7 +67,16 @@ class Field extends BagEntry
         $this->optionsRequestCallback = $callback;
     }
 
-    // anfang
+    public function options(array $options): Field
+    {
+        $this->options = $options;
+        return $this;
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
+    }
 
     public function resolveParams(array $params): Field
     {
@@ -93,8 +104,6 @@ class Field extends BagEntry
     {
         return $this->resolveParams;
     }
-
-    // ende
 
     public function validate(Closure $callback): Field
     {
@@ -227,14 +236,16 @@ class Field extends BagEntry
             if (isset($this->optionsRequestCallback)) {
                 $field->optionsRequest($this->optionsRequestCallback);
             }
+            if (isset($this->options)) {
+                $field->options($this->options);
+            }
         });
     }
 
     public function getSchemaJson(TypeRegistry $typeRegistry): array
     {
         $json = [
-            'type' => static::$type,
-            // 'name' => $this->name
+            'type' => static::$type
         ];
 
         if ($this->required) {
@@ -248,6 +259,10 @@ class Field extends BagEntry
                 ($this->optionsRequestCallback)($request);
             });
             $json['options_request'] = $request->toSchemaJson();
+        }
+
+        if (count($this->options)) {
+            $json['options'] = $this->options;
         }
 
         if ($this->validator) {
