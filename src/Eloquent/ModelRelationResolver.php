@@ -73,33 +73,32 @@ class ModelRelationResolver
                 // add or update all others
                 foreach ($relatedObjects as $relatedObject) {
                     if ($relatedObject->id) {
-                        $this->addRelated($eloquentRelation, $relatedObject);
-                    } else {
+                        $eloquentRelation = $this->getEloquentRelation($r, $owner)[2];
                         $this->updateRelated($eloquentRelation, $relatedObject);
+                    } else {
+                        $eloquentRelation = $this->getEloquentRelation($r, $owner)[2];
+                        $this->addRelated($eloquentRelation, $relatedObject);
                     }
                 }
             })
 
             ->update(function (Model $owner, array $relatedObjects) use ($r) {
-                $eloquentRelation = $this->getEloquentRelation($r, $owner)[2];
-
                 foreach ($relatedObjects as $relatedObject) {
+                    $eloquentRelation = $this->getEloquentRelation($r, $owner)[2];
                     $this->updateRelated($eloquentRelation, $relatedObject);
                 }
             })
 
             ->add(function (Model $owner, array $relatedObjects) use ($r) {
-                $eloquentRelation = $this->getEloquentRelation($r, $owner)[2];
-
                 foreach ($relatedObjects as $relatedObject) {
+                    $eloquentRelation = $this->getEloquentRelation($r, $owner)[2];
                     $this->addRelated($eloquentRelation, $relatedObject);
                 }
             })
 
             ->delete(function (Model $owner, array $relatedObjects) use ($r) {
-                $eloquentRelation = $this->getEloquentRelation($r, $owner)[2];
-
                 foreach ($relatedObjects as $relatedObject) {
+                    $eloquentRelation = $this->getEloquentRelation($r, $owner)[2];
                     $relatedModel = $eloquentRelation->find($relatedObject->id);
 
                     if ($relatedModel) {
