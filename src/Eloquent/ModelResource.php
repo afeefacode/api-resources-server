@@ -46,7 +46,7 @@ class ModelResource extends Resource
                 ->fields([
                     'id' => [OrderFilter::DESC, OrderFilter::ASC]
                 ])
-                ->default(['id' => OrderFilter::ASC]);
+                ->default(['id' => OrderFilter::DESC]);
         });
 
         $filters->add('page_size', function (PageSizeFilter $filter) {
