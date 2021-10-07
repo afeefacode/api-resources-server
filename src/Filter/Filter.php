@@ -87,7 +87,7 @@ class Filter extends BagEntry
 
         if (isset($this->optionsRequestCallback)) {
             $api = $this->container->get(Api::class);
-            $request = $this->container->create(function (ApiRequest $request) use ($api, $callback) {
+            $request = $this->container->create(function (ApiRequest $request) use ($api) {
                 $request->api($api);
                 ($this->optionsRequestCallback)($request);
             });

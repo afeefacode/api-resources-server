@@ -29,25 +29,25 @@ class GetRelationResolver extends RelationResolver
         return $this;
     }
 
-    public function init(Closure $callback): RelationResolver
+    public function init(Closure $callback): GetRelationResolver
     {
         $this->initCallback = $callback;
         return $this;
     }
 
-    public function load(Closure $callback): RelationResolver
+    public function load(Closure $callback): GetRelationResolver
     {
         $this->loadCallback = $callback;
         return $this;
     }
 
-    public function map(Closure $callback): RelationResolver
+    public function map(Closure $callback): GetRelationResolver
     {
         $this->mapCallback = $callback;
         return $this;
     }
 
-    public function flatten(Closure $callback): RelationResolver
+    public function flatten(Closure $callback): GetRelationResolver
     {
         $this->flattenCallback = $callback;
         return $this;
