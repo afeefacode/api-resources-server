@@ -7,6 +7,7 @@ use Afeefa\ApiResources\Api\ToSchemaJsonTrait;
 use Afeefa\ApiResources\Api\TypeRegistry;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
+use Afeefa\ApiResources\Type\Type;
 
 class ActionInput implements ToSchemaJsonInterface, ContainerAwareInterface
 {

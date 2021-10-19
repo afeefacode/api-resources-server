@@ -28,8 +28,6 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     protected array $params = [];
 
-    protected array $data = [];
-
     protected RequestedFields $fields;
 
     protected FieldsToSave $fieldsToSave;
@@ -57,8 +55,6 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         $this->fields($input['fields'] ?? []);
 
         $this->fieldsToSave($input['data'] ?? []);
-
-        $this->data = $input['data'] ?? [];
 
         return $this;
     }

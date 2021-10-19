@@ -228,7 +228,7 @@ class ContainerTest extends TestCase
     public function test_get_with_callback_callable_not_accessible()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a type nor a valid callback.');
+        $this->expectExceptionMessage('Argument is not a class string: array');
 
         $container = new Container();
 
@@ -238,7 +238,7 @@ class ContainerTest extends TestCase
     public function test_get_with_callback_callable_invalid()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a type nor a valid callback.');
+        $this->expectExceptionMessage('Argument is not a class string: array');
 
         $container = new Container();
 
@@ -248,7 +248,7 @@ class ContainerTest extends TestCase
     public function test_get_with_invalid_type()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a type nor a valid callback.');
+        $this->expectExceptionMessage('Argument is not a known type: InvalidType');
 
         $container = new Container();
 

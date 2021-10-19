@@ -168,7 +168,7 @@ class BagTest extends TestCase
     public function test_set_definition_invalid_not_a_callback()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a type nor a valid callback.');
+        $this->expectExceptionMessage('Argument is not a class string: object');
 
         $container = new Container();
         $bag = $container->create(Bag::class);

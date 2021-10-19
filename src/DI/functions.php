@@ -29,8 +29,12 @@ function classOrCallback($classOrCallback): array
         return [null, Closure::fromCallable($classOrCallback)];
     }
 
-    if (!is_string($classOrCallback) || !class_exists($classOrCallback)) {
-        throw new NotATypeOrCallbackException('Argument is not a type nor a valid callback.');
+    if (!is_string($classOrCallback)) {
+        throw new NotATypeOrCallbackException('Argument is not a class string: ' . gettype($classOrCallback));
+    }
+
+    if (!class_exists($classOrCallback)) {
+        throw new NotATypeOrCallbackException('Argument is not a known type: ' . $classOrCallback);
     }
 
     return [$classOrCallback, null];
