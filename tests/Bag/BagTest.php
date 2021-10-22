@@ -84,7 +84,7 @@ class BagTest extends TestCase
 
     public function test_set_non_bagentry()
     {
-        $message = preg_quote('Argument 2 passed to Afeefa\ApiResources\Bag\Bag::set() must implement interface Afeefa\ApiResources\Bag\BagEntryInterface, string given');
+        $message = preg_quote('Argument #2 ($value) must be of type Afeefa\ApiResources\Bag\BagEntryInterface, string given');
         $this->expectExceptionMessageMatches("/{$message}/");
 
         $bag = new Bag();
@@ -178,15 +178,15 @@ class BagTest extends TestCase
 
     public function test_set_definition_invalid_not_a_bagentry()
     {
-        $message = preg_quote('Argument 1 passed to Afeefa\ApiResources\Bag\Bag') . '.*' . preg_quote('must implement interface Afeefa\ApiResources\Bag\BagEntryInterface, instance of class@anonymous given');
+        $message = preg_quote('Argument #1 ($entry) must be of type Afeefa\ApiResources\Bag\BagEntryInterface, class@anonymous given');
         $this->expectExceptionMessageMatches("/{$message}/");
 
         $container = new Container();
         $bag = $container->create(Bag::class);
 
-        $NoBagEntry = new class() {};
+        $NoBagEntry = new class () {};
 
-        $bag->setDefinition('one', get_class($NoBagEntry));
+        $bag->setDefinition('one', $NoBagEntry::class);
         $bag->get('one');
     }
 

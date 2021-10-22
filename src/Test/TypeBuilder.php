@@ -2,21 +2,38 @@
 
 namespace Afeefa\ApiResources\Test;
 
+use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Type\Type;
 use Closure;
+use Webmozart\PathUtil\Path;
 
 class TypeBuilder
 {
     public Type $type;
 
-    public function type(string $type, ?Closure $callback = null): TypeBuilder
-    {
-        $newType = new class() extends TestType {};
-        $TypeClass = get_class($newType);
-        $TypeClass::$type = $type;
-        $TypeClass::$createCallback = $callback;
+    public function type(
+        string $typeName,
+        ?Closure $fieldsCallback = null,
+        ?Closure $updateFieldsCallback = null,
+        ?Closure $createFieldsCallback = null
+    ): TypeBuilder {
+        // creating unique anonymous class is difficult
+        // https://stackoverflow.com/questions/40833199/static-properties-in-php7-anonymous-classes
+        // https://www.php.net/language.oop5.anonymous#121839
+        $code = file_get_contents(Path::join(__DIR__, 'uniquetypeclass.php'));
+        $code = preg_replace("/<\?php/", '', $code);
 
-        $this->type = $newType;
+        /** @var TestType */
+        $type = eval($code); // eval is not always evil
+
+        $type::$type = $typeName;
+        $type::$fieldsCallback = $fieldsCallback;
+        $type::$updateFieldsCallback = $updateFieldsCallback;
+        $type::$createFieldsCallback = $createFieldsCallback;
+
+        TypeRegistry::register($type);
+
+        $this->type = $type;
 
         return $this;
     }
@@ -29,26 +46,28 @@ class TypeBuilder
 
 class TestType extends Type
 {
-    public static ?Closure $createCallback;
+    public static ?Closure $fieldsCallback;
+    public static ?Closure $updateFieldsCallback;
+    public static ?Closure $createFieldsCallback;
 
-    public function created(): void
+    protected function fields(FieldBag $fields): void
     {
-        parent::created();
-
-        if (static::$createCallback) {
-            (static::$createCallback)($this);
+        if (static::$fieldsCallback) {
+            (static::$fieldsCallback)->call($this, $fields);
         }
     }
 
-    public function attribute(string $name, $classOrCallback): TestType
+    protected function updateFields(FieldBag $fields): void
     {
-        $this->fields->attribute($name, $classOrCallback);
-        return $this;
+        if (static::$updateFieldsCallback) {
+            (static::$updateFieldsCallback)->call($this, $fields);
+        }
     }
 
-    public function relation(string $name, string $RelatedTypeClass, $classOrCallback): TestType
+    protected function createFields(FieldBag $fields): void
     {
-        $this->fields->relation($name, $RelatedTypeClass, $classOrCallback);
-        return $this;
+        if (static::$createFieldsCallback) {
+            (static::$createFieldsCallback)->call($this, $fields);
+        }
     }
 }

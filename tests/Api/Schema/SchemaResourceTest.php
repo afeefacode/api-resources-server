@@ -3,57 +3,58 @@
 namespace Afeefa\ApiResources\Tests\Api;
 
 use Afeefa\ApiResources\Action\Action;
+use Afeefa\ApiResources\Action\ActionBag;
 use Afeefa\ApiResources\Api\Api;
+use Afeefa\ApiResources\Resource\ResourceBag;
 use Afeefa\ApiResources\Test\ApiBuilder;
-use Afeefa\ApiResources\Test\TestApi;
-use Afeefa\ApiResources\Test\TestResource;
-use Afeefa\ApiResources\Test\TypeBuilder;
-use Afeefa\ApiResources\Type\Type;
+use Afeefa\ApiResources\Test\ResourceBuilder;
+use function Afeefa\ApiResources\Test\T;
 use Closure;
+
 use PHPUnit\Framework\TestCase;
 
 class SchemaResourceTest extends TestCase
 {
     public function test_simple()
     {
-        $type = $this->createType('Test.Type');
-
-        $api = $this->createApi($type);
-
-        // debug_dump($api->toSchemaJson());
+        $api = $this->createApiWithResource(
+            'Test.Resource',
+            function (ActionBag $actions) {
+                $actions
+                    ->add('test_action', function (Action $action) {
+                        $action->response(T('Test.Type'));
+                    });
+            }
+        );
 
         $schema = $api->toSchemaJson();
 
-        $this->assertEquals(['Test.Resource'], array_keys($schema['resources']));
+        $expectedResourcesSchema = [
+            'Test.Resource' => [
+                'test_action' => [
+                    'response' => [
+                        'type' => 'Test.Type'
+                    ]
+                ]
+            ]
+        ];
 
-        $resourceSchema = $schema['resources']['Test.Resource'];
-
-        $this->assertEquals(['test_action'], array_keys($resourceSchema));
-
-        $actionSchema = $resourceSchema['test_action'];
-
-        $this->assertEquals(['response' => [
-            'type' => 'Test.Type'
-        ]], $actionSchema);
+        $this->assertEquals($expectedResourcesSchema, $schema['resources']);
     }
 
-    private function createType(string $type, ?Closure $callback = null): Type
+    private function createApiWithResource(string $type, Closure $actionsCallback): Api
     {
-        return (new TypeBuilder())
-            ->type($type)
+        $resource = (new ResourceBuilder())
+            ->resource($type, $actionsCallback)
             ->get();
-    }
 
-    private function createApi(Type $type): Api
-    {
         return (new ApiBuilder())
-            ->api('Test.Api', function (TestApi $api) use ($type) {
-                $api->resource('Test.Resource', function (TestResource $resource) use ($type) {
-                    $resource->action('test_action', function (Action $action) use ($type) {
-                        $action->response(get_class($type));
-                    });
-                });
-            })
+            ->api(
+                'Test.Api',
+                function (ResourceBag $resources) use ($resource) {
+                        $resources->add($resource::class);
+                    }
+            )
             ->get();
     }
 }

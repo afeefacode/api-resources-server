@@ -105,30 +105,28 @@ class Field extends BagEntry
         return $this->resolveParams;
     }
 
-    public function validate(Closure $callback): Field
+    public function validate($validatorOrCallback): Field
     {
-        if ($this->validator) { // cloned validator
-            $this->container->call(
-                $callback,
-                function (DependencyResolver $r) {
-                    $r->fix($this->validator);
-                }
-            );
+        if ($validatorOrCallback instanceof Validator) {
+            $this->validator = $validatorOrCallback;
         } else {
-            $this->container->create(
-                $callback,
-                function (Validator $validator) {
-                    $this->validator = $validator;
-                }
-            );
+            if ($this->validator) { // cloned validator
+                $this->container->call(
+                    $validatorOrCallback,
+                    function (DependencyResolver $r) {
+                        $r->fix($this->validator);
+                    }
+                );
+            } else {
+                $this->container->create(
+                    $validatorOrCallback,
+                    function (Validator $validator) {
+                        $this->validator = $validator;
+                    }
+                );
+            }
         }
 
-        return $this;
-    }
-
-    public function validator(Validator $validator): Field
-    {
-        $this->validator = $validator;
         return $this;
     }
 
@@ -143,7 +141,7 @@ class Field extends BagEntry
         return $this->required;
     }
 
-    public function allowed(bool $allowed): Field
+    public function allowed(bool $allowed = true): Field
     {
         $this->allowed = $allowed;
         return $this;
@@ -231,13 +229,13 @@ class Field extends BagEntry
                 ->name($this->name)
                 ->required($this->required);
             if ($this->validator) {
-                $field->validator($this->validator->clone());
+                $field->validator = $this->validator->clone();
             }
             if (isset($this->optionsRequestCallback)) {
-                $field->optionsRequest($this->optionsRequestCallback);
+                $field->optionsRequestCallback = $this->optionsRequestCallback;
             }
             if (isset($this->options)) {
-                $field->options($this->options);
+                $field->options = $this->options;
             }
         });
     }

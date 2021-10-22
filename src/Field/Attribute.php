@@ -7,7 +7,7 @@ namespace Afeefa\ApiResources\Field;
  * @method Attribute validate(Closure $callback)
  * @method Attribute validator(Validator $validator)
  * @method Attribute required(bool $required = true)
- * @method Attribute allowed()
+ * @method Attribute allowed(bool $allowed = true)
  * @method Attribute resolve(string|callable|Closure $classOrCallback)
  * @method Attribute resolveSave(string|callable|Closure $classOrCallback)
  * @method Attribute resolveParam(string $key, $value)
