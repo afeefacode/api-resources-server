@@ -7,6 +7,7 @@ use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\NotACallbackException;
 use Afeefa\ApiResources\Exception\Exceptions\NotATypeException;
+use Afeefa\ApiResources\Field\Attribute;
 use Afeefa\ApiResources\Filter\Filter;
 use Afeefa\ApiResources\Filter\FilterBag;
 use Afeefa\ApiResources\Type\TypeMeta;
@@ -19,8 +20,6 @@ class Action extends BagEntry
     protected ActionParams $params;
 
     protected ActionInput $input;
-
-    protected FilterBag $scopes;
 
     protected FilterBag $filters;
 
@@ -50,6 +49,16 @@ class Action extends BagEntry
             $this->params = $params;
         });
         return $this;
+    }
+
+    public function hasParam(string $name): bool
+    {
+        return $this->params->has($name);
+    }
+
+    public function getParam(string $name): Attribute
+    {
+        return $this->params->get($name);
     }
 
     public function input($TypeClassOrMeta, Closure $callback = null): Action
@@ -106,24 +115,6 @@ class Action extends BagEntry
     public function getFilter(string $name): Filter
     {
         return $this->filters->get($name);
-    }
-
-    public function scopes(Closure $callback): Action
-    {
-        $this->container->create($callback, function (FilterBag $scopes) {
-            $this->scopes = $scopes;
-        });
-        return $this;
-    }
-
-    public function hasScope(string $name): bool
-    {
-        return $this->scopes->has($name);
-    }
-
-    public function getScope(string $name): Filter
-    {
-        return $this->scopes->get($name);
     }
 
     public function response($TypeClassOrClassesOrMeta, Closure $callback = null): Action
@@ -220,10 +211,6 @@ class Action extends BagEntry
 
         if (isset($this->input)) {
             $json['input'] = $this->input->toSchemaJson();
-        }
-
-        if (isset($this->scopes)) {
-            $json['scopes'] = $this->scopes->toSchemaJson();
         }
 
         if (isset($this->filters)) {

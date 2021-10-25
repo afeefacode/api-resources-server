@@ -19,7 +19,7 @@ class ModelResolver
     protected string $ModelClass;
     protected string $relationName;
 
-    protected Closure $scopeFunction;
+    protected Closure $paramFunction;
     protected Closure $filterFunction;
     protected Closure $searchFunction;
     protected Closure $orderFunction;
@@ -37,9 +37,9 @@ class ModelResolver
         return $this;
     }
 
-    public function scope(Closure $scopeFunction): ModelResolver
+    public function param(Closure $paramFunction): ModelResolver
     {
-        $this->scopeFunction = $scopeFunction;
+        $this->paramFunction = $paramFunction;
         return $this;
     }
 
@@ -67,8 +67,8 @@ class ModelResolver
             ->load(function (ResolveContext $c) use ($r) {
                 $request = $r->getRequest();
                 $action = $r->getAction();
+                $params = $request->getParams();
                 $filters = $request->getFilters();
-                $scopes = $request->getScopes();
 
                 $table = (new $this->ModelClass())->getTable();
                 $selectFields = array_map(function ($field) use ($table) {
@@ -79,15 +79,15 @@ class ModelResolver
 
                 $query = $this->ModelClass::query();
 
-                // scopes
+                // params
 
-                foreach ($scopes as $name => $value) {
-                    if ($action->hasScope($name)) {
-                        ($this->scopeFunction)($name, $value, $query);
+                foreach ($params as $name => $value) {
+                    if ($action->hasParam($name)) {
+                        ($this->paramFunction)($name, $value, $query);
                     }
                 }
 
-                $countScope = $countFilters = $countSearch = $query->count();
+                $countAll = $countFilters = $countSearch = $query->count();
 
                 // filters
 
@@ -181,7 +181,7 @@ class ModelResolver
                 $models = $query->get()->all();
 
                 $c->meta([
-                    'count_scope' => $countScope,
+                    'count_all' => $countAll,
                     'count_filter' => $countFilters,
                     'count_search' => $countSearch,
                     'used_filters' => $usedFilters

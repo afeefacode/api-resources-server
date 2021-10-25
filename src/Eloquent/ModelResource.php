@@ -33,7 +33,7 @@ class ModelResource extends Resource
         parent::created();
     }
 
-    protected function scopes(FilterBag $filters): void
+    protected function params(ActionParams $params): void
     {
     }
 
@@ -58,7 +58,7 @@ class ModelResource extends Resource
         $filters->add('page', PageFilter::class);
     }
 
-    protected function scope(string $name, string $value, Builder $query): void
+    protected function param(string $name, string $value, Builder $query): void
     {
         $query->where($name, $value);
     }
@@ -91,8 +91,8 @@ class ModelResource extends Resource
             ->filter(function (string $name, string $value, Builder $query) {
                 $this->filter($name, $value, $query);
             })
-            ->scope(function (string $name, string $value, Builder $query) {
-                $this->scope($name, $value, $query);
+            ->param(function (string $name, string $value, Builder $query) {
+                $this->param($name, $value, $query);
             });
     }
 
@@ -100,8 +100,8 @@ class ModelResource extends Resource
     {
         $actions->add('list', function (Action $action) {
             $action
-                ->scopes(function (FilterBag $scopes) {
-                    $this->scopes($scopes);
+                ->params(function (ActionParams $params) {
+                    $this->params($params);
                 })
 
                 ->filters(function (FilterBag $filters) {

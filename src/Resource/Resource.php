@@ -33,12 +33,6 @@ class Resource extends BagEntry
         return $this->actions->get($name);
     }
 
-    // public function removeAction(string $name): Resource
-    // {
-    //     $this->actions->remove($name);
-    //     return $this;
-    // }
-
     public function toSchemaJson(): array
     {
         return $this->actions->toSchemaJson();
