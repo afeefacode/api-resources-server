@@ -12,7 +12,7 @@ class TypeBuilder
     public Type $type;
 
     public function type(
-        string $typeName,
+        ?string $typeName = null,
         ?Closure $fieldsCallback = null,
         ?Closure $updateFieldsCallback = null,
         ?Closure $createFieldsCallback = null
@@ -20,18 +20,26 @@ class TypeBuilder
         // creating unique anonymous class is difficult
         // https://stackoverflow.com/questions/40833199/static-properties-in-php7-anonymous-classes
         // https://www.php.net/language.oop5.anonymous#121839
-        $code = file_get_contents(Path::join(__DIR__, 'uniquetypeclass.php'));
+        $code = file_get_contents(Path::join(__DIR__, 'class-templates', 'type.php'));
         $code = preg_replace("/<\?php/", '', $code);
+
+        if ($typeName) {
+            $code = preg_replace('/Test.Type/', $typeName, $code);
+        } else {
+            // remove type information for no type given tests
+            $code = preg_replace('/protected static string \$type.+/', '', $code);
+        }
 
         /** @var TestType */
         $type = eval($code); // eval is not always evil
 
-        $type::$type = $typeName;
         $type::$fieldsCallback = $fieldsCallback;
         $type::$updateFieldsCallback = $updateFieldsCallback;
         $type::$createFieldsCallback = $createFieldsCallback;
 
-        TypeRegistry::register($type);
+        if ($typeName) { // do not register in missing type test
+            TypeRegistry::register($type);
+        }
 
         $this->type = $type;
 

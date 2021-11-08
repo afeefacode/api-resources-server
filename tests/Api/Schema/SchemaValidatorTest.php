@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Tests\Api;
 
+use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
 use Afeefa\ApiResources\Field\FieldBag;
 
 use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
@@ -51,8 +52,6 @@ class SchemaValidatorTest extends TestCase
 
         $schema = $api->toSchemaJson();
 
-        // debug_dump($schema);
-
         $expectedTypesSchema = [
             'Test.Type' => [
                 'translations' => [],
@@ -87,5 +86,17 @@ class SchemaValidatorTest extends TestCase
         ];
 
         $this->assertEquals($expectedValidatorsSchema, $schema['validators']);
+    }
+
+    public function test_get_type_with_missing_type()
+    {
+        $this->expectException(MissingTypeException::class);
+        $this->expectExceptionMessageMatches('/^Missing type for class Afeefa\\\ApiResources\\\Test\\\TestValidator@anonymous/');
+
+        $validator = (new ValidatorBuilder())
+            ->validator()
+            ->get();
+
+        $validator->type();
     }
 }

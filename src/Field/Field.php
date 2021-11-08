@@ -9,16 +9,15 @@ use Afeefa\ApiResources\Api\TypeRegistry;
 use Afeefa\ApiResources\Bag\BagEntry;
 use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
-use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
 use Afeefa\ApiResources\Exception\Exceptions\NotACallbackException;
+use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
 use Afeefa\ApiResources\Validator\Validator;
 use Closure;
 
 class Field extends BagEntry
 {
     use ToSchemaJsonTrait;
-
-    public static string $type;
+    use HasStaticTypeTrait;
 
     protected string $name;
 
@@ -46,9 +45,6 @@ class Field extends BagEntry
 
     public function created(): void
     {
-        if (!static::$type) {
-            throw new MissingTypeException('Missing type for field of class ' . static::class . '.');
-        };
     }
 
     public function name(string $name): Field
@@ -243,7 +239,7 @@ class Field extends BagEntry
     public function getSchemaJson(TypeRegistry $typeRegistry): array
     {
         $json = [
-            'type' => static::$type
+            'type' => $this::type()
         ];
 
         if ($this->required) {

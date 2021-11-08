@@ -7,7 +7,7 @@ use Afeefa\ApiResources\Validator\Validator;
 
 class LinkOneValidator extends Validator
 {
-    public static string $type = 'Afeefa.LinkOneValidator';
+    protected static string $type = 'Afeefa.LinkOneValidator';
 
     public function filled(): LinkOneValidator
     {

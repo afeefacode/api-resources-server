@@ -9,28 +9,30 @@ use Afeefa\ApiResources\Field\Attribute;
 use Afeefa\ApiResources\Field\Field;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Relation;
+use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
 
 class Type implements ToSchemaJsonInterface, ContainerAwareInterface
 {
+    use HasStaticTypeTrait;
     use ContainerAwareTrait;
-
-    public static string $type = 'Afeefa.Type';
 
     protected FieldBag $fields;
 
-    public static function list(string $TypeClass): TypeMeta
+    public static function list($TypeClassOrClasses): TypeMeta
     {
-        return (new TypeMeta())->typeClass($TypeClass)->list();
+        $meta = new TypeMeta();
+        $meta->typeClassOrClasses($TypeClassOrClasses);
+        return $meta->list();
     }
 
     public static function create(string $TypeClass): TypeMeta
     {
-        return (new TypeMeta())->typeClass($TypeClass)->create();
+        return (new TypeMeta())->typeClassOrClasses($TypeClass)->create();
     }
 
     public static function update(string $TypeClass): TypeMeta
     {
-        return (new TypeMeta())->typeClass($TypeClass)->update();
+        return (new TypeMeta())->typeClassOrClasses($TypeClass)->update();
     }
 
     public function created(): void

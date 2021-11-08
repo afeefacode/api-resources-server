@@ -12,8 +12,8 @@ class ValidatorBuilderTest extends TestCase
         $validator = (new ValidatorBuilder())->Validator('Validator')->get();
         $validator2 = (new ValidatorBuilder())->Validator('Validator2')->get();
 
-        $this->assertEquals('Validator', $validator::$type);
-        $this->assertEquals('Validator2', $validator2::$type);
+        $this->assertEquals('Validator', $validator::type());
+        $this->assertEquals('Validator2', $validator2::type());
     }
 
     public function test_creates_different_validators2()

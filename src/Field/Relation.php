@@ -98,7 +98,7 @@ class Relation extends Field
 
         $typeRegistry->registerType($this->RelatedTypeClass);
 
-        $json['related_type'] = $this->RelatedTypeClass::$type;
+        $json['related_type'] = $this->RelatedTypeClass::type();
 
         return $json;
     }

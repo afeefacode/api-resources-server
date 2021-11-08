@@ -5,12 +5,12 @@ namespace Afeefa\ApiResources\Filter;
 use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Bag\BagEntry;
-use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
+use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
 use Closure;
 
 class Filter extends BagEntry
 {
-    public static string $type;
+    use HasStaticTypeTrait;
 
     protected string $name;
 
@@ -20,14 +20,12 @@ class Filter extends BagEntry
 
     protected $default;
 
+    protected bool $nullIsOption = false;
+
     protected bool $defaultValueSet = false;
 
     public function created(): void
     {
-        if (!static::$type) {
-            throw new MissingTypeException('Missing type for filter of class ' . static::class . '.');
-        };
-
         $this->setup();
     }
 
@@ -43,10 +41,26 @@ class Filter extends BagEntry
         return $this;
     }
 
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function nullIsOption(bool $nullIsOption = true): Filter
+    {
+        $this->nullIsOption = $nullIsOption;
+        return $this;
+    }
+
+    public function hasNullAsOption(): bool
+    {
+        return $this->nullIsOption || $this->hasOption(null);
+    }
+
     public function default($default): Filter
     {
         $this->default = $default;
-        $this->defaultValueSet = true;
+        $this->defaultValueSet = $default !== null;
         return $this;
     }
 
@@ -66,15 +80,20 @@ class Filter extends BagEntry
         return $this;
     }
 
+    public function hasOption($option): bool
+    {
+        return isset($this->options) && in_array($option, $this->options, true);
+    }
+
     public function getOptions(): array
     {
-        return $this->options;
+        return $this->options ?? [];
     }
 
     public function toSchemaJson(): array
     {
         $json = [
-            'type' => static::$type
+            'type' => $this::type()
         ];
 
         if ($this->defaultValueSet) {
@@ -83,15 +102,17 @@ class Filter extends BagEntry
 
         if (isset($this->options)) {
             $json['options'] = $this->options;
-        }
-
-        if (isset($this->optionsRequestCallback)) {
+        } elseif (isset($this->optionsRequestCallback)) {
             $api = $this->container->get(Api::class);
             $request = $this->container->create(function (ApiRequest $request) use ($api) {
                 $request->api($api);
                 ($this->optionsRequestCallback)($request);
             });
             $json['options_request'] = $request->toSchemaJson();
+        }
+
+        if ($this->hasNullAsOption()) {
+            $json['null_is_option'] = true;
         }
 
         return $json;

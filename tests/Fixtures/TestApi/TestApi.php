@@ -7,7 +7,7 @@ use Afeefa\ApiResources\Resource\ResourceBag;
 
 class TestApi extends Api
 {
-    public static string $type = 'TestApi';
+    protected static string $type = 'TestApi';
 
     protected function resources(ResourceBag $resources): void
     {

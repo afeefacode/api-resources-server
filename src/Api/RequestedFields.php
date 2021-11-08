@@ -78,7 +78,7 @@ class RequestedFields implements ContainerAwareInterface, JsonSerializable
         $fieldNames = [];
         foreach ($this->fields as $fieldName => $nested) {
             if (preg_match('/^\@(.+)/', $fieldName, $matches)) {
-                if ($type::$type === $matches[1]) {
+                if ($type::type() === $matches[1]) {
                     $fieldNames = array_merge($fieldNames, $nested->getFieldNames());
                 }
             } else {

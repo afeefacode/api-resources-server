@@ -12,19 +12,25 @@ class ResourceBuilder
     public Resource $resource;
 
     public function resource(
-        string $type,
+        ?string $type = null,
         ?Closure $actionsCallback = null
     ): ResourceBuilder {
         // creating unique anonymous class is difficult
         // https://stackoverflow.com/questions/40833199/static-properties-in-php7-anonymous-classes
         // https://www.php.net/language.oop5.anonymous#121839
-        $code = file_get_contents(Path::join(__DIR__, 'uniqueresourceclass.php'));
+        $code = file_get_contents(Path::join(__DIR__, 'class-templates', 'resource.php'));
         $code = preg_replace("/<\?php/", '', $code);
+
+        if ($type) {
+            $code = preg_replace('/Test.Resource/', $type, $code);
+        } else {
+            // remove type information for no type given tests
+            $code = preg_replace('/protected static string \$type.+/', '', $code);
+        }
 
         /** @var TestResource */
         $resource = eval($code); // eval is not always evil
 
-        $resource::$type = $type;
         $resource::$actionsCallback = $actionsCallback;
 
         $this->resource = $resource;

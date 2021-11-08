@@ -21,7 +21,7 @@ class ResourceBag extends Bag
             $ResourceClass = getCallbackArgumentType($callback);
         }
 
-        $this->setDefinition($ResourceClass::$type, $classOrCallback);
+        $this->setDefinition($ResourceClass::type(), $classOrCallback);
         return $this;
     }
 }

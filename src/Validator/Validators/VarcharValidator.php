@@ -9,9 +9,14 @@ class VarcharValidator extends Validator
 {
     public static string $type = 'Afeefa.VarcharValidator';
 
-    public function filled(): VarcharValidator
+    public function filled(bool $filled = true): VarcharValidator
     {
-        return $this->param('filled', true);
+        return $this->param('filled', $filled);
+    }
+
+    public function null(bool $null = true): VarcharValidator
+    {
+        return $this->param('null', $null);
     }
 
     public function min(int $min): VarcharValidator
@@ -31,9 +36,31 @@ class VarcharValidator extends Validator
 
     protected function rules(RuleBag $rules): void
     {
+        $rules->add('string')
+            ->default(true)
+            ->message('{{ fieldLabel }} sollte eine Zeichenkette sein.')
+            ->validate(function ($value) {
+                if (is_null($value)) { // validate null in null-rule
+                    return true;
+                }
+                if (!is_string($value)) {
+                    return false;
+                }
+                return true;
+            });
+
+        $rules->add('null')
+            ->message('{{ fieldLabel }} sollte eine Zeichenkette sein.')
+            ->validate(function ($value, $null) {
+                if (!$null && is_null($value)) {
+                    return false;
+                }
+                return true;
+            });
+
         $rules->add('filled')
             ->message('{{ fieldLabel }} sollte einen Wert enthalten.')
-            ->validate(function (?string $value, bool $filled) {
+            ->validate(function ($value, $filled) {
                 if ($filled && !$value) {
                     return false;
                 }
@@ -42,7 +69,7 @@ class VarcharValidator extends Validator
 
         $rules->add('min')
             ->message('{{ fieldLabel }} sollte mindestens {{ param }} Zeichen beinhalten.')
-            ->validate(function (?string $value, bool $filled, ?int $min) {
+            ->validate(function ($value, $filled, $min) {
                 if ($min === null) {
                     return true;
                 }
@@ -57,7 +84,7 @@ class VarcharValidator extends Validator
 
         $rules->add('max')
             ->message('{{ fieldLabel }} sollte maximal {{ param }} Zeichen beinhalten.')
-            ->validate(function (?string $value, ?int $max) {
+            ->validate(function ($value, $max) {
                 if ($max === null) {
                     return true;
                 }
@@ -69,7 +96,7 @@ class VarcharValidator extends Validator
 
         $rules->add('regex')
             ->message('{{ fieldLabel }} sollte ein gültiger Wert sein.')
-            ->validate(function (?string $value, ?string $regex) {
+            ->validate(function ($value, $regex) {
                 if ($regex === null) {
                     return true;
                 }

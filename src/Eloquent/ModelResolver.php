@@ -100,12 +100,24 @@ class ModelResolver
 
                 $filterUsed = false;
 
-                foreach ($filters as $name => $value) {
-                    if ($action->hasFilter($name)) {
-                        $actionFilter = $action->getFilter($name);
-                        if (!in_array(get_class($actionFilter), $coreFilters)) {
+                $actionFilters = $action->getFilters()->getEntries();
+                foreach ($actionFilters as $name => $filter) {
+                    if (!in_array(get_class($filter), $coreFilters)) {
+                        $useFilter = false;
+                        $value = null;
+
+                        if (array_key_exists($name, $filters)) { // filter is given
+                            $value = $filters[$name];
+                            $useFilter = true;
+                        } elseif ($filter->hasDefaultValue()) { // filter not given but has default
+                            $value = $filter->getDefaultValue();
+                            $useFilter = true;
+                        }
+
+                        if ($useFilter) {
                             ($this->filterFunction)($name, $value, $query);
                             $filterUsed = true;
+                            $usedFilters[$name] = $value;
                         }
                     }
                 }
@@ -247,7 +259,7 @@ class ModelResolver
 
             ->forward(function (ApiRequest $apiRequest) {
                 $apiRequest
-                    ->resourceType($apiRequest->getResource()->getType())
+                    ->resourceType($apiRequest->getResource()::type())
                     ->actionName('get');
             });
     }
@@ -272,7 +284,7 @@ class ModelResolver
 
             ->forward(function (ApiRequest $apiRequest, Model $model) {
                 $apiRequest
-                    ->resourceType($apiRequest->getResource()->getType())
+                    ->resourceType($apiRequest->getResource()::type())
                     ->actionName('get')
                     ->params(['id' => $model->id]);
             });

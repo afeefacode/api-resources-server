@@ -166,7 +166,7 @@ class ResolveContext implements ContainerAwareInterface
 
             if (preg_match('/^\@(.+)/', $fieldName, $matches)) {
                 $onTypeName = $matches[1];
-                if ($type::$type === $onTypeName) {
+                if ($type::type() === $onTypeName) {
                     $selectFields = array_unique(
                         array_merge(
                             $selectFields,
@@ -260,7 +260,7 @@ class ResolveContext implements ContainerAwareInterface
                     );
 
                     if (!$relationResolver) {
-                        throw new InvalidConfigurationException("Resolve callback for relation {$fieldName} on type {$type::$type} must receive a RelationResolver as argument.");
+                        throw new InvalidConfigurationException("Resolve callback for relation {$fieldName} on type {$type::type()} must receive a RelationResolver as argument.");
                     }
 
                     $relationResolver->ownerType($type);
@@ -268,7 +268,7 @@ class ResolveContext implements ContainerAwareInterface
                     $relationResolver->requestedFields($requestedFields->getNestedField($fieldName));
                     $relationResolvers[$fieldName] = $relationResolver;
                 } else {
-                    throw new InvalidConfigurationException("Relation {$fieldName} on type {$type::$type} does not have a relation resolver.");
+                    throw new InvalidConfigurationException("Relation {$fieldName} on type {$type::type()} does not have a relation resolver.");
                 }
             }
         }
@@ -313,7 +313,7 @@ class ResolveContext implements ContainerAwareInterface
                     );
 
                     if (!$saveRelationResolver) {
-                        throw new InvalidConfigurationException("Resolve callback for save relation {$fieldName} on type {$type::$type} must receive a SaveRelationResolver as argument.");
+                        throw new InvalidConfigurationException("Resolve callback for save relation {$fieldName} on type {$type::type()} must receive a SaveRelationResolver as argument.");
                     }
 
                     $saveRelationResolver->ownerType($type);
@@ -321,7 +321,7 @@ class ResolveContext implements ContainerAwareInterface
                     $saveRelationResolver->fieldsToSave($fieldsToSave->getNestedField($fieldName));
                     $saveRelationResolvers[$fieldName] = $saveRelationResolver;
                 } else {
-                    throw new InvalidConfigurationException("Relation {$fieldName} on type {$type::$type} does not have a save relation resolver.");
+                    throw new InvalidConfigurationException("Relation {$fieldName} on type {$type::type()} does not have a save relation resolver.");
                 }
             }
         }
@@ -364,7 +364,7 @@ class ResolveContext implements ContainerAwareInterface
                     );
 
                     if (!$attributeResolver) {
-                        throw new InvalidConfigurationException("Resolve callback for attribute {$fieldName} on type {$type::$type} must receive a AttributeResolver as argument.");
+                        throw new InvalidConfigurationException("Resolve callback for attribute {$fieldName} on type {$type::type()} must receive a AttributeResolver as argument.");
                     }
 
                     // $attributeResolver->ownerType($type);

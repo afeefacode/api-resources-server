@@ -3,13 +3,14 @@
 namespace Afeefa\ApiResources\Validator;
 
 use Afeefa\ApiResources\Api\ToSchemaJsonInterface;
-use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
+use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
 use Afeefa\ApiResources\Validator\Rule\RuleBag;
 use ArrayObject;
+use ReflectionFunction;
 
 class Validator implements ToSchemaJsonInterface
 {
-    public static string $type;
+    use HasStaticTypeTrait;
 
     public array $params = [];
 
@@ -17,10 +18,6 @@ class Validator implements ToSchemaJsonInterface
 
     public function __construct()
     {
-        if (!static::$type) {
-            throw new MissingTypeException('Missing type for validator of class ' . static::class . '.');
-        };
-
         $this->rules = new RuleBag();
         $this->rules($this->rules);
     }
@@ -34,10 +31,36 @@ class Validator implements ToSchemaJsonInterface
         return $validator;
     }
 
+    public function validate($value): bool
+    {
+        foreach ($this->rules->getEntries() as $rule) {
+            $validate = $rule->getValidate();
+            $f = new ReflectionFunction($validate);
+            $fParams = array_slice($f->getParameters(), 1); // remove '$value' from arg list
+
+            $args = array_map(function ($param) use ($rule) {
+                return $this->getParam($param->name, $rule->getDefaultParam());
+            }, $fParams);
+
+            $result = $validate($value, ...$args);
+
+            if (!$result) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     protected function param($name, $value): Validator
     {
         $this->params[$name] = $value;
         return $this;
+    }
+
+    protected function getParam(string $name, $default = null)
+    {
+        return $this->params[$name] ?? $default;
     }
 
     protected function rules(RuleBag $rules): void
@@ -47,7 +70,7 @@ class Validator implements ToSchemaJsonInterface
     public function toSchemaJson(): array
     {
         return [
-            'type' => static::$type,
+            'type' => $this::type(),
             'params' => $this->params,
             'rules' => $this->rules->toSchemaJson(),
         ];

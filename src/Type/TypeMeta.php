@@ -4,14 +4,16 @@ namespace Afeefa\ApiResources\Type;
 
 class TypeMeta
 {
-    public string $TypeClass;
+    public $TypeClassOrClasses = [];
+    public bool $mixed = false;
     public bool $list = false;
     public bool $create = false;
     public bool $update = false;
 
-    public function typeClass(string $TypeClass): TypeMeta
+    public function typeClassOrClasses($TypeClassOrClasses): TypeMeta
     {
-        $this->TypeClass = $TypeClass;
+        $this->TypeClassOrClasses = $TypeClassOrClasses;
+        $this->mixed = is_array($TypeClassOrClasses);
         return $this;
     }
 

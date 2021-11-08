@@ -58,12 +58,12 @@ class ModelResource extends Resource
         $filters->add('page', PageFilter::class);
     }
 
-    protected function param(string $name, string $value, Builder $query): void
+    protected function param(string $name, $value, Builder $query): void
     {
         $query->where($name, $value);
     }
 
-    protected function filter(string $name, string $value, Builder $query): void
+    protected function filter(string $name, $value, Builder $query): void
     {
         $query->where($name, $value);
     }
@@ -88,10 +88,10 @@ class ModelResource extends Resource
             ->order(function (string $field, string $direction, Builder $query) {
                 $this->order($field, $direction, $query);
             })
-            ->filter(function (string $name, string $value, Builder $query) {
+            ->filter(function (string $name, $value, Builder $query) {
                 $this->filter($name, $value, $query);
             })
-            ->param(function (string $name, string $value, Builder $query) {
+            ->param(function (string $name, $value, Builder $query) {
                 $this->param($name, $value, $query);
             });
     }

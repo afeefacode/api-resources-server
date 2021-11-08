@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Filter\Filter;
 
 class OrderFilter extends Filter
 {
-    public static string $type = 'Afeefa.OrderFilter';
+    protected static string $type = 'Afeefa.OrderFilter';
 
     public const DESC = 'desc';
 

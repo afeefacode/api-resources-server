@@ -6,17 +6,21 @@ use Afeefa\ApiResources\Filter\Filter;
 
 class PageSizeFilter extends Filter
 {
-    public static string $type = 'Afeefa.PageSizeFilter';
+    protected static string $type = 'Afeefa.PageSizeFilter';
 
     public function pageSizes(array $pageSizes): PageSizeFilter
     {
-        return parent::options($pageSizes);
+        return $this->options($pageSizes);
     }
 
-    public function hasPageSize(int $pageSize = null): bool
+    public function getPageSizes(): array
     {
-        $options = parent::getOptions();
-        return in_array($pageSize, $options);
+        return $this->getOptions();
+    }
+
+    public function hasPageSize(?int $pageSize): bool
+    {
+        return $this->hasOption($pageSize);
     }
 
     protected function setup(): void

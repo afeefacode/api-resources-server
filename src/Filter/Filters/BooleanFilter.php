@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Filter\Filter;
 
 class BooleanFilter extends Filter
 {
-    public static string $type = 'Afeefa.BooleanFilter';
+    protected static string $type = 'Afeefa.BooleanFilter';
 
     public function values(array $values): BooleanFilter
     {

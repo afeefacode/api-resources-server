@@ -32,7 +32,7 @@ class TestResolver
                     $objects[] = $object;
                 }
 
-                return Model::fromList(TestType::$type, $objects);
+                return Model::fromList(TestType::type(), $objects);
             });
     }
 }

@@ -59,7 +59,7 @@ class FieldBag extends Bag
         });
 
         $this->container->get(function (TypeClassMap $typeClassMap) use ($RelatedTypeClass) {
-            $typeClassMap->add($RelatedTypeClass::$type, $RelatedTypeClass);
+            $typeClassMap->add($RelatedTypeClass::type(), $RelatedTypeClass);
         });
 
         return $this;

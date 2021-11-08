@@ -26,9 +26,9 @@ class ActionResponse implements ToSchemaJsonInterface, ContainerAwareInterface
         return $this;
     }
 
-    public function getTypeClass(): string
+    public function getTypeClass(): ?string
     {
-        return $this->TypeClass;
+        return $this->TypeClass ?? null;
     }
 
     public function typeClasses(array $TypeClasses): ActionResponse
@@ -37,10 +37,20 @@ class ActionResponse implements ToSchemaJsonInterface, ContainerAwareInterface
         return $this;
     }
 
+    public function getTypeClasses(): array
+    {
+        return $this->TypeClasses ?? [];
+    }
+
     public function list(): ActionResponse
     {
         $this->list = true;
         return $this;
+    }
+
+    public function isList(): bool
+    {
+        return $this->list;
     }
 
     public function getSchemaJson(TypeRegistry $typeRegistry): array
@@ -48,7 +58,7 @@ class ActionResponse implements ToSchemaJsonInterface, ContainerAwareInterface
         $typeRegistry->registerType($this->TypeClass);
 
         $json = [
-            'type' => $this->TypeClass::$type
+            'type' => $this->TypeClass::type()
         ];
 
         if ($this->list) {

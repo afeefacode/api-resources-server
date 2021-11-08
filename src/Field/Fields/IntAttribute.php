@@ -6,5 +6,5 @@ use Afeefa\ApiResources\Field\Attribute;
 
 class IntAttribute extends Attribute
 {
-    public static string $type = 'Afeefa.IntAttribute';
+    protected static string $type = 'Afeefa.IntAttribute';
 }

@@ -11,7 +11,7 @@ class TypeRegistryTest extends TestCase
     public function test_creates_type_once()
     {
         $type = new class () extends Type {
-            public static string $type = 'TESTTYPE';
+            protected static string $type = 'TESTTYPE';
             public static int $count = 0;
 
             public function __construct()

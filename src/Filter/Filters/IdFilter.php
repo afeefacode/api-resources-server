@@ -6,5 +6,5 @@ use Afeefa\ApiResources\Filter\Filter;
 
 class IdFilter extends Filter
 {
-    public static string $type = 'Afeefa.IdFilter';
+    protected static string $type = 'Afeefa.IdFilter';
 }

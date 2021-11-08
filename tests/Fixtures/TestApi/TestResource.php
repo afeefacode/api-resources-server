@@ -10,7 +10,7 @@ use Afeefa\ApiResources\Resource\Resource;
 
 class TestResource extends Resource
 {
-    public static string $type = 'TestResource';
+    protected static string $type = 'TestResource';
 
     protected function actions(ActionBag $actions): void
     {

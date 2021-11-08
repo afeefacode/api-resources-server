@@ -6,5 +6,5 @@ use Afeefa\ApiResources\Field\Attribute;
 
 class DateAttribute extends Attribute
 {
-    public static string $type = 'Afeefa.DateAttribute';
+    protected static string $type = 'Afeefa.DateAttribute';
 }

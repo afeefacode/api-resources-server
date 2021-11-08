@@ -15,8 +15,8 @@ class TypeRegistry
 
     public static function register(Type $type): void
     {
-        if (!isset(self::$TypeClasses[$type::$type])) {
-            self::$TypeClasses[$type::$type] = $type;
+        if (!isset(self::$TypeClasses[$type::type()])) {
+            self::$TypeClasses[$type::type()] = $type;
         }
     }
 
@@ -43,7 +43,7 @@ class TypeRegistry
     public static function dump(): void
     {
         foreach (static::$TypeClasses as $type => $TypeClass) {
-            debug_dump([$type, $TypeClass::class, $TypeClass::$type]);
+            debug_dump([$type, $TypeClass::class, $TypeClass::type()]);
         }
     }
 

@@ -5,27 +5,18 @@ namespace Afeefa\ApiResources\Resource;
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Action\ActionBag;
 use Afeefa\ApiResources\Bag\BagEntry;
-use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
+use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
 
 class Resource extends BagEntry
 {
-    public static string $type;
+    use HasStaticTypeTrait;
 
     protected ActionBag $actions;
 
     public function created(): void
     {
-        if (!static::$type) {
-            throw new MissingTypeException('Missing type for resource of class ' . static::class . '.');
-        };
-
         $this->actions = $this->container->create(ActionBag::class);
         $this->actions($this->actions);
-    }
-
-    public function getType(): string
-    {
-        return static::$type;
     }
 
     public function getAction(string $name): Action
@@ -38,7 +29,7 @@ class Resource extends BagEntry
         return $this->actions->toSchemaJson();
 
         $json = [
-            // 'type' => static::$type,
+            // 'type' => $this::type(),
             'actions' => $this->actions->toSchemaJson()
         ];
 

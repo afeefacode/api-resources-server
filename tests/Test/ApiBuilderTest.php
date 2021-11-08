@@ -12,8 +12,8 @@ class ApiBuilderTest extends TestCase
         $api = (new ApiBuilder())->api('Api')->get();
         $api2 = (new ApiBuilder())->api('Api2')->get();
 
-        $this->assertEquals('Api', $api::$type);
-        $this->assertEquals('Api2', $api2::$type);
+        $this->assertEquals('Api', $api::type());
+        $this->assertEquals('Api2', $api2::type());
     }
 
     public function test_creates_different_apis2()

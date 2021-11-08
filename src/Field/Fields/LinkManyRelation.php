@@ -6,5 +6,5 @@ use Afeefa\ApiResources\Field\Relation;
 
 class LinkManyRelation extends Relation
 {
-    public static string $type = 'Afeefa.LinkManyRelation';
+    protected static string $type = 'Afeefa.LinkManyRelation';
 }

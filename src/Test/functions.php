@@ -24,6 +24,8 @@ function createApiWithSingleType(
         $actionsCallback = function (ActionBag $actions) use ($typeName) {
             $actions->add('test_action', function (Action $action) use ($typeName) {
                 $action->response(T($typeName));
+                $action->resolve(function () {
+                });
             });
         };
     }
@@ -44,5 +46,6 @@ function createApiWithSingleResource(?Closure $actionsCallback = null): Api
                 $resources->add($resource::class);
             }
         )
+        ->useTestContainer()
         ->get();
 }

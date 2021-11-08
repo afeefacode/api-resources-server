@@ -7,7 +7,7 @@ use Afeefa\ApiResources\Validator\Validator;
 
 class SelectValidator extends Validator
 {
-    public static string $type = 'Afeefa.SelectValidator';
+    protected static string $type = 'Afeefa.SelectValidator';
 
     public function filled(): SelectValidator
     {

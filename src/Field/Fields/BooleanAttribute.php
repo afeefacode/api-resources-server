@@ -6,5 +6,5 @@ use Afeefa\ApiResources\Field\Attribute;
 
 class BooleanAttribute extends Attribute
 {
-    public static string $type = 'Afeefa.BooleanAttribute';
+    protected static string $type = 'Afeefa.BooleanAttribute';
 }

@@ -6,5 +6,5 @@ use Afeefa\ApiResources\Filter\Filter;
 
 class StringFilter extends Filter
 {
-    public static string $type = 'Afeefa.StringFilter';
+    protected static string $type = 'Afeefa.StringFilter';
 }
