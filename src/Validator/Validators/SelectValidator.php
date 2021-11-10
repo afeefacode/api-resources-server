@@ -9,9 +9,9 @@ class SelectValidator extends Validator
 {
     protected static string $type = 'Afeefa.SelectValidator';
 
-    public function filled(): SelectValidator
+    public function filled(bool $filled = true): SelectValidator
     {
-        return $this->param('filled', true);
+        return $this->param('filled', $filled);
     }
 
     protected function rules(RuleBag $rules): void

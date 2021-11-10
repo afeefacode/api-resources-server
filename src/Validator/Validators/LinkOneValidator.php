@@ -9,9 +9,9 @@ class LinkOneValidator extends Validator
 {
     protected static string $type = 'Afeefa.LinkOneValidator';
 
-    public function filled(): LinkOneValidator
+    public function filled(bool $filled = true): LinkOneValidator
     {
-        return $this->param('filled', true);
+        return $this->param('filled', $filled);
     }
 
     protected function rules(RuleBag $rules): void
