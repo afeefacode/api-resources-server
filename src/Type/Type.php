@@ -18,26 +18,39 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
 
     protected FieldBag $fields;
 
-    public static function list($TypeClassOrClasses): TypeMeta
+    public static function list($TypeClassOrClassesOrMeta): TypeMeta
     {
-        $meta = new TypeMeta();
-        $meta->typeClassOrClasses($TypeClassOrClasses);
-        return $meta->list();
+        return (new TypeMeta())
+            ->typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta)
+            ->list();
     }
 
-    public static function create(string $TypeClass): TypeMeta
+    public static function link($TypeClassOrClassesOrMeta): TypeMeta
     {
-        return (new TypeMeta())->typeClassOrClasses($TypeClass)->create();
+        return (new TypeMeta())
+            ->typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta)
+            ->link();
     }
 
-    public static function update(string $TypeClass): TypeMeta
+    public static function create(string $TypeClassOrClassesOrMeta): TypeMeta
     {
-        return (new TypeMeta())->typeClassOrClasses($TypeClass)->update();
+        return (new TypeMeta())
+            ->typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta)
+            ->create();
+    }
+
+    public static function update(string $TypeClassOrClassesOrMeta): TypeMeta
+    {
+        return (new TypeMeta())
+            ->typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta)
+            ->update();
     }
 
     public function created(): void
     {
-        $this->fields = $this->container->create(FieldBag::class);
+        $this->fields = $this->container
+            ->create(FieldBag::class)
+            ->owner($this);
         $this->fields($this->fields);
     }
 
@@ -49,6 +62,32 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
     public function getFields(): FieldBag
     {
         return $this->fields;
+    }
+
+    public function getAllRelatedTypeClasses(): array
+    {
+        $TypeClasses = [];
+
+        foreach ($this->fields->getEntries() as $field) {
+            if ($field instanceof Relation) {
+                $TypeClasses = [...$TypeClasses, ...$field->getRelatedType()->getAllTypeClasses()];
+            }
+        }
+
+        return $TypeClasses;
+    }
+
+    public function getAllValidatorClasses(): array
+    {
+        $ValidatorClasses = [];
+
+        foreach ($this->fields->getEntries() as $field) {
+            if ($ValidatorClass = $field->getValidatorClass()) {
+                $ValidatorClasses[] = $ValidatorClass;
+            }
+        }
+
+        return $ValidatorClasses;
     }
 
     public function getField(string $name): Field

@@ -3,58 +3,30 @@
 namespace Afeefa\ApiResources\Test;
 
 use Afeefa\ApiResources\Action\Action;
-use Afeefa\ApiResources\DI\Container;
+use Closure;
 
-class ActionBuilder
+class ActionBuilder extends Builder
 {
     private ?string $name = null;
-    private bool $response = false;
-    private bool $resolver = false;
+    private ?Closure $actionCallback = null;
 
-    public function action(?string $name = null): ActionBuilder
+    public function action(?string $name = null, ?Closure $actionCallback = null): ActionBuilder
     {
         $this->name = $name;
-        return $this;
-    }
-
-    public function withResponse($response = true): ActionBuilder
-    {
-        $this->response = $response;
-        return $this;
-    }
-
-    public function withResolver($resolver = true): ActionBuilder
-    {
-        $this->resolver = $resolver;
+        $this->actionCallback = $actionCallback;
         return $this;
     }
 
     public function get(): Action
     {
-        return $this->getAction(new Action());
-    }
-
-    public function createInContainer(): Action
-    {
-        $action = (new Container())->create(Action::class);
-        return $this->getAction($action);
-    }
-
-    protected function getAction(Action $action)
-    {
+        $action = $this->container->create(Action::class);
         if ($this->name) {
             $action->name($this->name);
         }
 
-        if (!$action->hasResponse() && $this->response) {
-            $action->response(T('Test.Type'));
+        if ($this->actionCallback) {
+            ($this->actionCallback)($action);
         }
-
-        if (!$action->hasResolver() && $this->resolver) {
-            $action->resolve(function () {
-            });
-        }
-
         return $action;
     }
 }

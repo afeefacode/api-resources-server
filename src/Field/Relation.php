@@ -2,11 +2,11 @@
 
 namespace Afeefa\ApiResources\Field;
 
-use Afeefa\ApiResources\Api\TypeRegistry;
-use Afeefa\ApiResources\Type\Type;
+use Afeefa\ApiResources\Type\RelatedType;
 use Closure;
 
 /**
+ * @method Relation owner($owner)
  * @method Relation name(string $name)
  * @method Relation validate(Closure $callback)
  * @method Relation validator(Validator $validator)
@@ -19,9 +19,7 @@ use Closure;
  */
 class Relation extends Field
 {
-    protected string $RelatedTypeClass;
-
-    protected bool $isSingle = false;
+    protected RelatedType $relatedType;
 
     protected bool $isUpdate = false;
 
@@ -64,41 +62,45 @@ class Relation extends Field
 
     public function isSingle(): bool
     {
-        return $this->isSingle;
+        return !$this->isList();
     }
 
-    public function relatedTypeClass(string $RelatedTypeClass): Relation
+    public function isList(): bool
     {
-        $this->RelatedTypeClass = $RelatedTypeClass;
+        return $this->relatedType->isList();
+    }
 
+    public function isLink(): bool
+    {
+        return $this->relatedType->isLink();
+    }
+
+    public function typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta): Relation
+    {
+        $this->relatedType = $this->container->create(RelatedType::class)
+            ->relationName($this->name)
+            ->initFromArgument($TypeClassOrClassesOrMeta);
         return $this;
     }
 
-    public function getRelatedTypeClass(): string
+    public function getRelatedType(): RelatedType
     {
-        return $this->RelatedTypeClass;
-    }
-
-    public function getRelatedTypeInstance(): Type
-    {
-        return $this->container->get($this->RelatedTypeClass);
+        return $this->relatedType;
     }
 
     public function clone(): Relation
     {
         /** @var Relation */
         $relation = parent::clone();
-        $relation->relatedTypeClass($this->RelatedTypeClass);
+        $relation->relatedType = $this->relatedType;
         return $relation;
     }
 
-    public function getSchemaJson(TypeRegistry $typeRegistry): array
+    public function toSchemaJson(): array
     {
-        $json = parent::getSchemaJson($typeRegistry);
+        $json = parent::toSchemaJson();
 
-        $typeRegistry->registerType($this->RelatedTypeClass);
-
-        $json['related_type'] = $this->RelatedTypeClass::type();
+        $json['related_type'] = $this->relatedType->toSchemaJson();
 
         return $json;
     }

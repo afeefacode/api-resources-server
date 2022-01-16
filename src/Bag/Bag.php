@@ -8,7 +8,6 @@ use Afeefa\ApiResources\DI\ContainerAwareInterface;
 
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\DI\DependencyResolver;
-
 use Closure;
 
 class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
@@ -37,7 +36,7 @@ class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
                 if ($createCallback) {
                     $createCallback($entry);
                 }
-                $this->set($name, $entry);
+                $this->setInternal($name, $entry);
             });
         }
 
@@ -56,13 +55,12 @@ class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
 
     public function set(string $name, BagEntryInterface $value): Bag
     {
-        $this->entries[$name] = $value;
-        return $this;
+        return $this->setInternal($name, $value);
     }
 
     public function has(string $name): bool
     {
-        return isset($this->entries[$name]) || isset($this->definitions[$name]);
+        return $this->hasInternal($name);
     }
 
     public function remove(string $name): Bag
@@ -91,7 +89,12 @@ class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
         return $this->entries;
     }
 
-    public function getSchemaJson(): array
+    public function numEntries(): int
+    {
+        return count($this->entries);
+    }
+
+    public function toSchemaJson(): array
     {
         return array_filter(array_map(function (BagEntryInterface $entry) {
             if (method_exists($this, 'getEntrySchemaJson')) {
@@ -106,5 +109,16 @@ class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
             }
             return $entry->toSchemaJson();
         }, $this->getEntries()));
+    }
+
+    public function hasInternal(string $name): bool
+    {
+        return isset($this->entries[$name]) || isset($this->definitions[$name]);
+    }
+
+    protected function setInternal(string $name, BagEntryInterface $value): Bag
+    {
+        $this->entries[$name] = $value;
+        return $this;
     }
 }

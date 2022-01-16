@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Action;
 
 use Afeefa\ApiResources\Bag\Bag;
+use Afeefa\ApiResources\Bag\BagEntryInterface;
 use Closure;
 
 /**
@@ -17,6 +18,14 @@ class ActionBag extends Bag
             $action->name($name);
         });
 
+        return $this;
+    }
+
+    /**
+     * disabled
+     */
+    public function set(string $name, BagEntryInterface $value): Bag
+    {
         return $this;
     }
 }

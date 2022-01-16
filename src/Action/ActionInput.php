@@ -3,7 +3,6 @@
 namespace Afeefa\ApiResources\Action;
 
 use Afeefa\ApiResources\Api\ToSchemaJsonInterface;
-use Afeefa\ApiResources\Api\TypeRegistry;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 
 /**
@@ -26,9 +25,9 @@ class ActionInput extends ActionResponse implements ToSchemaJsonInterface, Conta
         return $this;
     }
 
-    public function getSchemaJson(TypeRegistry $typeRegistry): array
+    public function toSchemaJson(): array
     {
-        $json = parent::getSchemaJson($typeRegistry);
+        $json = parent::toSchemaJson();
 
         if ($this->create) {
             $json['create'] = true;
@@ -39,5 +38,10 @@ class ActionInput extends ActionResponse implements ToSchemaJsonInterface, Conta
         }
 
         return $json;
+    }
+
+    protected function getNameForException(): string
+    {
+        return 'input';
     }
 }

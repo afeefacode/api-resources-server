@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Field;
 
 /**
+ * @method Attribute owner($owner)
  * @method Attribute name(string $name)
  * @method Attribute validate(Closure $callback)
  * @method Attribute validator(Validator $validator)

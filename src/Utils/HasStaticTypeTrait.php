@@ -12,7 +12,7 @@ trait HasStaticTypeTrait
     {
         if (!isset(static::$type)) {
             throw new MissingTypeException('Missing type for class ' . static::class . '.');
-        };
+        }
 
         return static::$type;
     }

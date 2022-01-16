@@ -27,6 +27,11 @@ class Api implements ContainerAwareInterface
         $this->resources($this->resources);
     }
 
+    public function getResources(): ResourceBag
+    {
+        return $this->resources;
+    }
+
     public function getResource(string $resourceType): Resource
     {
         return $this->resources->get($resourceType);
@@ -56,23 +61,26 @@ class Api implements ContainerAwareInterface
         return $request->dispatch();
     }
 
-    public function getSchemaJson(TypeRegistry $typeRegistry, TypeClassMap $typeClassMap): array
+    public function toSchemaJson(): array
     {
         $resources = $this->resources->toSchemaJson();
+        $usedTypes = $this->container->get(TypeClassMap::class)
+            ->createUsedTypesForApi($this);
+        $usedValidators = $this->createAllUsedValidators($usedTypes);
 
-        // $typeRegistry->dumpEntries();
+        // debug_dump(array_keys($usedTypes));
+        // debug_dump(array_keys($usedValidators));
+
         // debug_dump($typeClassMap);
         // $this->container->dumpEntries();
 
         $types = [];
-        foreach ($typeRegistry->getTypeClasses() as $TypeClass) {
-            $type = $this->container->get($TypeClass);
+        foreach ($usedTypes as $type) {
             $types[$type::type()] = $type->toSchemaJson();
         }
 
         $validators = [];
-        foreach ($typeRegistry->validators() as $ValidatorClass) {
-            $validator = $this->container->get($ValidatorClass);
+        foreach ($usedValidators as $validator) {
             $validators[$validator::type()] = $validator->toSchemaJson();
             unset($validators[$validator::type()]['params']);
             unset($validators[$validator::type()]['type']);
@@ -88,5 +96,24 @@ class Api implements ContainerAwareInterface
 
     protected function resources(ResourceBag $resources): void
     {
+    }
+
+    /**
+     * @param Type[] $types
+     */
+    protected function createAllUsedValidators(array $types): array
+    {
+        $validators = [];
+
+        foreach ($types as $type) {
+            $ValidatorClasses = $type->getAllValidatorClasses();
+            foreach ($ValidatorClasses as $ValidatorClass) {
+                if (!isset($validators[$ValidatorClass])) {
+                    $validators[$ValidatorClass] = $this->container->get($ValidatorClass);
+                }
+            }
+        }
+
+        return $validators;
     }
 }

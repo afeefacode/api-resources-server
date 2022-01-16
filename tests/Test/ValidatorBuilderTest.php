@@ -1,6 +1,6 @@
 <?php
 
-namespace Afeefa\ApiResources\Tests\Api;
+namespace Afeefa\ApiResources\Tests\Test;
 
 use Afeefa\ApiResources\Test\ValidatorBuilder;
 use PHPUnit\Framework\TestCase;

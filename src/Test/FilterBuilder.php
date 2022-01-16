@@ -2,12 +2,11 @@
 
 namespace Afeefa\ApiResources\Test;
 
-use Afeefa\ApiResources\DI\Container;
 use Afeefa\ApiResources\Filter\Filter;
 use Closure;
 use Webmozart\PathUtil\Path;
 
-class FilterBuilder
+class FilterBuilder extends Builder
 {
     public Filter $filter;
 
@@ -40,12 +39,7 @@ class FilterBuilder
 
     public function get(): Filter
     {
-        return $this->filter;
-    }
-
-    public function createInContainer(): Filter
-    {
-        return (new Container())->create($this->filter::class);
+        return $this->container->create($this->filter::class);
     }
 }
 
@@ -56,7 +50,7 @@ class TestFilter extends Filter
     protected function setup(): void
     {
         if (static::$setupCallback) {
-            (static::$setupCallback)->call($this);
+            (static::$setupCallback)($this);
         }
     }
 }

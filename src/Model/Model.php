@@ -28,7 +28,7 @@ class Model implements ModelInterface, JsonSerializable
             return $object;
         }
 
-        $model = new Model();
+        $model = new static();
         $model->type = $type;
         $model->setAttributes($object);
         return $model;
@@ -37,6 +37,11 @@ class Model implements ModelInterface, JsonSerializable
     public function __construct(array $attributes = [])
     {
         $this->setAttributes($attributes);
+    }
+
+    public function apiResourcesGetId(): ?string
+    {
+        return $this->id ?? null;
     }
 
     public function apiResourcesGetType(): string
@@ -75,6 +80,18 @@ class Model implements ModelInterface, JsonSerializable
             if (in_array($name, $this->visibleFields)) {
                 if ($name === 'id' || $name === 'type') {
                     continue;
+                }
+
+                if ($value instanceof JsonSerializable) {
+                    $value = $value->jsonSerialize();
+                }
+
+                if (is_array($value)) {
+                    foreach ($value as $index => $element) {
+                        if ($element instanceof JsonSerializable) {
+                            $value[$index] = $element->jsonSerialize();
+                        }
+                    }
                 }
 
                 $json[$name] = $value;

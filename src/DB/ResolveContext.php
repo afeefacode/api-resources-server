@@ -81,6 +81,10 @@ class ResolveContext implements ContainerAwareInterface
 
     public function getSelectFields(string $typeName = null): array
     {
+        if (!isset($this->attributeResolvers)) {
+            $this->createAttributeResolvers();
+        }
+
         if (!isset($this->relationResolvers)) {
             $this->createRelationResolvers();
         }
@@ -138,41 +142,49 @@ class ResolveContext implements ContainerAwareInterface
 
     protected function calculateSelectFields(Type $type, RequestedFields $requestedFields): array
     {
+        $attributeResolvers = $this->attributeResolvers;
         $relationResolvers = $this->relationResolvers;
 
-        $selectFields = ['id'];
+        $selectFields = ['id']; // TODO this might be a problem if using no 'id' tables
 
         foreach ($requestedFields->getFieldNames() as $fieldName) {
+            // select attributes
             if ($type->hasAttribute($fieldName)) {
                 $attribute = $type->getAttribute($fieldName);
-                if ($attribute->hasDependingAttributes()) {
-                    $selectFields = array_merge($selectFields, $attribute->getDependingAttributes());
-                } else {
-                    if (!$attribute->hasResolver()) { // let resolvers provide value
-                        $selectFields[] = $fieldName;
+
+                $useAttributeName = true;
+
+                if ($attribute->hasResolver()) { // if a resolver
+                    $attributeResolver = $attributeResolvers[$fieldName];
+                    $ownerIdFields = $attributeResolver->getOwnerIdFields();
+                    if (count($ownerIdFields)) {
+                        $selectFields = [...$selectFields, ...$ownerIdFields];
+                        $useAttributeName = false;
                     }
+                }
+
+                if ($useAttributeName) {
+                    $selectFields[] = $fieldName; // default is just the attribute name
                 }
             }
 
+            // select relations
             if ($type->hasRelation($fieldName)) {
                 $relationResolver = $relationResolvers[$fieldName];
-                $selectFields = array_unique(
-                    array_merge(
-                        $selectFields,
-                        $relationResolver->getOwnerIdFields()
-                    )
-                );
+                $selectFields = [
+                    ...$selectFields,
+                    ...$relationResolver->getOwnerIdFields()
+                ];
             }
 
+            // select attributes or relation on type
             if (preg_match('/^\@(.+)/', $fieldName, $matches)) {
                 $onTypeName = $matches[1];
                 if ($type::type() === $onTypeName) {
-                    $selectFields = array_unique(
-                        array_merge(
-                            $selectFields,
-                            $this->calculateSelectFields($type, $requestedFields->getNestedField($fieldName))
-                        )
-                    );
+                    $selectFields = [
+                        ...$selectFields,
+                        ...$this->calculateSelectFields($type, $requestedFields->getNestedField($fieldName))
+                    ];
                 }
             }
         }

@@ -2,23 +2,22 @@
 
 namespace Afeefa\ApiResources\Tests\Fixtures\TestApi;
 
-use Afeefa\ApiResources\DB\ActionResolver;
 use Afeefa\ApiResources\Model\Model;
+use Afeefa\ApiResources\Resolver\QueryActionResolver;
 
 class TestResolver
 {
-    public function get_types(ActionResolver $r)
+    public function get_types(QueryActionResolver $r)
     {
         $r
             ->load(function () use ($r) {
                 $request = $r->getRequest();
-                $requestedFields = $request->getFields();
+                $fieldNames = $r->getRequestedFieldNames();
                 $filters = $request->getFilters();
 
-                $pageSizeFilter = $r->getAction()->getFilter('page_size');
+                $pageSizeFilter = $request->getAction()->getFilter('page_size');
                 $pageSize = $filters['page_size'] ?? $pageSizeFilter->getDefaultValue();
 
-                $fieldNames = $requestedFields->getFieldNames();
                 $objects = [];
                 foreach (range(1, $pageSize) as $id) {
                     $object = [

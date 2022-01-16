@@ -3,13 +3,12 @@
 namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Api\ApiRequest;
-use Afeefa\ApiResources\DB\ActionResolver;
-use Afeefa\ApiResources\DB\MutationResolver;
-use Afeefa\ApiResources\DB\ResolveContext;
 use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
 use Afeefa\ApiResources\Filter\Filters\PageFilter;
 use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
+use Afeefa\ApiResources\Resolver\Mutation\MutationActionResolver;
+use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Closure;
 use Illuminate\Database\Query\Builder as EloquentBuilder;
 
@@ -61,19 +60,19 @@ class ModelResolver
         return $this;
     }
 
-    public function list(ActionResolver $r)
+    public function list(QueryActionResolver $r)
     {
         $r
-            ->load(function (ResolveContext $c) use ($r) {
+            ->load(function () use ($r) {
                 $request = $r->getRequest();
-                $action = $r->getAction();
+                $action = $request->getAction();
                 $params = $request->getParams();
                 $filters = $request->getFilters();
 
                 $table = (new $this->ModelClass())->getTable();
                 $selectFields = array_map(function ($field) use ($table) {
                     return $table . '.' . $field;
-                }, $c->getSelectFields());
+                }, $r->getSelectFields());
 
                 $usedFilters = [];
 
@@ -164,7 +163,7 @@ class ModelResolver
 
                 // counts
 
-                $relationCounts = $this->getRelationCounts($c);
+                $relationCounts = $this->getRelationCounts($r);
                 if (count($relationCounts)) {
                     $query->withCount($relationCounts);
                 }
@@ -192,7 +191,7 @@ class ModelResolver
 
                 $models = $query->get()->all();
 
-                $c->meta([
+                $r->meta([
                     'count_all' => $countAll,
                     'count_filter' => $countFilters,
                     'count_search' => $countSearch,
@@ -203,12 +202,12 @@ class ModelResolver
             });
     }
 
-    public function get(ActionResolver $r)
+    public function get(QueryActionResolver $r)
     {
         $r
-            ->load(function (ResolveContext $c) use ($r) {
+            ->load(function () use ($r) {
                 $request = $r->getRequest();
-                $selectFields = $c->getSelectFields();
+                $selectFields = $r->getSelectFields();
 
                 $relatedTable = (new $this->type::$ModelClass())->getTable();
                 $selectFields = array_map(function ($field) use ($relatedTable) {
@@ -222,7 +221,7 @@ class ModelResolver
                 // will add a '*' column by default, which we don't want.
                 $query->select($selectFields);
 
-                $relationCounts = $this->getRelationCounts($c);
+                $relationCounts = $this->getRelationCounts($r);
                 if (count($relationCounts)) {
                     $query->withCount($relationCounts);
                 }
@@ -235,10 +234,10 @@ class ModelResolver
             });
     }
 
-    public function update(MutationResolver $r)
+    public function update(MutationActionResolver $r)
     {
         $r
-            ->save(function (ResolveContext $c) use ($r) {
+            ->save(function () use ($r) {
                 $request = $r->getRequest();
 
                 $query = $this->ModelClass::query();
@@ -247,7 +246,7 @@ class ModelResolver
                     ->where('id', $request->getParam('id'))
                     ->first();
 
-                $updates = $c->getSaveFields();
+                $updates = $r->getSaveFields();
 
                 if (!empty($updates)) {
                     $model->fillable(array_keys($updates));
@@ -264,13 +263,13 @@ class ModelResolver
             });
     }
 
-    public function create(MutationResolver $r)
+    public function create(MutationActionResolver $r)
     {
         $r
-            ->save(function (ResolveContext $c) {
+            ->save(function () use ($r) {
                 $model = new $this->ModelClass();
 
-                $updates = $c->getSaveFields();
+                $updates = $r->getSaveFields();
 
                 if (!empty($updates)) {
                     $model->fillable(array_keys($updates));
@@ -290,7 +289,7 @@ class ModelResolver
             });
     }
 
-    public function delete(ActionResolver $r)
+    public function delete(QueryActionResolver $r)
     {
         $r
             ->load(function () use ($r) {
@@ -309,9 +308,9 @@ class ModelResolver
             });
     }
 
-    protected function getRelationCounts(ResolveContext $c): array
+    protected function getRelationCounts(QueryActionResolver $r): array
     {
-        $requestedFieldNames = $c->getRequestedFields()->getFieldNames();
+        $requestedFieldNames = $r->getRequestedFieldNames();
         $relationCounts = [];
         foreach ($requestedFieldNames as $fieldName) {
             if (preg_match('/^count_(.+)/', $fieldName, $matches)) {

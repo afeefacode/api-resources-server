@@ -7,6 +7,7 @@ use Afeefa\ApiResources\Action\ActionBag;
 use Afeefa\ApiResources\Filter\FilterBag;
 use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
 use Afeefa\ApiResources\Resource\Resource;
+use Afeefa\ApiResources\Type\Type;
 
 class TestResource extends Resource
 {
@@ -24,7 +25,7 @@ class TestResource extends Resource
                     });
                 })
 
-                ->response(TestType::class)
+                ->response(Type::list(TestType::class))
 
                 ->resolve([TestResolver::class, 'get_types']);
         });

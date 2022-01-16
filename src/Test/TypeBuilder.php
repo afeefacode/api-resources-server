@@ -2,12 +2,13 @@
 
 namespace Afeefa\ApiResources\Test;
 
+use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Type\Type;
 use Closure;
 use Webmozart\PathUtil\Path;
 
-class TypeBuilder
+class TypeBuilder extends Builder
 {
     public Type $type;
 
@@ -37,18 +38,18 @@ class TypeBuilder
         $type::$updateFieldsCallback = $updateFieldsCallback;
         $type::$createFieldsCallback = $createFieldsCallback;
 
-        if ($typeName) { // do not register in missing type test
-            TypeRegistry::register($type);
-        }
-
         $this->type = $type;
 
         return $this;
     }
 
-    public function get(): Type
+    public function get(bool $register = false): Type
     {
-        return $this->type;
+        $type = $this->container->get($this->type::class); // create and register single instance
+        if ($register) {
+            $this->container->get(TypeClassMap::class)->add($type::class);
+        }
+        return $type;
     }
 }
 
@@ -61,21 +62,21 @@ class TestType extends Type
     protected function fields(FieldBag $fields): void
     {
         if (static::$fieldsCallback) {
-            (static::$fieldsCallback)->call($this, $fields);
+            (static::$fieldsCallback)($fields);
         }
     }
 
     protected function updateFields(FieldBag $fields): void
     {
         if (static::$updateFieldsCallback) {
-            (static::$updateFieldsCallback)->call($this, $fields);
+            (static::$updateFieldsCallback)($fields);
         }
     }
 
     protected function createFields(FieldBag $fields): void
     {
         if (static::$createFieldsCallback) {
-            (static::$createFieldsCallback)->call($this, $fields);
+            (static::$createFieldsCallback)($fields);
         }
     }
 }

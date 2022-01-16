@@ -1,6 +1,6 @@
 <?php
 
-namespace Afeefa\ApiResources\Tests\DI;
+namespace Afeefa\ApiResources\Tests\Bag;
 
 use Afeefa\ApiResources\Bag\Bag;
 use Afeefa\ApiResources\Bag\BagEntry;
@@ -205,6 +205,22 @@ class BagTest extends TestCase
         $bag->remove('one');
 
         $this->assertFalse($bag->has('one'));
+    }
+
+    public function test_num_entries()
+    {
+        $bag = new Bag();
+
+        $entry = new TestBagEntry([
+            'value' => 'one'
+        ]);
+
+        $this->assertEquals(0, $bag->numEntries());
+
+        $bag->set('one', $entry);
+        $bag->set('two', $entry);
+
+        $this->assertEquals(2, $bag->numEntries());
     }
 }
 

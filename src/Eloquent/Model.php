@@ -25,6 +25,11 @@ class Model extends EloquentModel implements ModelInterface
         return [];
     }
 
+    public function apiResourcesGetId(): ?string
+    {
+        return $this->id ?? null;
+    }
+
     public function apiResourcesGetType(): string
     {
         return static::$type;

@@ -13,9 +13,16 @@ class AttributeResolver extends DataResolver
     protected Attribute $attribute;
 
     /**
+     * Closure or array
+     */
+    protected $ownerIdFields;
+
+    /**
      * @var ModelInterface[]
      */
     protected array $owners = [];
+
+    protected ?string $selectField = null;
 
     protected ?Closure $loadCallback = null;
 
@@ -30,6 +37,27 @@ class AttributeResolver extends DataResolver
     public function getAttribute(): Attribute
     {
         return $this->attribute;
+    }
+
+    public function select(string $fieldName): AttributeResolver
+    {
+        $this->ownerIdFields([$fieldName]);
+        return $this;
+    }
+
+    public function ownerIdFields($ownerIdFields): AttributeResolver
+    {
+        $this->ownerIdFields = $ownerIdFields;
+        return $this;
+    }
+
+    public function getOwnerIdFields(): array
+    {
+        if ($this->ownerIdFields instanceof Closure) {
+            return ($this->ownerIdFields)() ?? [$this->attribute->getName()];
+        }
+
+        return $this->ownerIdFields ?? [$this->attribute->getName()];
     }
 
     public function addOwner(ModelInterface $owner): AttributeResolver
@@ -60,18 +88,18 @@ class AttributeResolver extends DataResolver
 
     public function resolve()
     {
-        $resolveContext = $this->resolveContext();
-
         // query db
 
-        $loadCallback = $this->loadCallback;
-        if (!$loadCallback) {
+        if (!$this->loadCallback) {
+            if ($this->ownerIdFields) {
+                return; // only select fields are set up
+            }
             throw new MissingCallbackException('attribute resolve callback needs to implement a load() method.');
         }
-        $objects = $loadCallback($this->owners, $resolveContext);
+        $objects = ($this->loadCallback)($this->owners);
 
         if (!is_iterable($objects) || !is_countable($objects)) {
-            throw new InvalidConfigurationException('load() method of an attribute resolver must return an iterable+countable.');
+            throw new InvalidConfigurationException('load() method of an attribute resolver must return a collection.');
         }
 
         // map results to owners

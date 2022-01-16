@@ -3,14 +3,11 @@
 namespace Afeefa\ApiResources\Action;
 
 use Afeefa\ApiResources\Bag\BagEntry;
-use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\NotACallbackException;
-use Afeefa\ApiResources\Exception\Exceptions\NotATypeException;
 use Afeefa\ApiResources\Field\Attribute;
 use Afeefa\ApiResources\Filter\Filter;
 use Afeefa\ApiResources\Filter\FilterBag;
-use Afeefa\ApiResources\Type\TypeMeta;
 use Closure;
 
 class Action extends BagEntry
@@ -61,8 +58,8 @@ class Action extends BagEntry
 
     public function input($TypeClassOrClassesOrMeta, Closure $callback = null): Action
     {
-        $this->input = $this->container->create(ActionInput::class);
-        $this->initInputOrResponse($this->input, $TypeClassOrClassesOrMeta, $callback);
+        $this->input = $this->container->create(ActionInput::class)
+            ->initFromArgument($TypeClassOrClassesOrMeta, $callback);
         return $this;
     }
 
@@ -73,6 +70,9 @@ class Action extends BagEntry
 
     public function getInput(): ?ActionInput
     {
+        if (!isset($this->input)) {
+            throw new InvalidConfigurationException("Mutation action {$this->name} does not have an input type.");
+        }
         return $this->input ?? null;
     }
 
@@ -101,8 +101,8 @@ class Action extends BagEntry
 
     public function response($TypeClassOrClassesOrMeta, Closure $callback = null): Action
     {
-        $this->response = $this->container->create(ActionResponse::class);
-        $this->initInputOrResponse($this->response, $TypeClassOrClassesOrMeta, $callback);
+        $this->response = $this->container->create(ActionResponse::class)
+            ->initFromArgument($TypeClassOrClassesOrMeta, $callback);
         return $this;
     }
 
@@ -119,7 +119,6 @@ class Action extends BagEntry
         if (!isset($this->response)) {
             throw new InvalidConfigurationException("Action {$this->name} does not have a response type.");
         }
-
         return $this->response;
     }
 
@@ -171,10 +170,6 @@ class Action extends BagEntry
             throw new InvalidConfigurationException("Action {$this->name} does not have a resolver.");
         }
 
-        $json = [
-            // 'name' => $this->name
-        ];
-
         if (isset($this->params)) {
             $json['params'] = $this->params->toSchemaJson();
         }
@@ -190,52 +185,5 @@ class Action extends BagEntry
         $json['response'] = $this->response->toSchemaJson();
 
         return $json;
-    }
-
-    protected function initInputOrResponse(ActionResponse $inputOrResponse, $TypeClassOrClassesOrMeta, Closure $callback = null)
-    {
-        $valueFor = $inputOrResponse instanceof ActionInput ? 'input' : 'response';
-
-        if ($TypeClassOrClassesOrMeta instanceof TypeMeta) {
-            $typeMeta = $TypeClassOrClassesOrMeta;
-            $TypeClassOrClasses = $typeMeta->TypeClassOrClasses;
-
-            $inputOrResponse->list($typeMeta->list);
-
-            if ($inputOrResponse instanceof ActionInput) {
-                $inputOrResponse
-                    ->create($typeMeta->create)
-                    ->update($typeMeta->update);
-            }
-        } else {
-            $TypeClassOrClasses = $TypeClassOrClassesOrMeta;
-        }
-
-        if (is_array($TypeClassOrClasses)) {
-            foreach ($TypeClassOrClasses as $TypeClass) {
-                if (!class_exists($TypeClass)) {
-                    throw new NotATypeException("Value for {$valueFor} \$TypeClassOrClasses is not a list of types.");
-                }
-            }
-            $inputOrResponse->typeClasses($TypeClassOrClasses);
-        } elseif (is_string($TypeClassOrClasses)) {
-            if (!class_exists($TypeClassOrClasses)) {
-                throw new NotATypeException("Value for {$valueFor} \$TypeClassOrClasses is not a type.");
-            }
-            $inputOrResponse->typeClass($TypeClassOrClasses);
-        } else {
-            throw new NotATypeException("Value for {$valueFor} \$TypeClassOrClasses is not a type or a list of types.");
-        }
-
-        if ($callback) {
-            $callback($inputOrResponse);
-        }
-
-        $TypeClasses = is_array($TypeClassOrClasses) ? $TypeClassOrClasses : [$TypeClassOrClasses];
-        $this->container->get(function (TypeClassMap $typeClassMap) use ($TypeClasses) {
-            foreach ($TypeClasses as $TypeClass) {
-                $typeClassMap->add($TypeClass::type(), $TypeClass);
-            }
-        });
     }
 }

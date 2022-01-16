@@ -4,6 +4,8 @@ namespace Afeefa\ApiResources\DB;
 
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\ApiRequest;
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Model\ModelInterface;
 use Closure;
 
 class ActionResolver extends DataResolver
@@ -25,17 +27,6 @@ class ActionResolver extends DataResolver
         return $this->request;
     }
 
-    public function action(Action $action): ActionResolver
-    {
-        $this->action = $action;
-        return $this;
-    }
-
-    public function getAction(): Action
-    {
-        return $this->action;
-    }
-
     public function load(Closure $callback): ActionResolver
     {
         $this->loadCallback = $callback;
@@ -50,17 +41,47 @@ class ActionResolver extends DataResolver
             ->resolveContext()
             ->requestedFields($requestedFields);
 
+        $action = $this->request->getAction();
+
+        // if errors
+
+        $actionName = $action->getName();
+        $resourceType = $this->request->getResource()::type();
+        $mustReturn = "Load callback of action resolver for action {$actionName} on resource {$resourceType} must return";
+
         // query db
 
-        $loadCallback = $this->loadCallback;
-        $modelOrModels = $loadCallback($resolveContext);
+        if (!isset($this->loadCallback)) {
+            throw new InvalidConfigurationException("Action resolver for action {$actionName} on resource {$resourceType} must provide a load callback.");
+        }
 
-        $isList = is_array($modelOrModels);
-        $hasResult = $isList && count($modelOrModels) || $modelOrModels;
+        $modelOrModels = ($this->loadCallback)($resolveContext);
+        /** @var ModelInterface[] */
+        $models = [];
+        $hasResult = false;
+        $isList = false;
+
+        if ($action->getResponse()->isList()) {
+            if (!is_array($modelOrModels)) {
+                throw new InvalidConfigurationException("{$mustReturn} an array of ModelInterface objects.");
+            }
+            foreach ($modelOrModels as $model) {
+                if (!$model instanceof ModelInterface) {
+                    throw new InvalidConfigurationException("{$mustReturn} an array of ModelInterface objects.");
+                }
+            }
+            $models = $modelOrModels;
+            $hasResult = count($models) > 0;
+            $isList = true;
+        } else {
+            if ($modelOrModels !== null && !$modelOrModels instanceof ModelInterface) {
+                throw new InvalidConfigurationException("{$mustReturn} a ModelInterface object or null.");
+            }
+            $models = $modelOrModels ? [$modelOrModels] : [];
+            $hasResult = !!$modelOrModels;
+        }
 
         if ($hasResult) {
-            $models = $isList ? $modelOrModels : [$modelOrModels];
-
             // resolve attributes
 
             foreach ($resolveContext->getAttributeResolvers() as $attributeResolver) {

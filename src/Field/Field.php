@@ -5,7 +5,6 @@ namespace Afeefa\ApiResources\Field;
 use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Api\ToSchemaJsonTrait;
-use Afeefa\ApiResources\Api\TypeRegistry;
 use Afeefa\ApiResources\Bag\BagEntry;
 use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
@@ -19,13 +18,15 @@ class Field extends BagEntry
     use ToSchemaJsonTrait;
     use HasStaticTypeTrait;
 
+    protected $owner;
+
     protected string $name;
 
     protected ?Validator $validator = null;
 
     protected bool $required = false;
 
-    protected bool $allowed = false;
+    protected bool $allowed = true;
 
     protected Closure $optionsRequestCallback;
 
@@ -43,8 +44,15 @@ class Field extends BagEntry
      */
     protected $resolveSaveCallback = null;
 
-    public function created(): void
+    public function owner($owner): Field
     {
+        $this->owner = $owner;
+        return $this;
+    }
+
+    public function getOwner()
+    {
+        return $this->owner;
     }
 
     public function name(string $name): Field
@@ -58,20 +66,42 @@ class Field extends BagEntry
         return $this->name;
     }
 
-    public function optionsRequest(Closure $callback)
-    {
-        $this->optionsRequestCallback = $callback;
-    }
-
     public function options(array $options): Field
     {
         $this->options = $options;
         return $this;
     }
 
+    public function hasOptions(): bool
+    {
+        return count($this->options);
+    }
+
     public function getOptions(): array
     {
         return $this->options;
+    }
+
+    public function optionsRequest(Closure $callback): Field
+    {
+        $this->optionsRequestCallback = $callback;
+        return $this;
+    }
+
+    public function hasOptionsRequest(): bool
+    {
+        return isset($this->optionsRequestCallback);
+    }
+
+    public function getOptionsRequest(): ?ApiRequest
+    {
+        if (isset($this->optionsRequestCallback)) {
+            return $this->container->create(function (ApiRequest $request) {
+                $request->api($this->container->get(Api::class));
+                ($this->optionsRequestCallback)($request);
+            });
+        }
+        return null;
     }
 
     public function resolveParams(array $params): Field
@@ -99,6 +129,14 @@ class Field extends BagEntry
     public function getResolveParams(): array
     {
         return $this->resolveParams;
+    }
+
+    public function getValidatorClass(): ?string
+    {
+        if ($this->validator) {
+            return get_class($this->validator);
+        }
+        return null;
     }
 
     public function validate($validatorOrCallback): Field
@@ -151,9 +189,10 @@ class Field extends BagEntry
     /**
      * @param string|callable|Closure $classOrCallback
      */
-    public function resolve($classOrCallback): Field
+    public function resolve($classOrCallback, array $params = []): Field
     {
         $this->resolveCallback = $classOrCallback;
+        $this->resolveParams = $params;
         return $this;
     }
 
@@ -167,7 +206,7 @@ class Field extends BagEntry
         $callback = $this->resolveCallback ?? null;
 
         if (!$callback) {
-            throw new InvalidConfigurationException("Field {$this->name} does not have a get resolver.");
+            throw new InvalidConfigurationException("Field {$this->name} does not have a resolver.");
         }
 
         if (is_array($callback) && is_string($callback[0])) { // static class -> create instance
@@ -223,7 +262,8 @@ class Field extends BagEntry
         return $this->container->create(static::class, function (Field $field) {
             $field
                 ->name($this->name)
-                ->required($this->required);
+                ->required($this->required)
+                ->allowed(false);
             if ($this->validator) {
                 $field->validator = $this->validator->clone();
             }
@@ -233,10 +273,16 @@ class Field extends BagEntry
             if (isset($this->options)) {
                 $field->options = $this->options;
             }
+            if (isset($this->resolveCallback)) {
+                $field->resolveCallback = $this->resolveCallback;
+            }
+            if (isset($this->resolveSaveCallback)) {
+                $field->resolveSaveCallback = $this->resolveSaveCallback;
+            }
         });
     }
 
-    public function getSchemaJson(TypeRegistry $typeRegistry): array
+    public function toSchemaJson(): array
     {
         $json = [
             'type' => $this::type()
@@ -247,11 +293,7 @@ class Field extends BagEntry
         }
 
         if (isset($this->optionsRequestCallback)) {
-            $api = $this->container->get(Api::class);
-            $request = $this->container->create(function (ApiRequest $request) use ($api) {
-                $request->api($api);
-                ($this->optionsRequestCallback)($request);
-            });
+            $request = $this->getOptionsRequest();
             $json['options_request'] = $request->toSchemaJson();
         }
 
@@ -260,8 +302,6 @@ class Field extends BagEntry
         }
 
         if ($this->validator) {
-            $typeRegistry->registerValidator(get_class($this->validator));
-
             $json['validator'] = $this->validator->toSchemaJson();
             unset($json['validator']['rules']);
         }

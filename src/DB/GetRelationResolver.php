@@ -15,8 +15,6 @@ class GetRelationResolver extends RelationResolver
 {
     protected RequestedFields $requestedFields;
 
-    protected ?Closure $initCallback = null;
-
     protected ?Closure $loadCallback = null;
 
     protected ?Closure $mapCallback = null;
@@ -26,12 +24,6 @@ class GetRelationResolver extends RelationResolver
     public function requestedFields(RequestedFields $fields): RelationResolver
     {
         $this->requestedFields = $fields;
-        return $this;
-    }
-
-    public function init(Closure $callback): GetRelationResolver
-    {
-        $this->initCallback = $callback;
         return $this;
     }
 
@@ -60,12 +52,6 @@ class GetRelationResolver extends RelationResolver
         $resolveContext = $this
             ->resolveContext()
             ->requestedFields($requestedFields);
-
-        // init
-
-        if (isset($this->initCallback)) {
-            ($this->initCallback)();
-        }
 
         // query db
 

@@ -2,14 +2,22 @@
 
 namespace Afeefa\ApiResources\Tests\Api;
 
+use Afeefa\ApiResources\Action\Action;
+use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\DI\Container;
 use Afeefa\ApiResources\Model\Model;
+use Afeefa\ApiResources\Resolver\Mutation\MutationActionResolver;
+use Afeefa\ApiResources\Test\ApiResourcesTest;
+use function Afeefa\ApiResources\Test\T;
 use Afeefa\ApiResources\Tests\Fixtures\TestApi\TestApi;
 use Afeefa\ApiResources\Tests\Fixtures\TestApi\TestResource;
-use PHPUnit\Framework\TestCase;
+use Afeefa\ApiResources\Type\Type;
+use Afeefa\ApiResources\Validator\ValidationFailedException;
 
-class ApiRequestTest extends TestCase
+use Closure;
+
+class ApiRequestTest extends ApiResourcesTest
 {
     public function test_request()
     {
@@ -95,6 +103,84 @@ class ApiRequestTest extends TestCase
         $this->assertFields($models);
     }
 
+    /**
+     * @dataProvider wrongValueSingleDataProvider
+     */
+    public function test_mutation_wrong_value_single($value)
+    {
+        $this->expectException(ValidationFailedException::class);
+        $this->expectExceptionMessage('Data passed to the mutation action ACT on resource RES must be an array.');
+
+        $api = $this->createApiWithAction(
+            function (Action $action) {
+                $action
+                    ->input(T('TYPE'))
+                    ->response(T('TYPE'))
+                    ->resolve(function (MutationActionResolver $r) {
+                        $r->save(function () {
+                        });
+                    });
+            }
+        );
+
+        $this->requestSave(
+            $api,
+            data: $value
+        );
+    }
+
+    public function wrongValueSingleDataProvider()
+    {
+        return [
+            'string' => ['wrong'],
+            'number' => [1]
+        ];
+    }
+
+    /**
+     * @dataProvider wrongValueManyDataProvider
+     */
+    public function test_mutation_wrong_value_many($value)
+    {
+        $this->expectException(ValidationFailedException::class);
+        $this->expectExceptionMessage('Data passed to the mutation action ACT on resource RES must be an array.');
+
+        $api = $this->createApiWithAction(
+            function (Action $action) {
+                $action
+                    ->input(Type::list(T('TYPE')))
+                    ->response(T('TYPE'))
+                    ->resolve(function (MutationActionResolver $r) {
+                        $r->save(function () {
+                        });
+                    });
+            }
+        );
+
+        $this->requestSave(
+            $api,
+            data: $value
+        );
+    }
+
+    public function wrongValueManyDataProvider()
+    {
+        return [
+            'string' => ['wrong'],
+            'number' => [1],
+            'null' => [null]
+        ];
+    }
+
+    private function createApiWithAction(Closure $actionCallback): Api
+    {
+        return $this->apiBuilder()->api('API', function (Closure $addResource) use ($actionCallback) {
+            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
+                $addAction('ACT', $actionCallback);
+            });
+        })->get();
+    }
+
     private function request(?int $count = null, array $fields = null)
     {
         $container = new Container();
@@ -119,6 +205,19 @@ class ApiRequestTest extends TestCase
         });
 
         return $this->toJson($result['data']);
+    }
+
+    private function requestSave(Api $api, $data = 'unset'): array
+    {
+        return $api->request(function (ApiRequest $request) use ($data) {
+            $request
+                ->resourceType('RES')
+                ->actionName('ACT');
+
+            if ($data !== 'unset') {
+                $request->fieldsToSave($data);
+            }
+        });
     }
 
     private function assertFields(array $models, array $fieldNames = [])

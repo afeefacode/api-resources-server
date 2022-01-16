@@ -34,7 +34,7 @@ function classOrCallback($classOrCallback): array
     }
 
     if (!class_exists($classOrCallback)) {
-        throw new NotATypeOrCallbackException('Argument is not a known type: ' . $classOrCallback);
+        throw new NotATypeOrCallbackException('Argument is not a known class: ' . $classOrCallback);
     }
 
     return [$classOrCallback, null];

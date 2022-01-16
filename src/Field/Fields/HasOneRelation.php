@@ -7,6 +7,4 @@ use Afeefa\ApiResources\Field\Relation;
 class HasOneRelation extends Relation
 {
     protected static string $type = 'Afeefa.HasOneRelation';
-
-    protected bool $isSingle = true;
 }

@@ -3,6 +3,8 @@
 namespace Afeefa\ApiResources\Resource;
 
 use Afeefa\ApiResources\Bag\Bag;
+use Afeefa\ApiResources\Bag\BagEntryInterface;
+
 use function Afeefa\ApiResources\DI\classOrCallback;
 use function Afeefa\ApiResources\DI\getCallbackArgumentType;
 
@@ -22,6 +24,14 @@ class ResourceBag extends Bag
         }
 
         $this->setDefinition($ResourceClass::type(), $classOrCallback);
+        return $this;
+    }
+
+    /**
+     * disabled
+     */
+    public function set(string $name, BagEntryInterface $value): Bag
+    {
         return $this;
     }
 }

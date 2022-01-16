@@ -7,13 +7,13 @@ use Afeefa\ApiResources\Resource\Resource;
 use Closure;
 use Webmozart\PathUtil\Path;
 
-class ResourceBuilder
+class ResourceBuilder extends Builder
 {
     public Resource $resource;
 
     public function resource(
         ?string $type = null,
-        ?Closure $actionsCallback = null
+        ?Closure $addActionCallback = null
     ): ResourceBuilder {
         // creating unique anonymous class is difficult
         // https://stackoverflow.com/questions/40833199/static-properties-in-php7-anonymous-classes
@@ -31,7 +31,7 @@ class ResourceBuilder
         /** @var TestResource */
         $resource = eval($code); // eval is not always evil
 
-        $resource::$actionsCallback = $actionsCallback;
+        $resource::$addActionCallback = $addActionCallback;
 
         $this->resource = $resource;
 
@@ -40,18 +40,21 @@ class ResourceBuilder
 
     public function get(): Resource
     {
-        return $this->resource;
+        return $this->container->create($this->resource::class);
     }
 }
 
 class TestResource extends Resource
 {
-    public static ?Closure $actionsCallback;
+    public static ?Closure $addActionCallback;
 
     protected function actions(ActionBag $actions): void
     {
-        if (static::$actionsCallback) {
-            (static::$actionsCallback)->call($this, $actions);
+        if (static::$addActionCallback) {
+            $addAction = function (string $name, Closure $actionCallback) use ($actions): void {
+                $actions->add($name, $actionCallback);
+            };
+            (static::$addActionCallback)($addAction);
         }
     }
 }

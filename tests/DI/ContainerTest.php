@@ -248,7 +248,7 @@ class ContainerTest extends TestCase
     public function test_get_with_invalid_type()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a known type: InvalidType');
+        $this->expectExceptionMessage('Argument is not a known class: InvalidType');
 
         $container = new Container();
 

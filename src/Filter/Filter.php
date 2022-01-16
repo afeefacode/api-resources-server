@@ -29,12 +29,6 @@ class Filter extends BagEntry
         $this->setup();
     }
 
-    public function optionsRequest(Closure $callback): Filter
-    {
-        $this->optionsRequestCallback = $callback;
-        return $this;
-    }
-
     public function name(string $name): Filter
     {
         $this->name = $name;
@@ -90,6 +84,28 @@ class Filter extends BagEntry
         return $this->options ?? [];
     }
 
+    public function optionsRequest(Closure $callback): Filter
+    {
+        $this->optionsRequestCallback = $callback;
+        return $this;
+    }
+
+    public function hasOptionsRequest(): bool
+    {
+        return isset($this->optionsRequestCallback);
+    }
+
+    public function getOptionsRequest(): ?ApiRequest
+    {
+        if (isset($this->optionsRequestCallback)) {
+            return $this->container->create(function (ApiRequest $request) {
+                $request->api($this->container->get(Api::class)); // default api
+                ($this->optionsRequestCallback)($request);
+            });
+        }
+        return null;
+    }
+
     public function toSchemaJson(): array
     {
         $json = [
@@ -103,11 +119,7 @@ class Filter extends BagEntry
         if (isset($this->options)) {
             $json['options'] = $this->options;
         } elseif (isset($this->optionsRequestCallback)) {
-            $api = $this->container->get(Api::class);
-            $request = $this->container->create(function (ApiRequest $request) use ($api) {
-                $request->api($api);
-                ($this->optionsRequestCallback)($request);
-            });
+            $request = $this->getOptionsRequest();
             $json['options_request'] = $request->toSchemaJson();
         }
 

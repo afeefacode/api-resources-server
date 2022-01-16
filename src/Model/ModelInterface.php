@@ -4,6 +4,8 @@ namespace Afeefa\ApiResources\Model;
 
 interface ModelInterface
 {
+    public function apiResourcesGetId(): ?string;
+
     public function apiResourcesGetType(): string;
 
     public function apiResourcesSetAttribute(string $name, $value): void;

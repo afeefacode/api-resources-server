@@ -1,29 +1,23 @@
 <?php
 
-namespace Afeefa\ApiResources\Tests\Api;
+namespace Afeefa\ApiResources\Tests\Api\Schema;
 
 use Afeefa\ApiResources\Action\Action;
-use Afeefa\ApiResources\Action\ActionBag;
 use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\HasOneRelation;
 use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Test\ApiResourcesTest;
 use function Afeefa\ApiResources\Test\createApiWithSingleResource;
+
 use function Afeefa\ApiResources\Test\createApiWithSingleType;
 use function Afeefa\ApiResources\Test\T;
-use Afeefa\ApiResources\Test\TypeBuilder;
-use Afeefa\ApiResources\Test\TypeRegistry;
+use Afeefa\ApiResources\Type\Type;
 use Afeefa\ApiResources\Validator\Validators\VarcharValidator;
+use Closure;
 
-use PHPUnit\Framework\TestCase;
-
-class SchemaTypeTest extends TestCase
+class SchemaTypeTest extends ApiResourcesTest
 {
-    protected function setUp(): void
-    {
-        TypeRegistry::reset();
-    }
-
     public function test_simple()
     {
         $api = createApiWithSingleType(
@@ -52,7 +46,9 @@ class SchemaTypeTest extends TestCase
                     ],
                     'related_type' => [
                         'type' => 'Afeefa.HasOneRelation',
-                        'related_type' => 'Test.Type'
+                        'related_type' => [
+                            'type' => 'Test.Type'
+                        ]
                     ]
                 ]
             ]
@@ -167,7 +163,7 @@ class SchemaTypeTest extends TestCase
 
     public function test_type_not_in_action()
     {
-        (new TypeBuilder())->type('Test.Type');
+        $this->typeBuilder()->type('Test.Type')->get();
 
         $api = createApiWithSingleResource();
 
@@ -178,15 +174,17 @@ class SchemaTypeTest extends TestCase
 
     public function test_type_in_action_input()
     {
-        (new TypeBuilder())->type('Test.Type');
+        $this->typeBuilder()->type('Test.Type')->get();
 
-        $api = createApiWithSingleResource(
-            actionsCallback: function (ActionBag $actions) {
-                $actions->add('type', function (Action $action) {
-                    $action->input(T('Test.Type'));
-                });
-            }
-        );
+        $api = createApiWithSingleResource(function (Closure $addAction) {
+            $addAction('type', function (Action $action) {
+                $action
+                    ->input(T('Test.Type'))
+                    ->response(T('Test.Type'))
+                    ->resolve(function () {
+                    });
+            });
+        });
 
         $schema = $api->toSchemaJson();
 
@@ -195,15 +193,16 @@ class SchemaTypeTest extends TestCase
 
     public function test_type_in_action_response()
     {
-        (new TypeBuilder())->type('Test.Type');
+        $this->typeBuilder()->type('Test.Type')->get();
 
-        $api = createApiWithSingleResource(
-            actionsCallback: function (ActionBag $actions) {
-                $actions->add('type', function (Action $action) {
-                    $action->response(T('Test.Type'));
-                });
-            }
-        );
+        $api = createApiWithSingleResource(function (Closure $addAction) {
+            $addAction('type', function (Action $action) {
+                $action
+                    ->response(T('Test.Type'))
+                    ->resolve(function () {
+                    });
+            });
+        });
 
         $schema = $api->toSchemaJson();
 
@@ -212,7 +211,7 @@ class SchemaTypeTest extends TestCase
 
     public function test_type_in_relation()
     {
-        (new TypeBuilder())->type('Test.Type2');
+        $this->typeBuilder()->type('Test.Type2')->get();
 
         $api = createApiWithSingleType(
             'Test.Type',
@@ -227,31 +226,156 @@ class SchemaTypeTest extends TestCase
         $this->assertEquals(['Test.Type', 'Test.Type2'], array_keys($schema['types']));
     }
 
-    public function test_get_type_with_missing_type()
-    {
-        $this->expectException(MissingTypeException::class);
-        $this->expectExceptionMessageMatches('/^Missing type for class Afeefa\\\ApiResources\\\Test\\\TestType@anonymous/');
-
-        $type = (new TypeBuilder())->type()->get();
-
-        $type->type();
-    }
-
     public function test_add_with_missing_type()
     {
         $this->expectException(MissingTypeException::class);
         $this->expectExceptionMessageMatches('/^Missing type for class Afeefa\\\ApiResources\\\Test\\\TestType@anonymous/');
 
-        $type = (new TypeBuilder())->type()->get();
+        $type = $this->typeBuilder()->type()->get();
 
-        $api = createApiWithSingleResource(
-            actionsCallback: function (ActionBag $actions) use ($type) {
-                $actions->add('type', function (Action $action) use ($type) {
-                    $action->response($type::class);
-                });
+        $api = createApiWithSingleResource(function (Closure $addAction) use ($type) {
+            $addAction('type', function (Action $action) use ($type) {
+                $action
+                    ->response($type::class)
+                    ->resolve(function () {
+                    });
+            });
+        });
+
+        $api->toSchemaJson();
+    }
+
+    public function test_relation()
+    {
+        $this->typeBuilder()->type('Test.Type2')->get();
+
+        $api = createApiWithSingleType(
+            'Test.Type',
+            function (FieldBag $fields) {
+                $fields
+                    ->relation('other_type', T('Test.Type2'), HasOneRelation::class)
+                    ->relation('other_type2', [T('Test.Type2')], HasOneRelation::class); // single array element
             }
         );
 
-        $api->toSchemaJson();
+        $schema = $api->toSchemaJson();
+
+        $expectedTypesSchema = [
+            'Test.Type' => [
+                'translations' => [],
+                'fields' => [
+                    'other_type' => [
+                        'type' => 'Afeefa.HasOneRelation',
+                        'related_type' => [
+                            'type' => 'Test.Type2'
+                        ]
+                    ],
+                    'other_type2' => [
+                        'type' => 'Afeefa.HasOneRelation',
+                        'related_type' => [
+                            'type' => 'Test.Type2'
+                        ]
+                    ]
+                ]
+            ],
+            'Test.Type2' => [
+                'translations' => [],
+                'fields' => []
+            ]
+        ];
+
+        $this->assertEquals($expectedTypesSchema, $schema['types']);
+    }
+
+    public function test_relation_list()
+    {
+        $this->typeBuilder()->type('Test.Type2')->get();
+
+        $api = createApiWithSingleType(
+            'Test.Type',
+            function (FieldBag $fields) {
+                $fields
+                    ->relation('other_types', Type::list(T('Test.Type2')), HasOneRelation::class)
+                    ->relation('other_types2', Type::list([T('Test.Type2')]), HasOneRelation::class); // single array element
+            }
+        );
+
+        $schema = $api->toSchemaJson();
+
+        $expectedTypesSchema = [
+            'Test.Type' => [
+                'translations' => [],
+                'fields' => [
+                    'other_types' => [
+                        'type' => 'Afeefa.HasOneRelation',
+                        'related_type' => [
+                            'type' => 'Test.Type2',
+                            'list' => true
+                        ]
+                    ],
+                    'other_types2' => [
+                        'type' => 'Afeefa.HasOneRelation',
+                        'related_type' => [
+                            'type' => 'Test.Type2',
+                            'list' => true
+                        ]
+                    ]
+                ]
+            ],
+            'Test.Type2' => [
+                'translations' => [],
+                'fields' => []
+            ]
+        ];
+
+        $this->assertEquals($expectedTypesSchema, $schema['types']);
+    }
+
+    public function test_relation_mixed()
+    {
+        $this->typeBuilder()->type('Test.Type2')->get();
+        $this->typeBuilder()->type('Test.Type3')->get();
+
+        $api = createApiWithSingleType(
+            'Test.Type',
+            function (FieldBag $fields) {
+                $fields
+                    ->relation('other_type', [T('Test.Type2'), T('Test.Type3')], HasOneRelation::class)
+                    ->relation('other_types', Type::list([T('Test.Type2'), T('Test.Type3')]), HasOneRelation::class);
+            }
+        );
+
+        $schema = $api->toSchemaJson();
+
+        $expectedTypesSchema = [
+            'Test.Type' => [
+                'translations' => [],
+                'fields' => [
+                    'other_type' => [
+                        'type' => 'Afeefa.HasOneRelation',
+                        'related_type' => [
+                            'types' => ['Test.Type2', 'Test.Type3']
+                        ]
+                    ],
+                    'other_types' => [
+                        'type' => 'Afeefa.HasOneRelation',
+                        'related_type' => [
+                            'types' => ['Test.Type2', 'Test.Type3'],
+                            'list' => true
+                        ]
+                    ]
+                ]
+            ],
+            'Test.Type2' => [
+                'translations' => [],
+                'fields' => []
+            ],
+            'Test.Type3' => [
+                'translations' => [],
+                'fields' => []
+            ]
+        ];
+
+        $this->assertEquals($expectedTypesSchema, $schema['types']);
     }
 }

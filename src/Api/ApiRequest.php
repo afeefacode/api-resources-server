@@ -3,13 +3,15 @@
 namespace Afeefa\ApiResources\Api;
 
 use Afeefa\ApiResources\Action\Action;
-use Afeefa\ApiResources\DB\ActionResolver;
+use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\ApiException;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Resolver\Action\BaseActionResolver;
 use Afeefa\ApiResources\Resource\Resource;
+use Afeefa\ApiResources\Validator\ValidationFailedException;
 use JsonSerializable;
 
 class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, JsonSerializable
@@ -26,13 +28,13 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     protected array $params = [];
 
-    protected RequestedFields $fields;
+    protected array $fields = [];
 
-    protected FieldsToSave $fieldsToSave;
+    protected array $fieldsToSave = [];
 
-    public function fromInput(): ApiRequest
+    public function fromInput(?array $input = null): ApiRequest
     {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input ??= json_decode(file_get_contents('php://input'), true);
 
         $this->resourceType = $input['resource'] ?? '';
         if (!$this->resourceType) {
@@ -50,10 +52,12 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         // todo validate filters
         $this->filters = $input['filters'] ?? [];
 
-        $this->fields($input['fields'] ?? []);
+        $this->fields = $input['fields'] ?? [];
 
         // todo validate data
-        $this->fieldsToSave($input['data'] ?? []);
+        if (array_key_exists('data', $input)) {
+            $this->fieldsToSave($input['data']);
+        }
 
         return $this;
     }
@@ -68,6 +72,11 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     {
         $this->api = $api;
         return $this;
+    }
+
+    public function getApi(): Api
+    {
+        return $this->api;
     }
 
     public function actionName(string $actionName): ApiRequest
@@ -108,9 +117,9 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         return isset($this->params[$name]);
     }
 
-    public function getParam(string $name)
+    public function getParam(string $name, $default = null)
     {
-        return $this->params[$name];
+        return $this->params[$name] ?? $default;
     }
 
     public function filter(string $name, string $value): ApiRequest
@@ -134,67 +143,57 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     public function fields(array $fields): ApiRequest
     {
-        $this->fields = $this->container->create(function (RequestedFields $requestedFields) use ($fields) {
-            $TypeClass = $this->getAction()->getResponse()->getTypeClass();
-            $requestedFields
-                ->typeClass($TypeClass)
-                ->fields($fields);
-        });
-
+        $this->fields = $fields;
         return $this;
     }
 
-    public function getFields(): RequestedFields
+    public function getFields(): array
     {
         return $this->fields;
     }
 
-    public function fieldsToSave(array $fields): ApiRequest
+    public function fieldsToSave($fields): ApiRequest
     {
-        $this->fieldsToSave = $this->container->create(function (FieldsToSave $fieldsToSave) use ($fields) {
-            $TypeClass = $this->getAction()->getResponse()->getTypeClass();
-            $operation = $this->hasParam('id') ? Operation::UPDATE : Operation::CREATE;
+        // validate fields
+        $actionName = $this->getAction()->getName();
+        $resourceType = $this->getResource()::type();
+        if (!is_array($fields)) {
+            throw new ValidationFailedException("Data passed to the mutation action {$actionName} on resource {$resourceType} must be an array.");
+        }
 
-            $fieldsToSave
-                ->typeClass($TypeClass)
-                ->operation($operation)
-                ->fields($fields);
-
-            if ($operation === Operation::UPDATE) {
-                $fieldsToSave->id($this->getParam('id'));
-            }
-        });
-
+        $this->fieldsToSave = $fields;
         return $this;
     }
 
-    public function getFieldsToSave(): FieldsToSave
+    public function getFieldsToSave2(): array
     {
         return $this->fieldsToSave;
     }
 
-    public function dispatch()
+    public function dispatch(): array
     {
-        if (!isset($this->fields)) {
-            $this->fields([]);
-        }
-
         $action = $this->getAction();
+
+        // find and register all necessary types
+        $this->container->get(TypeClassMap::class)
+            ->createUsedTypesForAction($action);
+
         $resolveCallback = $action->getResolve();
 
+        /** @var BaseActionResolver */
         $actionResolver = null;
 
         $this->container->call(
             $resolveCallback,
             function (DependencyResolver $r) {
-                if ($r->isOf(ActionResolver::class)) {
+                if ($r->isOf(BaseActionResolver::class)) {
                     $r->create();
                 }
             },
             function () use (&$actionResolver) {
                 $arguments = func_get_args();
                 foreach ($arguments as $argument) {
-                    if ($argument instanceof ActionResolver) {
+                    if ($argument instanceof BaseActionResolver) {
                         $actionResolver = $argument;
                     }
                 }
@@ -202,11 +201,10 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         );
 
         if (!$actionResolver) {
-            throw new InvalidConfigurationException("Resolve callback for action {$this->actionName} on type {$this->resourceType} must receive an ActionResolver as argument.");
+            throw new InvalidConfigurationException("Resolve callback for action {$this->actionName} on resource {$this->resourceType} must receive an ActionResolver as argument.");
         }
 
         return $actionResolver
-            ->action($action)
             ->request($this)
             ->resolve();
     }
@@ -240,7 +238,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
             'params' => $this->params,
             'filters' => $this->filters,
             'fields' => $this->fields,
-            'fieldsToSave' => $this->fieldsToSave
+            'fieldsToSave' => $this->fieldsToSave ?? []
         ];
         return $json;
     }

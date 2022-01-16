@@ -3,17 +3,15 @@
 namespace Afeefa\ApiResources\Test;
 
 use Afeefa\ApiResources\Api\Api;
-use Afeefa\ApiResources\DI\Container;
 use Afeefa\ApiResources\Resource\ResourceBag;
+use Afeefa\ApiResources\Type\Type;
 use Closure;
 
 use Webmozart\PathUtil\Path;
 
-class ApiBuilder
+class ApiBuilder extends Builder
 {
-    public Container $container;
     public Api $api;
-    private $useTestContainer = false;
 
     public function api(
         ?string $type = null,
@@ -42,24 +40,9 @@ class ApiBuilder
         return $this;
     }
 
-    /**
-     * Enables ActionBag to create actions with pre-configured response and resolver.
-     */
-    public function useTestContainer(): ApiBuilder
-    {
-        $this->useTestContainer = true;
-        return $this;
-    }
-
     public function get(): Api
     {
-        if ($this->useTestContainer) {
-            $api = (new TestContainer())->create($this->api::class);
-        } else {
-            $api = (new Container())->create($this->api::class);
-        }
-
-        return $api;
+        return $this->container->get($this->api::class); // create and register single instance
     }
 }
 
@@ -70,7 +53,24 @@ class TestApi extends Api
     protected function resources(ResourceBag $resources): void
     {
         if (static::$resourcesCallback) {
-            (static::$resourcesCallback)->call($this, $resources);
+            $addResource = function (string $type = null, ?Closure $actionsCallback = null) use ($resources): void {
+                $resource = (new ResourceBuilder($this->container))
+                    ->resource($type, $actionsCallback)
+                    ->get()::class;
+                $resources->add($resource);
+            };
+
+            $addType = function (
+                string $typeName = null,
+                ?Closure $fieldsCallback = null,
+                ?Closure $updateFieldsCallback = null,
+                ?Closure $createFieldsCallback = null
+            ): Type {
+                return (new TypeBuilder($this->container))
+                    ->type($typeName, $fieldsCallback, $updateFieldsCallback, $createFieldsCallback)
+                    ->get();
+            };
+            (static::$resourcesCallback)($addResource, $addType);
         }
     }
 }

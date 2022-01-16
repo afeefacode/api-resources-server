@@ -24,11 +24,11 @@ class ModelResource extends Resource
     {
         if (!isset($this->ModelTypeClass)) {
             throw new InvalidConfigurationException('Missing model type class for model resource of class ' . static::class . '.');
-        };
+        }
 
         if (!isset($this->ModelTypeClass::$ModelClass)) {
             throw new InvalidConfigurationException('Missing model class for model type of class ' . $this->ModelTypeClass . '.');
-        };
+        }
 
         parent::created();
     }

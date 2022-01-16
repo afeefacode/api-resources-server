@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Validator\Rule;
 
 use Afeefa\ApiResources\Bag\Bag;
+use Afeefa\ApiResources\Bag\BagEntryInterface;
 
 /**
  * @method Rule get(string $name)
@@ -13,7 +14,15 @@ class RuleBag extends Bag
     public function add(string $name): Rule
     {
         $rule = new Rule();
-        $this->set($name, $rule);
+        $this->setInternal($name, $rule);
         return $rule;
+    }
+
+    /**
+     * disabled
+     */
+    public function set(string $name, BagEntryInterface $value): Bag
+    {
+        return $this;
     }
 }

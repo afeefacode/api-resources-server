@@ -18,14 +18,10 @@ class ModelType extends Type
     {
         parent::created();
 
-        $this->updateFields = $this->container->create(function (FieldBag $fieldBag) {
-            $fieldBag->original($this->fields);
-        });
+        $this->updateFields = $this->fields->clone();
         $this->updateFields($this->updateFields);
 
-        $this->createFields = $this->container->create(function (FieldBag $fieldBag) {
-            $fieldBag->original($this->updateFields);
-        });
+        $this->createFields = $this->updateFields->clone();
         $this->createFields($this->createFields);
     }
 
@@ -37,6 +33,25 @@ class ModelType extends Type
     public function getCreateFields(): FieldBag
     {
         return $this->createFields;
+    }
+
+    public function getAllValidatorClasses(): array
+    {
+        $ValidatorClasses = parent::getAllValidatorClasses();
+
+        foreach ($this->updateFields->getEntries() as $field) {
+            if ($ValidatorClass = $field->getValidatorClass()) {
+                $ValidatorClasses[] = $ValidatorClass;
+            }
+        }
+
+        foreach ($this->createFields->getEntries() as $field) {
+            if ($ValidatorClass = $field->getValidatorClass()) {
+                $ValidatorClasses[] = $ValidatorClass;
+            }
+        }
+
+        return $ValidatorClasses;
     }
 
     public function toSchemaJson(): array

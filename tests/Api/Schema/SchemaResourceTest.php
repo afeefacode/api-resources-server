@@ -1,34 +1,37 @@
 <?php
 
-namespace Afeefa\ApiResources\Tests\Api;
+namespace Afeefa\ApiResources\Tests\Api\Schema;
 
 use Afeefa\ApiResources\Action\Action;
-use Afeefa\ApiResources\Action\ActionBag;
 use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
-use Afeefa\ApiResources\Resource\ResourceBag;
 use Afeefa\ApiResources\Test\ApiBuilder;
+use Afeefa\ApiResources\Test\ApiResourcesTest;
+
 use function Afeefa\ApiResources\Test\createApiWithSingleResource;
 
 use Afeefa\ApiResources\Test\ResourceBuilder;
 use function Afeefa\ApiResources\Test\T;
 
-use PHPUnit\Framework\TestCase;
+use Closure;
 
-class SchemaResourceTest extends TestCase
+class SchemaResourceTest extends ApiResourcesTest
 {
     public function test_simple()
     {
-        $api = createApiWithSingleResource(
-            function (ActionBag $actions) {
-                $actions
-                    ->add('test_action', function (Action $action) {
-                        $action->response(T('Test.Type'));
-                    })
-                    ->add('test_action2', function (Action $action) {
-                        $action->response(T('Test.Type2'));
+        $api = createApiWithSingleResource(function (Closure $addAction) {
+            $addAction('test_action', function (Action $action) {
+                $action
+                    ->response(T('Test.Type'))
+                    ->resolve(function () {
                     });
-            }
-        );
+            });
+            $addAction('test_action2', function (Action $action) {
+                $action
+                    ->response(T('Test.Type2'))
+                    ->resolve(function () {
+                    });
+            });
+        });
 
         $schema = $api->toSchemaJson();
 
@@ -57,7 +60,7 @@ class SchemaResourceTest extends TestCase
 
         $resource = (new ResourceBuilder())->resource()->get();
 
-        $resource->type();
+        $resource::type();
     }
 
     public function test_add_with_missing_type()
@@ -65,15 +68,10 @@ class SchemaResourceTest extends TestCase
         $this->expectException(MissingTypeException::class);
         $this->expectExceptionMessageMatches('/^Missing type for class Afeefa\\\ApiResources\\\Test\\\TestResource@anonymous/');
 
-        $resource = (new ResourceBuilder())->resource()->get();
-
         (new ApiBuilder())
-            ->api(
-                'Test.Api',
-                function (ResourceBag $resources) use ($resource) {
-                    $resources->add($resource::class);
-                }
-            )
+            ->api('Test.Api', function (Closure $addResource) {
+                $addResource();
+            })
             ->get();
     }
 }

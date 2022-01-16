@@ -8,7 +8,7 @@ use Closure;
 use Exception;
 use Webmozart\PathUtil\Path;
 
-class ValidatorBuilder
+class ValidatorBuilder extends Builder
 {
     public Validator $validator;
 
@@ -34,16 +34,14 @@ class ValidatorBuilder
 
         $validator::$rulesCallback = $rulesCallback;
 
-        // create a new validator to apply rulesCallback
-        // which otherwise wouldn't be applied to the current instance
-        $this->validator = new $validator();
+        $this->validator = $validator;
 
         return $this;
     }
 
     public function get(): Validator
     {
-        return $this->validator;
+        return $this->container->create($this->validator::class);
     }
 }
 
@@ -63,7 +61,7 @@ class TestValidator extends Validator
     protected function rules(RuleBag $rules): void
     {
         if (isset(static::$rulesCallback)) {
-            (static::$rulesCallback)->call($this, $rules);
+            (static::$rulesCallback)($rules);
         }
     }
 }

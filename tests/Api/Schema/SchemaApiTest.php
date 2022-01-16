@@ -1,31 +1,23 @@
 <?php
 
-namespace Afeefa\ApiResources\Tests\Api;
+namespace Afeefa\ApiResources\Tests\Api\Schema;
 
 use Afeefa\ApiResources\Action\Action;
-use Afeefa\ApiResources\Action\ActionBag;
 use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
 use Afeefa\ApiResources\Test\ApiBuilder;
+use Afeefa\ApiResources\Test\ApiResourcesTest;
+
 use function Afeefa\ApiResources\Test\createApiWithSingleResource;
 
 use function Afeefa\ApiResources\Test\T;
-use Afeefa\ApiResources\Test\TypeBuilder;
-use Afeefa\ApiResources\Test\TypeRegistry;
 use Afeefa\ApiResources\Validator\Validators\VarcharValidator;
 use Closure;
 
-use PHPUnit\Framework\TestCase;
-
-class SchemaApiTest extends TestCase
+class SchemaApiTest extends ApiResourcesTest
 {
-    protected function setUp(): void
-    {
-        TypeRegistry::reset();
-    }
-
     public function test_simple()
     {
         $api = $this->createApiWithType(
@@ -110,7 +102,7 @@ class SchemaApiTest extends TestCase
 
         $api = (new ApiBuilder())->api()->get();
 
-        $api->type();
+        $api::type();
     }
 
     public function test_schema_with_missing_type()
@@ -126,18 +118,21 @@ class SchemaApiTest extends TestCase
     private function createApiWithType(
         string $typeName,
         ?Closure $fieldsCallback = null,
-        ?Closure $actionsCallback = null
+        ?Closure $addActionCallback = null
     ): Api {
-        (new TypeBuilder())->type($typeName, $fieldsCallback);
+        $this->typeBuilder()->type($typeName, $fieldsCallback)->get();
 
-        if (!$actionsCallback) {
-            $actionsCallback = function (ActionBag $actions) use ($typeName) {
-                $actions->add('test_action', function (Action $action) use ($typeName) {
-                    $action->response(T($typeName));
+        if (!$addActionCallback) {
+            $addActionCallback = function (Closure $addAction) use ($typeName) {
+                $addAction('test_action', function (Action $action) use ($typeName) {
+                    $action
+                        ->response(T($typeName))
+                        ->resolve(function () {
+                        });
                 });
             };
         }
 
-        return createApiWithSingleResource($actionsCallback);
+        return createApiWithSingleResource($addActionCallback);
     }
 }
