@@ -4,7 +4,6 @@ namespace Afeefa\ApiResources\Tests\Resolver;
 
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\Api;
-use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Field\FieldBag;
@@ -14,7 +13,8 @@ use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Afeefa\ApiResources\Resolver\QueryRelationResolver;
-use Afeefa\ApiResources\Test\ApiResourcesTest;
+use Afeefa\ApiResources\Test\QueryTest;
+
 use function Afeefa\ApiResources\Test\T;
 
 use Afeefa\ApiResources\Type\Type;
@@ -22,17 +22,8 @@ use Afeefa\ApiResources\Type\Type;
 use Closure;
 use stdClass;
 
-class QueryRelationResolverTest extends ApiResourcesTest
+class QueryRelationResolverTest extends QueryTest
 {
-    private TestWatcher $testWatcher;
-
-    protected function setUp(): void
-    {
-        parent::setup();
-
-        $this->testWatcher = new TestWatcher();
-    }
-
     public function test_simple()
     {
         $api = $this->createApiWithTypeAndAction(
@@ -1147,7 +1138,7 @@ class QueryRelationResolverTest extends ApiResourcesTest
         $this->assertEquals([['key' => 'value'], 'value'], $this->testWatcher->info);
     }
 
-    private function createApiWithTypeAndAction(Closure $fieldsCallback, ?Closure $actionCallback = null, bool $isList = false): Api
+    protected function createApiWithTypeAndAction(Closure $fieldsCallback, ?Closure $actionCallback = null, bool $isList = false): Api
     {
         $actionCallback ??= function (Action $action) use ($isList) {
             $response = $isList ? Type::list(T('TYPE')) : T('TYPE');
@@ -1169,25 +1160,12 @@ class QueryRelationResolverTest extends ApiResourcesTest
                 });
         };
 
-        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $actionCallback) {
-            $addType('TYPE', $fieldsCallback);
-            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
-                $addAction('ACT', $actionCallback);
-            });
-        })->get();
+        return parent::createApiWithTypeAndAction($fieldsCallback, $actionCallback);
     }
 
-    private function request(Api $api, ?array $fields = null)
+    protected function request(Api $api, ?array $fields = null, ?array $params = null, ?array $filters = null)
     {
-        $result = $api->request(function (ApiRequest $request) use ($fields) {
-            $request
-                ->resourceType('RES')
-                ->actionName('ACT');
-
-            if ($fields) {
-                $request->fields($fields);
-            }
-        });
+        $result = parent::request($api, $fields);
         return $result['data'];
     }
 

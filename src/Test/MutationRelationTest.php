@@ -8,7 +8,6 @@ use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Resolver\MutationActionModelResolver;
-use Afeefa\ApiResources\Tests\Resolver\TestModel;
 use Afeefa\ApiResources\Tests\Resolver\TestWatcher;
 use Closure;
 
@@ -41,7 +40,7 @@ class MutationRelationTest extends ApiResourcesTest
                                     return $model;
                                 })
                                 ->add(function () {
-                                    return TestModel::fromSingle('TYPE', ['id' => '111333']);
+                                    return Model::fromSingle('TYPE', ['id' => '111333']);
                                 })
                                 ->delete(fn () => null);
                         });
@@ -50,7 +49,26 @@ class MutationRelationTest extends ApiResourcesTest
         })->get();
     }
 
-    protected function request(Api $api, ?array $data = null, $params = []): array
+    protected function createApiWithTypeAndAction(Closure $fieldsCallback, Closure $actionCallback): Api
+    {
+        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $actionCallback) {
+            $addType('TYPE', $fieldsCallback);
+            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
+                $addAction('ACT', $actionCallback);
+            });
+        })->get();
+    }
+
+    protected function createApiWithAction(Closure $actionCallback): Api
+    {
+        return $this->apiBuilder()->api('API', function (Closure $addResource) use ($actionCallback) {
+            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
+                $addAction('ACT', $actionCallback);
+            });
+        })->get();
+    }
+
+    protected function request(Api $api, $data = 'unset', $params = []): array
     {
         return $api->request(function (ApiRequest $request) use ($data, $params) {
             $request
@@ -58,7 +76,7 @@ class MutationRelationTest extends ApiResourcesTest
                 ->actionName('ACT')
                 ->params($params);
 
-            if ($data !== null) {
+            if ($data !== 'unset') {
                 $request->fieldsToSave($data);
             }
         });

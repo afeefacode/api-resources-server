@@ -7,6 +7,8 @@ use Closure;
 
 class BaseMutationActionResolver extends BaseActionResolver
 {
+    use MutationResolverTrait;
+
     protected MutationResolveContext $resolveContext;
 
     protected ?Closure $forwardCallback = null;
@@ -19,27 +21,8 @@ class BaseMutationActionResolver extends BaseActionResolver
         return $this;
     }
 
-    public function getSaveFields(): array
-    {
-        return $this->getResolveContext2()->getSaveFields($this->relatedSaveFields);
-    }
-
     public function resolve(): array
     {
-        return [
-        ];
-    }
-
-    protected function getResolveContext2(): MutationResolveContext
-    {
-        if (!isset($this->resolveContext)) {
-            $action = $this->request->getAction();
-            $typeName = $action->getInput()->getTypeClass()::type();
-
-            $this->resolveContext = $this->container->create(MutationResolveContext::class)
-                ->type($this->getTypeByName($typeName))
-                ->fieldsToSave($this->request->getFieldsToSave2());
-        }
-        return $this->resolveContext;
+        return [];
     }
 }

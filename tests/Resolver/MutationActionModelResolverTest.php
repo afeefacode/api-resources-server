@@ -3,9 +3,8 @@
 namespace Afeefa\ApiResources\Tests\Resolver;
 
 use Afeefa\ApiResources\Action\Action;
-use Afeefa\ApiResources\Api\Api;
-use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
 use Afeefa\ApiResources\Field\Relation;
@@ -13,27 +12,84 @@ use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Resolver\MutationActionModelResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationHasOneResolver;
-use Afeefa\ApiResources\Test\ApiResourcesTest;
+use Afeefa\ApiResources\Test\MutationRelationTest;
+
 use function Afeefa\ApiResources\Test\T;
 
-use Closure;
 use stdClass;
 
-class MutationActionModelResolverTest extends ApiResourcesTest
+class MutationActionModelResolverTest extends MutationRelationTest
 {
-    private TestWatcher $testWatcher;
-
-    protected function setUp(): void
-    {
-        parent::setup();
-
-        $this->testWatcher = new TestWatcher();
-    }
-
     private $should_update = false;
 
     /**
-     * @dataProvider updateDataProvider
+     * @dataProvider missingCallbacksDataProvider
+     */
+    public function test_missing_callbacks($missingCallback)
+    {
+        $this->expectException(MissingCallbackException::class);
+        $n = in_array($missingCallback, ['add', 'update']) ? 'n' : '';
+        $this->expectExceptionMessage("Resolver for action ACT on resource RES needs to implement a{$n} {$missingCallback}() method.");
+
+        $api = $this->createApiWithAction(
+            function (Action $action) use ($missingCallback) {
+                $action
+                    ->input(T('TYPE'))
+                    ->response(T('TYPE'))
+                    ->resolve(function (MutationActionModelResolver $r) use ($missingCallback) {
+                        if ($missingCallback !== 'get') {
+                            $r->get(fn () => null);
+                        }
+                        if ($missingCallback !== 'add') {
+                            $r->add(fn () => null);
+                        }
+                        if ($missingCallback !== 'update') {
+                            $r->update(fn () => null);
+                        }
+                        if ($missingCallback !== 'delete') {
+                            $r->delete(fn () => null);
+                        }
+                    });
+            }
+        );
+
+        $this->request($api, data: ['other' => []]);
+    }
+
+    public function missingCallbacksDataProvider()
+    {
+        return [
+            ['get'],
+            ['add'],
+            ['update'],
+            ['delete']
+        ];
+    }
+
+    public function test_with_all_callbacks()
+    {
+        $api = $this->createApiWithAction(
+            function (Action $action) {
+                $action
+                    ->input(T('TYPE'))
+                    ->response(T('TYPE'))
+                    ->resolve(function (MutationActionModelResolver $r) {
+                        $r
+                            ->get(fn () => [])
+                            ->add(fn () => Model::fromSingle('TYPE', []))
+                            ->update(fn () => null)
+                            ->delete(fn () => null);
+                    });
+            }
+        );
+
+        $this->request($api);
+
+        $this->assertTrue(true);
+    }
+
+    /**
+     * @dataProvider mutationDataProvider
      */
     public function test_mutation($update, $fields, $expectedInfo, $expectedFields)
     {
@@ -55,18 +111,17 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                             ->get(function () {
                                 $this->testWatcher->info('get');
                                 if ($this->should_update) {
-                                    return TestModel::fromSingle('TYPE', []);
+                                    return Model::fromSingle('TYPE');
                                 }
                             })
-                            ->add(function () use ($r) {
+                            ->add(function (string $typeName, array $saveFields) use ($r) {
                                 $this->testWatcher->info('add');
-                                $this->testWatcher->saveFields($r->getSaveFields());
-                                return TestModel::fromSingle('TYPE', []);
+                                $this->testWatcher->saveFields($saveFields);
+                                return Model::fromSingle('TYPE');
                             })
-                            ->update(function () use ($r) {
+                            ->update(function (ModelInterface $model, array $saveFields) use ($r) {
                                 $this->testWatcher->info('update');
-                                $this->testWatcher->saveFields($r->getSaveFields());
-                                return TestModel::fromSingle('TYPE', []);
+                                $this->testWatcher->saveFields($saveFields);
                             })
                             ->delete(fn () => null);
                     });
@@ -83,7 +138,7 @@ class MutationActionModelResolverTest extends ApiResourcesTest
         $this->assertEquals($expectedFields, $this->testWatcher->saveFields);
     }
 
-    public function updateDataProvider()
+    public function mutationDataProvider()
     {
         // [data fields, save fields]
         return [
@@ -122,9 +177,9 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                         $r
                             ->get(fn () => null)
                             ->update(fn () => null)
-                            ->add(function () use ($r) {
-                                $this->testWatcher->saveFields($r->getSaveFields());
-                                return TestModel::fromSingle('TYPE', []);
+                            ->add(function (string $typeName, array $saveFields) use ($r) {
+                                $this->testWatcher->saveFields($saveFields);
+                                return Model::fromSingle('TYPE');
                             })
                             ->delete(fn () => null);
                     });
@@ -188,7 +243,7 @@ class MutationActionModelResolverTest extends ApiResourcesTest
     /**
      * @dataProvider createSaveRelationsDataProvider
      */
-    public function test_create_save_fields_relations($fields, $expectedFields, $expectedOrder)
+    public function test_create_save_fields_relations($fields, $expectedFields, $expectedInfo)
     {
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
@@ -201,9 +256,10 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                                 ->get(function () {
                                     $this->testWatcher->info('relation_get');
                                 })
-                                ->add(function ($owner, $type, $saveFields) {
+                                ->add(function ($owner, $typeName, $saveFields) {
                                     $this->testWatcher->info('relation_add');
                                     $this->testWatcher->saveFields($saveFields);
+                                    return Model::fromSingle('TYPE');
                                 })
                                 ->update(fn () => null)
                                 ->delete(function () {
@@ -226,7 +282,7 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                                     return Model::fromSingle('TYPE', ['id' => '10']);
                                 })
                                 ->get(fn () => null)
-                                ->add(fn () => null)
+                                ->add(fn () => Model::fromSingle('TYPE'))
                                 ->update(fn () => null)
                                 ->delete(function () {
                                     $this->testWatcher->info('relation_before_delete');
@@ -248,6 +304,7 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                                 ->add(function ($owner, $type, $saveFields) use ($r) {
                                     $this->testWatcher->info('relation_after_add');
                                     $this->testWatcher->saveFields($saveFields);
+                                    return Model::fromSingle('TYPE');
                                 })
                                 ->update(fn () => null)
                                 ->delete(function () {
@@ -263,13 +320,11 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                     ->resolve(function (MutationActionModelResolver $r) {
                         $r
                             ->get(fn () => null)
-                            ->update(function (ModelInterface $model) {
-                                return $model;
-                            })
-                            ->add(function () use ($r) {
-                                $this->testWatcher->saveFields($r->getSaveFields());
+                            ->update(fn () => null)
+                            ->add(function (string $typeName, array $saveFields) use ($r) {
+                                $this->testWatcher->saveFields($saveFields);
                                 $this->testWatcher->info('owner');
-                                return TestModel::fromSingle('TYPE', ['id' => '3']);
+                                return Model::fromSingle('TYPE', ['id' => '3']);
                             })
                             ->delete(fn () => null);
                     });
@@ -278,13 +333,12 @@ class MutationActionModelResolverTest extends ApiResourcesTest
 
         $this->request(
             $api,
-            data: $fields,
-        // params: ['id' => '3']
+            data: $fields
         );
 
         $this->assertEquals($expectedFields, $this->testWatcher->saveFields);
 
-        $this->assertEquals($expectedOrder, $this->testWatcher->info);
+        $this->assertEquals($expectedInfo, $this->testWatcher->info);
     }
 
     public function createSaveRelationsDataProvider()
@@ -370,7 +424,7 @@ class MutationActionModelResolverTest extends ApiResourcesTest
     /**
      * @dataProvider updateSaveRelationsDataProvider
      */
-    public function test_update_save_fields_relations($fields, $expectedFields, $expectedOrder)
+    public function test_update_save_fields_relations($fields, $expectedFields, $expectedInfo)
     {
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
@@ -386,6 +440,7 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                                 ->add(function ($owner, $type, $saveFields) {
                                     $this->testWatcher->info('relation_add');
                                     $this->testWatcher->saveFields($saveFields);
+                                    return Model::fromSingle('TYPE');
                                 })
                                 ->update(function () {
                                     $this->testWatcher->info('relation_update');
@@ -406,6 +461,7 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                                 })
                                 ->addBeforeOwner(function () {
                                     $this->testWatcher->info('relation_before_add_before_owner');
+                                    return Model::fromSingle('TYPE', ['id' => '10']);
                                 })
                                 ->get(function () {
                                     $this->testWatcher->info('relation_before_get');
@@ -435,9 +491,10 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                                 ->get(function () {
                                     $this->testWatcher->info('relation_after_get');
                                 })
-                                ->add(function ($owner, $type, $saveFields) use ($r) {
+                                ->add(function ($owner, $type, $saveFields) {
                                     $this->testWatcher->info('relation_after_add');
                                     $this->testWatcher->saveFields($saveFields);
+                                    return Model::fromSingle('TYPE');
                                 })
                                 ->update(function () {
                                     $this->testWatcher->info('relation_after_update');
@@ -455,13 +512,12 @@ class MutationActionModelResolverTest extends ApiResourcesTest
                     ->resolve(function (MutationActionModelResolver $r) {
                         $r
                             ->add(fn () => null)
-                            ->update(function (ModelInterface $model) use ($r) {
-                                $this->testWatcher->saveFields($r->getSaveFields());
+                            ->update(function (ModelInterface $model, array $saveFields) {
+                                $this->testWatcher->saveFields($saveFields);
                                 $this->testWatcher->info('owner');
-                                return $model;
                             })
                             ->get(function () {
-                                return TestModel::fromSingle('TYPE', ['id' => '3']);
+                                return Model::fromSingle('TYPE', ['id' => '3']);
                             })
                             ->delete(fn () => null);
                     });
@@ -474,9 +530,8 @@ class MutationActionModelResolverTest extends ApiResourcesTest
             params: ['id' => '3']
         );
 
+        $this->assertEquals($expectedInfo, $this->testWatcher->info);
         $this->assertEquals($expectedFields, $this->testWatcher->saveFields);
-
-        $this->assertEquals($expectedOrder, $this->testWatcher->info);
     }
 
     public function updateSaveRelationsDataProvider()
@@ -560,7 +615,7 @@ class MutationActionModelResolverTest extends ApiResourcesTest
     }
 
     /**
-     * @dataProvider wrongSaveReturnDataProvider
+     * @dataProvider addDoesNotReturnModelDataProvider
      */
     public function test_add_does_not_return_model($return)
     {
@@ -589,7 +644,7 @@ class MutationActionModelResolverTest extends ApiResourcesTest
         $this->request($api);
     }
 
-    public function wrongSaveReturnDataProvider()
+    public function addDoesNotReturnModelDataProvider()
     {
         return [
             'null' => [null],
@@ -600,36 +655,108 @@ class MutationActionModelResolverTest extends ApiResourcesTest
         ];
     }
 
-    private function createApiWithTypeAndAction(Closure $fieldsCallback, Closure $actionCallback): Api
+    /**
+     * @dataProvider getDoesNotReturnModelDataProvider
+     */
+    public function test_get_does_not_return_model_or_null($return)
     {
-        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $actionCallback) {
-            $addType('TYPE', $fieldsCallback);
-            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
-                $addAction('ACT', $actionCallback);
-            });
-        })->get();
-    }
+        if (in_array($return, [null, 'NOTHING'], true)) {
+            $this->assertTrue(true);
+        } else {
+            $this->expectException(InvalidConfigurationException::class);
+            $this->expectExceptionMessage('Get callback of mutation resolver for action ACT on resource RES must return a ModelInterface object or null.');
+        }
 
-    private function createApiWithAction(Closure $actionCallback): Api
-    {
-        return $this->apiBuilder()->api('API', function (Closure $addResource) use ($actionCallback) {
-            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
-                $addAction('ACT', $actionCallback);
-            });
-        })->get();
-    }
-
-    private function request(Api $api, $data = 'unset', $params = []): array
-    {
-        return $api->request(function (ApiRequest $request) use ($params, $data) {
-            $request
-                ->resourceType('RES')
-                ->actionName('ACT')
-                ->params($params);
-
-            if ($data !== 'unset') {
-                $request->fieldsToSave($data);
+        $api = $this->createApiWithAction(
+            function (Action $action) use ($return) {
+                $action
+                    ->input(T('TYPE'))
+                    ->response(T('TYPE'))
+                    ->resolve(function (MutationActionModelResolver $r) use ($return) {
+                        $r
+                            ->get(function () use ($return) {
+                                if ($return !== 'NOTHING') {
+                                    return $return;
+                                }
+                            })
+                            ->add(fn () => Model::fromSingle('TYPE'))
+                            ->update(fn () => null)
+                            ->delete(fn () => null);
+                    });
             }
-        });
+        );
+
+        $this->request($api, params: ['id' => '10']);
+    }
+
+    public function getDoesNotReturnModelDataProvider()
+    {
+        return [
+            'null' => [null],
+            'array' => [[]],
+            'string' => ['string'],
+            'object' => [new stdClass()],
+            'nothing' => ['NOTHING']
+        ];
+    }
+
+    /**
+     * @dataProvider deleteDataProvider
+     */
+    public function test_delete($fields, $expectedInfo, $expectedInfo2)
+    {
+        $api = $this->createApiWithTypeAndAction(
+            function (FieldBag $fields) {
+                $fields
+                    ->attribute('name', VarcharAttribute::class);
+            },
+            function (Action $action) {
+                $action
+                    ->input(T('TYPE'))
+                    ->response(T('TYPE'))
+                    ->resolve(function (MutationActionModelResolver $r) {
+                        $r
+                            ->get(function (string $id, string $typeName) {
+                                $this->testWatcher->info('get');
+                                return Model::fromSingle($typeName, ['id' => $id]);
+                            })
+                            ->add(function () {
+                                $this->testWatcher->info('add');
+                            })
+                            ->update(function () {
+                                $this->testWatcher->info('update');
+                            })
+                            ->delete(function (ModelInterface $modelToDelete) {
+                                $this->testWatcher->info('delete');
+
+                                $this->testWatcher->info2([
+                                    $modelToDelete->apiResourcesGetId(),
+                                    $modelToDelete->apiResourcesGetType()
+                                ]);
+                            });
+                    });
+            }
+        );
+
+        $this->request(
+            $api,
+            params: ['id' => '123'],
+            data: $fields
+        );
+
+        $this->assertEquals($expectedInfo, $this->testWatcher->info);
+        $this->assertEquals($expectedInfo2, $this->testWatcher->info2);
+    }
+
+    public function deleteDataProvider()
+    {
+        // $fields, $expectedInfo, $expectedInfo2
+        return [
+            'with_id' => [
+                null,
+                ['get', 'delete'],
+                [['123', 'TYPE']]
+            ]
+        ];
     }
 }

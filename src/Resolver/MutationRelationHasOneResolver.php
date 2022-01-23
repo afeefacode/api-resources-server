@@ -3,32 +3,20 @@
 namespace Afeefa\ApiResources\Resolver;
 
 use Afeefa\ApiResources\Api\Operation;
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Model\ModelInterface;
-use Afeefa\ApiResources\Resolver\Mutation\MutationRelationHasResolverTrait;
-use Afeefa\ApiResources\Resolver\Mutation\MutationRelationOneResolverTrait;
 use Afeefa\ApiResources\Resolver\Mutation\MutationRelationResolver;
-use Closure;
 
 class MutationRelationHasOneResolver extends MutationRelationResolver
 {
-    use MutationRelationOneResolverTrait;
-    use MutationRelationHasResolverTrait;
-
-    protected ?Closure $addBeforeOwnerCallback = null;
-
-    public function addBeforeOwner(Closure $callback): self
-    {
-        $this->addBeforeOwnerCallback = $callback;
-        return $this;
-    }
-
     public function resolve(): void
     {
         $relation = $this->getRelation();
         $relationName = $this->getRelation()->getName();
 
         $needsToImplement = "Resolver for relation {$relationName} needs to implement";
+        $mustReturn = "callback of resolver for relation {$relationName} must return";
 
         if (!$this->getCallback) {
             throw new MissingCallbackException("{$needsToImplement} a get() method.");
@@ -58,13 +46,17 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
 
             $related = null;
 
-            if ($this->operation === Operation::UPDATE) { // update owner -> handle related
-                /** @var ModelInterface */
-                $related = $this->handleSaveRelated($owner, $typeName);
+            if ($this->ownerOperation === Operation::UPDATE) { // update owner -> handle related
+                $related = $this->handleSaveRelated($owner, $typeName, $mustReturn, $this->fieldsToSave);
             } else { // create owner -> create related
-                if (is_array($this->fieldsToSave)) {
-                    /** @var ModelInterface */
-                    $related = ($this->addBeforeOwnerCallback)($typeName, $this->getSaveFields());
+                if (is_array($this->fieldsToSave)) { // add related only if data present
+                    $related = $this->resolveModel(null, Operation::CREATE, $typeName, $this->fieldsToSave, function ($saveFields) use ($typeName, $mustReturn) {
+                        $addedModel = ($this->addBeforeOwnerCallback)($typeName, $saveFields);
+                        if (!$addedModel instanceof ModelInterface) {
+                            throw new InvalidConfigurationException("AddBeforeOwner {$mustReturn} a ModelInterface object.");
+                        }
+                        return $addedModel;
+                    });
                 }
             }
 
@@ -75,32 +67,50 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
 
         // B.a_id or C.a_id,b_id
 
-        $this->handleSaveRelated($owner, $typeName);
+        $this->handleSaveRelated($owner, $typeName, $mustReturn, $this->fieldsToSave);
     }
 
-    protected function handleSaveRelated(ModelInterface $owner, string $typeName): ?ModelInterface
+    protected function handleSaveRelated(ModelInterface $owner, string $typeName, string $mustReturn, ?array $fieldsToSave): ?ModelInterface
     {
-        if ($this->operation === Operation::UPDATE) {
+        if ($this->ownerOperation === Operation::UPDATE) {
             /** @var ModelInterface */
             $existingModel = ($this->getCallback)($owner);
+            if ($existingModel !== null && !$existingModel instanceof ModelInterface) {
+                throw new InvalidConfigurationException("Get {$mustReturn} a ModelInterface object or null.");
+            }
 
             if ($existingModel) {
-                if ($this->fieldsToSave === null) { // delete related
+                if ($fieldsToSave === null) { // delete related
                     ($this->deleteCallback)($owner, $existingModel);
                     return null;
                 }
                 // update related
-                return ($this->updateCallback)($owner, $existingModel, $this->getSaveFields());
+                return $this->resolveModel($owner, Operation::UPDATE, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $existingModel) {
+                    ($this->updateCallback)($owner, $existingModel, $saveFields);
+                    return $existingModel;
+                });
             }
 
-            if (is_array($this->fieldsToSave)) {
+            if (is_array($fieldsToSave)) {
                 // add related
-                return ($this->addCallback)($owner, $typeName, $this->getSaveFields());
+                return $this->resolveModel($owner, Operation::CREATE, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
+                    $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
+                    if (!$addedModel instanceof ModelInterface) {
+                        throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");
+                    }
+                    return $addedModel;
+                });
             }
         } else {
-            if (is_array($this->fieldsToSave)) {
+            if (is_array($fieldsToSave)) {
                 // add related
-                return ($this->addCallback)($owner, $typeName, $this->getSaveFields());
+                return $this->resolveModel($owner, Operation::CREATE, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
+                    $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
+                    if (!$addedModel instanceof ModelInterface) {
+                        throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");
+                    }
+                    return $addedModel;
+                });
             }
         }
 

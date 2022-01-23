@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\DB\RelationRelatedData;
+use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Resolver\Field\RelationResolverTrait;
 use Afeefa\ApiResources\Resolver\Mutation\MutationRelationResolver;
 use Afeefa\ApiResources\Resolver\QueryRelationResolver;
@@ -20,14 +21,14 @@ class ModelRelationResolver
         $r
             ->ownerIdFields(function () use ($r) {
                 // select field on the owner prior loading the relation
-                $eloquentRelation = $this->getEloquentRelation($r)->relation();
+                $eloquentRelation = $this->getEloquentRelation($r->getRelation())->relation();
                 if ($eloquentRelation instanceof BelongsTo) { // reference to the related in the owner table
                     return [$eloquentRelation->getForeignKeyName()];
                 }
             })
 
             ->load(function (array $owners) use ($r) {
-                $relationWrapper = $this->getEloquentRelation($r);
+                $relationWrapper = $this->getEloquentRelation($r->getRelation());
                 $eloquentRelation = $relationWrapper->relation();
 
                 // select field on the relation prior matching the related to its owner
@@ -53,7 +54,7 @@ class ModelRelationResolver
         $r
             ->ownerIdFields(function () use ($r) {
                 // save fields on the owner in order to establish a new relation
-                $eloquentRelation = $this->getEloquentRelation($r)->relation();
+                $eloquentRelation = $this->getEloquentRelation($r->getRelation())->relation();
                 if ($eloquentRelation instanceof BelongsTo) { // reference to the related in the owner table
                     return [$eloquentRelation->getForeignKeyName()];
                 }
@@ -107,21 +108,21 @@ class ModelRelationResolver
             // })
 
             ->update(function (Model $owner, array $relatedObjects) use ($r) {
-                $relationWrapper = $this->getEloquentRelation($r, $owner);
+                $relationWrapper = $this->getEloquentRelation($r->getRelation(), $owner);
                 foreach ($relatedObjects as $relatedObject) {
                     $this->updateRelated($relationWrapper, $relatedObject);
                 }
             })
 
             ->add(function (Model $owner, array $relatedObjects) use ($r) {
-                $relationWrapper = $this->getEloquentRelation($r, $owner);
+                $relationWrapper = $this->getEloquentRelation($r->getRelation(), $owner);
                 foreach ($relatedObjects as $relatedObject) {
                     $this->addRelated($relationWrapper, $relatedObject);
                 }
             })
 
             ->delete(function (Model $owner, array $relatedObjects) use ($r) {
-                $relationWrapper = $this->getEloquentRelation($r, $owner);
+                $relationWrapper = $this->getEloquentRelation($r->getRelation(), $owner);
                 foreach ($relatedObjects as $relatedObject) {
                     $relatedModel = $relationWrapper->relation()->find($relatedObject->id);
                     if ($relatedModel) {
@@ -193,18 +194,17 @@ class ModelRelationResolver
         return $relationCounts;
     }
 
-    protected function getEloquentRelation(ModelRelationResolver $r, Model $owner = null): EloquentRelationWrapper
+    protected function getEloquentRelation(Relation $relation, Model $owner = null): EloquentRelationWrapper
     {
         $eloquentRelation = new EloquentRelationWrapper();
 
-        $relation = $r->getRelation();
         $eloquentRelation->name = $relation->hasResolveParam('eloquent_relation')
             ? $relation->getResolveParam('eloquent_relation')
             : $relation->getName();
 
         if (!$owner) {
             /** @var ModelType */
-            $ownerType = $r->getRelation()->getOwner();
+            $ownerType = $relation->getOwner();
             $OwnerClass = $ownerType::$ModelClass;
             $owner = new $OwnerClass();
         }

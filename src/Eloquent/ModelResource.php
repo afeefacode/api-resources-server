@@ -124,59 +124,17 @@ class ModelResource extends Resource
                 ->resolve([$this->getEloquentResolver(), 'get']);
         });
 
-        $actions->add('create', function (Action $action) {
-            $action
-                ->input(Type::create($this->ModelTypeClass))
-
-                ->response($this->ModelTypeClass)
-
-                ->resolve([$this->getEloquentResolver(), 'create']);
-        });
-
-        $actions->add('update', function (Action $action) {
+        $actions->add('save', function (Action $action) {
             $action
                 ->params(function (ActionParams $params) {
                     $params->attribute('id', IdAttribute::class);
                 })
 
-                ->input(Type::update($this->ModelTypeClass))
+                ->input($this->ModelTypeClass)
 
                 ->response($this->ModelTypeClass)
 
-                ->resolve([$this->getEloquentResolver(), 'update']);
-        });
-
-        $actions->add('delete', function (Action $action) {
-            $action
-                ->params(function (ActionParams $params) {
-                    $params->attribute('id', IdAttribute::class);
-                })
-
-                ->response($this->ModelTypeClass)
-
-                ->resolve([$this->getEloquentResolver(), 'delete']);
-        });
-
-        $actions->add('add_related', function (Action $action) {
-            $action
-                ->params(function (ActionParams $params) {
-                    $params->attribute('id', IdAttribute::class);
-                })
-
-                ->response($this->ModelTypeClass)
-
-                ->resolve([$this->getEloquentResolver(), 'add_related']);
-        });
-
-        $actions->add('delete_related', function (Action $action) {
-            $action
-                ->params(function (ActionParams $params) {
-                    $params->attribute('id', IdAttribute::class);
-                })
-
-                ->response($this->ModelTypeClass)
-
-                ->resolve([$this->getEloquentResolver(), 'delete_related']);
+                ->resolve([$this->getEloquentResolver(), 'save']);
         });
     }
 }

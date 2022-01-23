@@ -3,7 +3,6 @@
 namespace Afeefa\ApiResources\Tests\Resolver;
 
 use Afeefa\ApiResources\Action\Action;
-use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
@@ -11,25 +10,16 @@ use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
-use Afeefa\ApiResources\Test\ApiResourcesTest;
+use Afeefa\ApiResources\Test\QueryTest;
+
 use function Afeefa\ApiResources\Test\T;
 
 use Afeefa\ApiResources\Type\Type;
 
-use Closure;
 use stdClass;
 
-class QueryActionResolverTest extends ApiResourcesTest
+class QueryActionResolverTest extends QueryTest
 {
-    private TestWatcher $testWatcher;
-
-    protected function setUp(): void
-    {
-        parent::setup();
-
-        $this->testWatcher = new TestWatcher();
-    }
-
     public function test_calls()
     {
         $api = $this->createApiWithAction(function (Action $action) {
@@ -662,46 +652,6 @@ class QueryActionResolverTest extends ApiResourcesTest
         ];
 
         $this->assertEquals($expectedFilters, $request->getFilters());
-    }
-
-    private function createApiWithTypeAndAction(Closure $fieldsCallback, Closure $actionCallback): Api
-    {
-        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $actionCallback) {
-            $addType('TYPE', $fieldsCallback);
-            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
-                $addAction('ACT', $actionCallback);
-            });
-        })->get();
-    }
-
-    private function createApiWithAction(Closure $actionCallback): Api
-    {
-        return $this->apiBuilder()->api('API', function (Closure $addResource) use ($actionCallback) {
-            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
-                $addAction('ACT', $actionCallback);
-            });
-        })->get();
-    }
-
-    private function request(Api $api, ?array $fields = null, ?array $params = null, ?array $filters = null): array
-    {
-        return $api->request(function (ApiRequest $request) use ($fields, $params, $filters) {
-            $request
-                ->resourceType('RES')
-                ->actionName('ACT');
-
-            if ($fields) {
-                $request->fields($fields);
-            }
-
-            if ($params) {
-                $request->params($params);
-            }
-
-            if ($filters) {
-                $request->filters($filters);
-            }
-        });
     }
 }
 

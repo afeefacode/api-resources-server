@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Tests\Resolver;
 
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
@@ -14,6 +15,7 @@ use Afeefa\ApiResources\Test\MutationRelationTest;
 use function Afeefa\ApiResources\Test\T;
 
 use Afeefa\ApiResources\Type\Type;
+use stdClass;
 
 class MutationRelationLinkManyResolverTest extends MutationRelationTest
 {
@@ -280,6 +282,50 @@ class MutationRelationLinkManyResolverTest extends MutationRelationTest
                     ['111333', 'TYPE', '8', 'TYPE', 'other'], ['111333', 'TYPE', '9', 'TYPE', 'other']
                 ]
             ]
+        ];
+    }
+
+    /**
+     * @dataProvider getDoesNotReturnModelsDataProvider
+     */
+    public function test_get_does_not_return_array_of_models($return)
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Get callback of resolver for relation other must return an array of ModelInterface objects.');
+
+        $api = $this->createApiWithType(
+            function (FieldBag $fields) use ($return) {
+                $fields
+                    ->relation('other', T('TYPE'), function (Relation $relation) use ($return) {
+                        $relation->resolveSave(function (MutationRelationLinkManyResolver $r) use ($return) {
+                            $r
+                                ->get(function () use ($return) {
+                                    if ($return !== 'NOTHING') {
+                                        return $return;
+                                    }
+                                })
+                                ->link(fn () => null)
+                                ->unlink(fn () => null);
+                        });
+                    });
+            }
+        );
+
+        $this->request($api, data: ['other' => []], params: ['id' => '111333']);
+
+        $this->assertTrue(true);
+    }
+
+    public function getDoesNotReturnModelsDataProvider()
+    {
+        return [
+            'null' => [null],
+            'array_of_null' => [[null, null]],
+            'string' => ['string'],
+            'array_of_strings' => [['string', 'string']],
+            'object' => [new stdClass()],
+            'array_of_objects' => [[new stdClass(), new stdClass()]],
+            'nothing' => ['NOTHING']
         ];
     }
 }

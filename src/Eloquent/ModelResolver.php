@@ -7,7 +7,7 @@ use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
 use Afeefa\ApiResources\Filter\Filters\PageFilter;
 use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
-use Afeefa\ApiResources\Resolver\Mutation\MutationActionResolver;
+use Afeefa\ApiResources\Resolver\MutationActionModelResolver;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Closure;
 use Illuminate\Database\Query\Builder as EloquentBuilder;
@@ -234,46 +234,22 @@ class ModelResolver
             });
     }
 
-    public function update(MutationActionResolver $r)
+    public function save(MutationActionModelResolver $r)
     {
         $r
-            ->save(function () use ($r) {
-                $request = $r->getRequest();
-
+            ->get(function (string $id) {
                 $query = $this->ModelClass::query();
-
-                $model = $query
-                    ->where('id', $request->getParam('id'))
+                return $query
+                    ->where('id', $id)
                     ->first();
-
-                $updates = $r->getSaveFields();
-
-                if (!empty($updates)) {
-                    $model->fillable(array_keys($updates));
-                    $model->update($updates);
-                }
-
-                return $model;
             })
 
-            ->forward(function (ApiRequest $apiRequest) {
-                $apiRequest
-                    ->resourceType($apiRequest->getResource()::type())
-                    ->actionName('get');
-            });
-    }
-
-    public function create(MutationActionResolver $r)
-    {
-        $r
-            ->save(function () use ($r) {
+            ->add(function (string $typeName, array $saveFields) {
                 $model = new $this->ModelClass();
 
-                $updates = $r->getSaveFields();
-
-                if (!empty($updates)) {
-                    $model->fillable(array_keys($updates));
-                    $model->fill($updates);
+                if (!empty($saveFields)) {
+                    $model->fillable(array_keys($saveFields));
+                    $model->fill($saveFields);
                 }
 
                 $model->save();
@@ -281,30 +257,22 @@ class ModelResolver
                 return $model;
             })
 
+            ->update(function (Model $model, array $saveFields) {
+                if (!empty($saveFields)) {
+                    $model->fillable(array_keys($saveFields));
+                    $model->update($saveFields);
+                }
+            })
+
+            ->delete(function (Model $model) {
+                $model->delete();
+            })
+
             ->forward(function (ApiRequest $apiRequest, Model $model) {
                 $apiRequest
+                    ->param('id', $model->id)
                     ->resourceType($apiRequest->getResource()::type())
-                    ->actionName('get')
-                    ->params(['id' => $model->id]);
-            });
-    }
-
-    public function delete(QueryActionResolver $r)
-    {
-        $r
-            ->load(function () use ($r) {
-                $request = $r->getRequest();
-
-                $query = $this->ModelClass::query();
-
-                $model = $query->where('id', $request->getParam('id'))
-                    ->first();
-
-                if ($model) {
-                    $model->delete();
-                }
-
-                return null;
+                    ->actionName('get');
             });
     }
 

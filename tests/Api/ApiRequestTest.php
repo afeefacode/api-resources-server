@@ -7,7 +7,7 @@ use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\DI\Container;
 use Afeefa\ApiResources\Model\Model;
-use Afeefa\ApiResources\Resolver\Mutation\MutationActionResolver;
+use Afeefa\ApiResources\Resolver\MutationActionSimpleResolver;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
 use function Afeefa\ApiResources\Test\T;
 use Afeefa\ApiResources\Tests\Fixtures\TestApi\TestApi;
@@ -109,14 +109,14 @@ class ApiRequestTest extends ApiResourcesTest
     public function test_mutation_wrong_value_single($value)
     {
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessage('Data passed to the mutation action ACT on resource RES must be an array.');
+        $this->expectExceptionMessage('Data passed to the mutation action ACT on resource RES must be an array or null.');
 
         $api = $this->createApiWithAction(
             function (Action $action) {
                 $action
                     ->input(T('TYPE'))
                     ->response(T('TYPE'))
-                    ->resolve(function (MutationActionResolver $r) {
+                    ->resolve(function ($r) {
                         $r->save(function () {
                         });
                     });
@@ -143,15 +143,16 @@ class ApiRequestTest extends ApiResourcesTest
     public function test_mutation_wrong_value_many($value)
     {
         $this->expectException(ValidationFailedException::class);
-        $this->expectExceptionMessage('Data passed to the mutation action ACT on resource RES must be an array.');
+        $this->expectExceptionMessage('Data passed to the mutation action ACT on resource RES must be an array or null.');
 
         $api = $this->createApiWithAction(
             function (Action $action) {
                 $action
                     ->input(Type::list(T('TYPE')))
                     ->response(T('TYPE'))
-                    ->resolve(function (MutationActionResolver $r) {
+                    ->resolve(function (MutationActionSimpleResolver $r) {
                         $r->save(function () {
+                            return Model::fromSingle('TYPE');
                         });
                     });
             }
@@ -167,8 +168,7 @@ class ApiRequestTest extends ApiResourcesTest
     {
         return [
             'string' => ['wrong'],
-            'number' => [1],
-            'null' => [null]
+            'number' => [1]
         ];
     }
 

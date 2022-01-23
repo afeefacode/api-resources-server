@@ -30,7 +30,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     protected array $fields = [];
 
-    protected array $fieldsToSave = [];
+    protected ?array $fieldsToSave = [];
 
     public function fromInput(?array $input = null): ApiRequest
     {
@@ -157,15 +157,15 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         // validate fields
         $actionName = $this->getAction()->getName();
         $resourceType = $this->getResource()::type();
-        if (!is_array($fields)) {
-            throw new ValidationFailedException("Data passed to the mutation action {$actionName} on resource {$resourceType} must be an array.");
+        if ($fields !== null && !is_array($fields)) {
+            throw new ValidationFailedException("Data passed to the mutation action {$actionName} on resource {$resourceType} must be an array or null.");
         }
 
         $this->fieldsToSave = $fields;
         return $this;
     }
 
-    public function getFieldsToSave2(): array
+    public function getFieldsToSave2(): ?array
     {
         return $this->fieldsToSave;
     }

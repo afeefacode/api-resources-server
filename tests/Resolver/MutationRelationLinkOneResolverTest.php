@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Tests\Resolver;
 
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
@@ -14,6 +15,7 @@ use Afeefa\ApiResources\Test\MutationRelationTest;
 use function Afeefa\ApiResources\Test\T;
 
 use Afeefa\ApiResources\Type\Type;
+use stdClass;
 
 class MutationRelationLinkOneResolverTest extends MutationRelationTest
 {
@@ -406,6 +408,52 @@ class MutationRelationLinkOneResolverTest extends MutationRelationTest
                 ['save_to_owner'],
                 [['4', 'TYPE', 'other']]
             ]
+        ];
+    }
+
+    /**
+     * @dataProvider getDoesNotReturnModelDataProvider
+     */
+    public function test_get_does_not_return_model_or_null($return)
+    {
+        if (in_array($return, [null, 'NOTHING'], true)) {
+            $this->assertTrue(true);
+        } else {
+            $this->expectException(InvalidConfigurationException::class);
+            $this->expectExceptionMessage('Get callback of resolver for relation other must return a ModelInterface object or null.');
+        }
+
+        $api = $this->createApiWithType(
+            function (FieldBag $fields) use ($return) {
+                $fields
+                    ->relation('other', T('TYPE'), function (Relation $relation) use ($return) {
+                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) use ($return) {
+                            $r
+                                ->get(function () use ($return) {
+                                    if ($return !== 'NOTHING') {
+                                        return $return;
+                                    }
+                                })
+                                ->link(fn () => null)
+                                ->unlink(fn () => null);
+                        });
+                    });
+            }
+        );
+
+        $this->request($api, data: ['other' => []], params: ['id' => '111333']);
+
+        $this->assertTrue(true);
+    }
+
+    public function getDoesNotReturnModelDataProvider()
+    {
+        return [
+            'null' => [null],
+            'array' => [[]],
+            'string' => ['string'],
+            'object' => [new stdClass()],
+            'nothing' => ['NOTHING']
         ];
     }
 }

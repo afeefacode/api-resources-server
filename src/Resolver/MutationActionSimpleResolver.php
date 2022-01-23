@@ -6,6 +6,7 @@ use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Resolver\Mutation\BaseMutationActionResolver;
+use Afeefa\ApiResources\Resolver\Mutation\MutationResolveContext;
 use Afeefa\ApiResources\Resolver\Mutation\MutationResolverTrait;
 use Closure;
 
@@ -38,7 +39,14 @@ class MutationActionSimpleResolver extends BaseMutationActionResolver
 
         // save model
 
-        $model = ($this->saveCallback)($this->getSaveFields());
+        $input = $action->getInput();
+        $typeName = $input->isUnion() ? $this->request->getParam('type') : $input->getTypeClass()::type();
+
+        $resolveContext = $this->container->create(MutationResolveContext::class)
+            ->type($this->getTypeByName($typeName))
+            ->fieldsToSave($this->request->getFieldsToSave2());
+
+        $model = ($this->saveCallback)($resolveContext->getSaveFields());
         if (!$model instanceof ModelInterface) {
             throw new InvalidConfigurationException("Save {$mustReturn} a ModelInterface object.");
         }
