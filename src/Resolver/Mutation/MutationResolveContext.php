@@ -7,6 +7,7 @@ use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Field\Attribute;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Type\Type;
@@ -145,7 +146,7 @@ class MutationResolveContext implements ContainerAwareInterface
             foreach ($fieldsToSave as $fieldName => $value) {
                 // value is a scalar
                 if ($this->hasSaveAttribute($type, $operation, $fieldName)) {
-                    $attribute = $type->getAttribute($fieldName);
+                    $attribute = $this->getSaveAttribute($type, $operation, $fieldName);
                     if (!$attribute->hasSaveResolver()) { // let resolvers provide value
                         $saveFields[$fieldName] = $value;
                     }
@@ -160,6 +161,12 @@ class MutationResolveContext implements ContainerAwareInterface
     {
         $method = $operation === Operation::UPDATE ? 'Update' : 'Create';
         return $type->{'has' . $method . 'Attribute'}($name);
+    }
+
+    protected function getSaveAttribute(Type $type, string $operation, string $name): Attribute
+    {
+        $method = $operation === Operation::UPDATE ? 'Update' : 'Create';
+        return $type->{'get' . $method . 'Attribute'}($name);
     }
 
     protected function hasSaveRelation(Type $type, string $operation, string $name): bool

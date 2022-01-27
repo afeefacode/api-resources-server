@@ -5,7 +5,7 @@ namespace Afeefa\ApiResources\Tests\Api\Schema;
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
@@ -81,7 +81,7 @@ class SimpleRequestTest extends ApiResourcesTest
     {
         $api = $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) {
             $addType('TYPE', function (FieldBag $fields) {
-                $fields->attribute('name', VarcharAttribute::class);
+                $fields->attribute('name', StringAttribute::class);
             });
 
             $addResource('RES', function (Closure $addAction) {

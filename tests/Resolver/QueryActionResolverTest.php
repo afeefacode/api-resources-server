@@ -7,7 +7,7 @@ use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Afeefa\ApiResources\Test\QueryTest;
@@ -399,8 +399,8 @@ class QueryActionResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('name', VarcharAttribute::class)
-                    ->attribute('title', VarcharAttribute::class);
+                    ->attribute('name', StringAttribute::class)
+                    ->attribute('title', StringAttribute::class);
             },
             function (Action $action) {
                 $action
@@ -426,8 +426,8 @@ class QueryActionResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('name', VarcharAttribute::class)
-                    ->attribute('title', VarcharAttribute::class);
+                    ->attribute('name', StringAttribute::class)
+                    ->attribute('title', StringAttribute::class);
             },
             function (Action $action) {
                 $action
@@ -549,8 +549,8 @@ class QueryActionResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('name', VarcharAttribute::class)
-                    ->attribute('title', VarcharAttribute::class);
+                    ->attribute('name', StringAttribute::class)
+                    ->attribute('title', StringAttribute::class);
             },
             function (Action $action) {
                 $action

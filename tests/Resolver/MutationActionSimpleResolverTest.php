@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\MutationActionSimpleResolver;
@@ -60,10 +60,10 @@ class MutationActionSimpleResolverTest extends MutationRelationTest
      */
     public function test_mutation($update, $fields, $expectedInfo, $expectedFields)
     {
-        $api = $this->createApiWithTypeAndAction(
+        $api = $this->createApiWithUpdateTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('name', VarcharAttribute::class);
+                    ->attribute('name', StringAttribute::class);
             },
             function (Action $action) {
                 $action
@@ -115,11 +115,11 @@ class MutationActionSimpleResolverTest extends MutationRelationTest
      */
     public function test_save_fields($fields, $expectedFields)
     {
-        $api = $this->createApiWithTypeAndAction(
+        $api = $this->createApiWithUpdateTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('name', VarcharAttribute::class)
-                    ->attribute('title', VarcharAttribute::class);
+                    ->attribute('name', StringAttribute::class)
+                    ->attribute('title', StringAttribute::class);
             },
             function (Action $action) {
                 $action
@@ -199,11 +199,11 @@ class MutationActionSimpleResolverTest extends MutationRelationTest
      */
     public function test_save_ignores_relations($fields, $expectedFields, $expectedOrder)
     {
-        $api = $this->createApiWithTypeAndAction(
+        $api = $this->createApiWithUpdateTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('name', VarcharAttribute::class)
-                    ->attribute('title', VarcharAttribute::class)
+                    ->attribute('name', StringAttribute::class)
+                    ->attribute('title', StringAttribute::class)
                     ->relation('relation', T('TYPE'), function (Relation $relation) {
                         $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
                             $r

@@ -5,7 +5,7 @@ namespace Afeefa\ApiResources\Tests\Type;
 use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
 use Afeefa\ApiResources\Exception\Exceptions\NotATypeOrCallbackException;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
 
 class TypeTest extends ApiResourcesTest
@@ -34,12 +34,12 @@ class TypeTest extends ApiResourcesTest
     public function test_type_with_fields()
     {
         $type = $this->typeBuilder()->type('Test.Type', function (FieldBag $fields) {
-            $fields->attribute('name', VarcharAttribute::class);
+            $fields->attribute('name', StringAttribute::class);
         })->get();
 
         $this->assertEquals(1, $type->getFields()->numEntries());
-        $this->assertEquals(1, $type->getUpdateFields()->numEntries());
-        $this->assertEquals(1, $type->getCreateFields()->numEntries());
+        $this->assertEquals(0, $type->getUpdateFields()->numEntries());
+        $this->assertEquals(0, $type->getCreateFields()->numEntries());
 
         $field = $type->getField('name');
         $this->assertEquals($type, $field->getOwner());

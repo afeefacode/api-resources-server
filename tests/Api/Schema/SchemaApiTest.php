@@ -6,14 +6,14 @@ use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Test\ApiBuilder;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
 
 use function Afeefa\ApiResources\Test\createApiWithSingleResource;
 
 use function Afeefa\ApiResources\Test\T;
-use Afeefa\ApiResources\Validator\Validators\VarcharValidator;
+use Afeefa\ApiResources\Validator\Validators\StringValidator;
 use Closure;
 
 class SchemaApiTest extends ApiResourcesTest
@@ -24,8 +24,8 @@ class SchemaApiTest extends ApiResourcesTest
             'Test.Type',
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
-                        $attribute->validate(function (VarcharValidator $v) {
+                    ->attribute('title', function (StringAttribute $attribute) {
+                        $attribute->validate(function (StringValidator $v) {
                             $v
                                 ->filled()
                                 ->min(2)
@@ -53,9 +53,9 @@ class SchemaApiTest extends ApiResourcesTest
                     'translations' => [],
                     'fields' => [
                         'title' => [
-                            'type' => 'Afeefa.VarcharAttribute',
+                            'type' => 'Afeefa.StringAttribute',
                             'validator' => [
-                                'type' => 'Afeefa.VarcharValidator',
+                                'type' => 'Afeefa.StringValidator',
                                 'params' => [
                                     'filled' => true,
                                     'min' => 2,
@@ -63,11 +63,13 @@ class SchemaApiTest extends ApiResourcesTest
                                 ]
                             ]
                         ]
-                    ]
+                    ],
+                    'update_fields' => [],
+                    'create_fields' => []
                 ]
             ],
             'validators' => [
-                'Afeefa.VarcharValidator' => [
+                'Afeefa.StringValidator' => [
                     'rules' => [
                         'string' => [
                             'message' => '{{ fieldLabel }} sollte eine Zeichenkette sein.'

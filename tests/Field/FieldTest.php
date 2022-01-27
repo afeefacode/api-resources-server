@@ -21,7 +21,6 @@ class FieldTest extends ApiResourcesTest
 
         $this->assertEquals('Field', $field::type());
         $this->assertEquals('title', $field->getName());
-        $this->assertTrue($field->isAllowed());
         $this->assertFalse($field->isRequired());
         $this->assertFalse($field->hasOptions());
         $this->assertSame([], $field->getOptions());
@@ -72,7 +71,6 @@ class FieldTest extends ApiResourcesTest
 
         $this->assertEquals('Field', $field::type());
         $this->assertEquals('title', $field->getName());
-        $this->assertFalse($field->isAllowed());
         $this->assertFalse($field->isRequired());
         $this->assertFalse($field->hasOptions());
         $this->assertSame([], $field->getOptions());
@@ -186,17 +184,6 @@ class FieldTest extends ApiResourcesTest
         $this->assertEquals('API', $request->getApi()::type());
         $this->assertEquals('RES2', $request->getResource()::type());
         $this->assertEquals('ACT2', $request->getAction()->getName());
-    }
-
-    public function test_clone_allowed()
-    {
-        $originalField = (new FieldBuilder())->field('Field')->get()
-            ->name('title');
-        $this->assertTrue($originalField->isAllowed());
-
-        $field = $originalField->clone();
-
-        $this->assertFalse($field->isAllowed());
     }
 
     public function test_get_type_with_missing_type()

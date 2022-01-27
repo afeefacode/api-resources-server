@@ -5,26 +5,26 @@ namespace Afeefa\ApiResources\Validator\Validators;
 use Afeefa\ApiResources\Validator\Rule\RuleBag;
 use Afeefa\ApiResources\Validator\Validator;
 
-class VarcharValidator extends Validator
+class StringValidator extends Validator
 {
-    public static string $type = 'Afeefa.VarcharValidator';
+    public static string $type = 'Afeefa.StringValidator';
 
-    public function filled(bool $filled = true): VarcharValidator
+    public function filled(bool $filled = true): StringValidator
     {
         return $this->param('filled', $filled);
     }
 
-    public function null(bool $null = true): VarcharValidator
+    public function null(bool $null = true): StringValidator
     {
         return $this->param('null', $null);
     }
 
-    public function min(int $min): VarcharValidator
+    public function min(int $min): StringValidator
     {
         return $this->param('min', $min);
     }
 
-    public function max(int $max): VarcharValidator
+    public function max(int $max): StringValidator
     {
         return $this->param('max', $max);
     }

@@ -3,11 +3,11 @@
 namespace Afeefa\ApiResources\Api;
 
 use Afeefa\ApiResources\Action\Action;
-use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Resource\ResourceBag;
+use Afeefa\ApiResources\Type\TypeClassMap;
 use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
 use Closure;
 

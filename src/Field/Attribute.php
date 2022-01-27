@@ -2,13 +2,14 @@
 
 namespace Afeefa\ApiResources\Field;
 
+use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
+
 /**
  * @method Attribute owner($owner)
  * @method Attribute name(string $name)
  * @method Attribute validate(Closure $callback)
  * @method Attribute validator(Validator $validator)
  * @method Attribute required(bool $required = true)
- * @method Attribute allowed(bool $allowed = true)
  * @method Attribute resolve(string|callable|Closure $classOrCallback)
  * @method Attribute resolveSave(string|callable|Closure $classOrCallback)
  * @method Attribute resolveParam(string $key, $value)
@@ -16,6 +17,8 @@ namespace Afeefa\ApiResources\Field;
 */
 class Attribute extends Field
 {
+    use HasStaticTypeTrait;
+
     protected array $dependingAttributes;
 
     public function select($attributeOrAttributes): Attribute

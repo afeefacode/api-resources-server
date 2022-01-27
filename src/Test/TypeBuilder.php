@@ -2,9 +2,9 @@
 
 namespace Afeefa\ApiResources\Test;
 
-use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Type\Type;
+use Afeefa\ApiResources\Type\TypeClassMap;
 use Closure;
 use Webmozart\PathUtil\Path;
 
@@ -66,17 +66,17 @@ class TestType extends Type
         }
     }
 
-    protected function updateFields(FieldBag $fields): void
+    protected function updateFields(FieldBag $updateFields): void
     {
         if (static::$updateFieldsCallback) {
-            (static::$updateFieldsCallback)($fields);
+            (static::$updateFieldsCallback)($updateFields);
         }
     }
 
-    protected function createFields(FieldBag $fields): void
+    protected function createFields(FieldBag $createFields, FieldBag $updateFields): void
     {
         if (static::$createFieldsCallback) {
-            (static::$createFieldsCallback)($fields);
+            (static::$createFieldsCallback)($createFields, $updateFields);
         }
     }
 }

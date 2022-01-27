@@ -22,10 +22,15 @@ class MutationRelationTest extends ApiResourcesTest
         $this->testWatcher = new TestWatcher();
     }
 
-    protected function createApiWithType(Closure $fieldsCallback): Api
+    protected function createApiWithUpdateType(Closure $fieldsCallback): Api
     {
-        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback) {
-            $addType('TYPE', $fieldsCallback);
+        return $this->createApiWithType(null, $fieldsCallback, $fieldsCallback);
+    }
+
+    protected function createApiWithType(?Closure $fieldsCallback, ?Closure $updateFieldsCallback, ?Closure $createFieldsCallback): Api
+    {
+        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $updateFieldsCallback, $createFieldsCallback) {
+            $addType('TYPE', $fieldsCallback, $updateFieldsCallback, $createFieldsCallback);
             $addResource('RES', function (Closure $addAction) {
                 $addAction('ACT', function (Action $action) {
                     $action
@@ -49,10 +54,15 @@ class MutationRelationTest extends ApiResourcesTest
         })->get();
     }
 
-    protected function createApiWithTypeAndAction(Closure $fieldsCallback, Closure $actionCallback): Api
+    protected function createApiWithUpdateTypeAndAction(Closure $updateFieldsCallback, Closure $actionCallback): Api
     {
-        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $actionCallback) {
-            $addType('TYPE', $fieldsCallback);
+        return $this->createApiWithTypeAndAction(null, $updateFieldsCallback, $updateFieldsCallback, $actionCallback);
+    }
+
+    protected function createApiWithTypeAndAction(?Closure $fieldsCallback, ?Closure $updateFieldsCallback, ?Closure $createFieldsCallback, Closure $actionCallback): Api
+    {
+        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $updateFieldsCallback, $createFieldsCallback, $actionCallback) {
+            $addType('TYPE', $fieldsCallback, $updateFieldsCallback, $createFieldsCallback);
             $addResource('RES', function (Closure $addAction) use ($actionCallback) {
                 $addAction('ACT', $actionCallback);
             });

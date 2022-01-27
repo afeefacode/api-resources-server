@@ -25,7 +25,6 @@ class Validator implements ToSchemaJsonInterface
     public function clone(): Validator
     {
         $validator = new static();
-
         $arrObject = new ArrayObject($this->params);
         $validator->params = $arrObject->getArrayCopy();
         return $validator;
@@ -50,6 +49,16 @@ class Validator implements ToSchemaJsonInterface
         }
 
         return true;
+    }
+
+    public function getParams(): array
+    {
+        return $this->params;
+    }
+
+    public function getRules(): RuleBag
+    {
+        return $this->rules;
     }
 
     protected function param($name, $value): Validator

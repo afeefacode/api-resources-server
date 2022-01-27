@@ -4,10 +4,9 @@ namespace Afeefa\ApiResources\Tests\Resolver;
 
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\Api;
-use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\Field\Attribute;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\Model as BaseModel;
 use Afeefa\ApiResources\Model\ModelInterface;
@@ -18,8 +17,9 @@ use Afeefa\ApiResources\Resolver\MutationRelationLinkManyResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationLinkOneResolver;
 use Afeefa\ApiResources\Test\MutationRelationTest;
 use function Afeefa\ApiResources\Test\T;
-
 use Afeefa\ApiResources\Type\Type;
+
+use Afeefa\ApiResources\Type\TypeClassMap;
 
 class MutationModelResolverTest extends MutationRelationTest
 {
@@ -675,13 +675,13 @@ class MutationModelResolverTest extends MutationRelationTest
 
     private function getApi(): Api
     {
-        return $this->createApiWithTypeAndAction(
+        return $this->createApiWithUpdateTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', VarcharAttribute::class)
-                    ->attribute('has_one_before_id', VarcharAttribute::class)
-                    ->attribute('link_one_before_id', VarcharAttribute::class)
-                    ->attribute('owner_id', VarcharAttribute::class)
+                    ->attribute('title', StringAttribute::class)
+                    ->attribute('has_one_before_id', StringAttribute::class)
+                    ->attribute('link_one_before_id', StringAttribute::class)
+                    ->attribute('owner_id', StringAttribute::class)
                     ->relation('has_one', T('TYPE'), function (Relation $relation) {
                         $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
                             $r
@@ -871,7 +871,7 @@ class Model extends BaseModel
 
         $attributes = [];
 
-        $fields = $type->getFields()->getEntries();
+        $fields = $type->getUpdateFields()->getEntries();
         foreach ($fields as $name => $field) {
             if ($field instanceof Attribute) {
                 if (isset($this->$name)) {
@@ -886,7 +886,7 @@ class Model extends BaseModel
                     $attributes[$name] = $this->$name;
                 }
             } else {
-                $relation = $type->getRelation($name);
+                $relation = $type->getUpdateRelation($name);
                 if (isset($this->$name)) {
                     if ($relation->getRelatedType()->isList()) {
                         $attributes[$name] = [];

@@ -4,10 +4,12 @@ namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Relation;
-use Afeefa\ApiResources\Type\ModelType as ApiResourcesModelType;
+use Afeefa\ApiResources\Type\Type;
 
-class ModelType extends ApiResourcesModelType
+class ModelType extends Type
 {
+    public static string $ModelClass;
+
     public function created(): void
     {
         parent::created();

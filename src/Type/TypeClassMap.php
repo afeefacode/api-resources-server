@@ -1,6 +1,6 @@
 <?php
 
-namespace Afeefa\ApiResources\DB;
+namespace Afeefa\ApiResources\Type;
 
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\Api;

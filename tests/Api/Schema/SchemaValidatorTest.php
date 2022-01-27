@@ -5,7 +5,7 @@ namespace Afeefa\ApiResources\Tests\Api\Schema;
 use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
 use Afeefa\ApiResources\Field\FieldBag;
 
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
 
 use function Afeefa\ApiResources\Test\createApiWithSingleType;
@@ -39,7 +39,7 @@ class SchemaValidatorTest extends ApiResourcesTest
             'Test.Type',
             function (FieldBag $fields) use ($validator) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) use ($validator) {
+                    ->attribute('title', function (StringAttribute $attribute) use ($validator) {
                         $attribute->validate($validator->min(4)->max(14));
                     });
             }
@@ -52,7 +52,7 @@ class SchemaValidatorTest extends ApiResourcesTest
                 'translations' => [],
                 'fields' => [
                     'title' => [
-                        'type' => 'Afeefa.VarcharAttribute',
+                        'type' => 'Afeefa.StringAttribute',
                         'validator' => [
                             'type' => 'Test.Validator',
                             'params' => [
@@ -61,7 +61,9 @@ class SchemaValidatorTest extends ApiResourcesTest
                             ]
                         ]
                     ]
-                ]
+                ],
+                'update_fields' => [],
+                'create_fields' => []
             ]
         ];
 

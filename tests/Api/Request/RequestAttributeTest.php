@@ -5,7 +5,7 @@ namespace Afeefa\ApiResources\Tests\Api\Schema;
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
@@ -31,17 +31,17 @@ class RequestAttributeTest extends ApiResourcesTest
         $api = $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) {
             $addType('TYPE', function (FieldBag $fields) {
                 $fields
-                    ->attribute('name', VarcharAttribute::class)
+                    ->attribute('name', StringAttribute::class)
 
-                    ->attribute('source', VarcharAttribute::class)
+                    ->attribute('source', StringAttribute::class)
 
-                    ->attribute('dependent', function (VarcharAttribute $attribute) {
+                    ->attribute('dependent', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->select('source');
                         });
                     })
 
-                    ->attribute('resolved', function (VarcharAttribute $attribute) {
+                    ->attribute('resolved', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $this->testWatcher->attributeResolvers[] = $r;
 

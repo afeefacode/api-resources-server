@@ -9,7 +9,7 @@ use Afeefa\ApiResources\Action\ActionResponse;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\NotACallbackException;
 use Afeefa\ApiResources\Exception\Exceptions\NotATypeException;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Test\ActionBuilder;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
 
@@ -44,11 +44,11 @@ class ActionTest extends ApiResourcesTest
         $this->assertFalse($action->hasParam('my_param'));
 
         $action->params(function (ActionParams $params) {
-            $params->attribute('my_param', VarcharAttribute::class);
+            $params->attribute('my_param', StringAttribute::class);
         });
 
         $this->assertTrue($action->hasParam('my_param'));
-        $this->assertInstanceOf(VarcharAttribute::class, $action->getParam('my_param'));
+        $this->assertInstanceOf(StringAttribute::class, $action->getParam('my_param'));
     }
 
     public function test_params_get_nonexistent()

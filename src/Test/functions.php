@@ -32,10 +32,12 @@ function T(string $type, bool $create = true): ?string
 function createApiWithSingleType(
     string $typeName = 'Test.Type',
     ?Closure $fieldsCallback = null,
+    ?Closure $updateFieldsCallback = null,
+    ?Closure $createFieldsCallback = null,
     ?Closure $addActionCallback = null
 ): Api {
     $container = ApiResourcesTest::$staticContainer;
-    (new TypeBuilder($container))->type($typeName, $fieldsCallback)->get();
+    (new TypeBuilder($container))->type($typeName, $fieldsCallback, $updateFieldsCallback, $createFieldsCallback)->get();
 
     if (!$addActionCallback) {
         $addActionCallback = function (Closure $addAction) use ($typeName) {

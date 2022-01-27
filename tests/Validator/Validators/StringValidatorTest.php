@@ -3,16 +3,16 @@
 namespace Afeefa\ApiResources\Tests\Validator\Validators;
 
 use Afeefa\ApiResources\DI\Container;
-use Afeefa\ApiResources\Validator\Validators\VarcharValidator;
+use Afeefa\ApiResources\Validator\Validators\StringValidator;
 use PHPUnit\Framework\TestCase;
 
-class VarcharValidatorTest extends TestCase
+class StringValidatorTest extends TestCase
 {
     public function test_default_string()
     {
-        /** @var VarcharValidator */
+        /** @var StringValidator */
         $validator = (new Container())
-            ->create(VarcharValidator::class);
+            ->create(StringValidator::class);
 
         foreach ([
             '',
@@ -36,9 +36,9 @@ class VarcharValidatorTest extends TestCase
 
     public function test_filled()
     {
-        /** @var VarcharValidator */
+        /** @var StringValidator */
         $validator = (new Container())
-            ->create(VarcharValidator::class)
+            ->create(StringValidator::class)
             ->filled();
 
         foreach ([
@@ -58,9 +58,9 @@ class VarcharValidatorTest extends TestCase
 
     public function test_min()
     {
-        /** @var VarcharValidator */
+        /** @var StringValidator */
         $validator = (new Container())
-            ->create(VarcharValidator::class)
+            ->create(StringValidator::class)
             ->min(3);
 
         foreach ([
@@ -83,9 +83,9 @@ class VarcharValidatorTest extends TestCase
 
     public function test_min_null()
     {
-        /** @var VarcharValidator */
+        /** @var StringValidator */
         $validator = (new Container())
-            ->create(VarcharValidator::class)
+            ->create(StringValidator::class)
             ->min(3)
             ->null();
 
@@ -109,9 +109,9 @@ class VarcharValidatorTest extends TestCase
 
     public function test_min_filled()
     {
-        /** @var VarcharValidator */
+        /** @var StringValidator */
         $validator = (new Container())
-            ->create(VarcharValidator::class)
+            ->create(StringValidator::class)
             ->min(3)
             ->filled();
 
@@ -134,9 +134,9 @@ class VarcharValidatorTest extends TestCase
 
     public function test_max()
     {
-        /** @var VarcharValidator */
+        /** @var StringValidator */
         $validator = (new Container())
-            ->create(VarcharValidator::class)
+            ->create(StringValidator::class)
             ->max(5);
 
         foreach ([
@@ -157,9 +157,9 @@ class VarcharValidatorTest extends TestCase
 
     public function test_regex()
     {
-        /** @var VarcharValidator */
+        /** @var StringValidator */
         $validator = (new Container())
-            ->create(VarcharValidator::class)
+            ->create(StringValidator::class)
             ->regex('/test/');
 
         foreach ([

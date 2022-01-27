@@ -7,9 +7,8 @@ use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\HasManyRelation;
-use Afeefa\ApiResources\Field\Fields\HasOneRelation;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
+use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Afeefa\ApiResources\Resolver\QueryAttributeResolver;
@@ -29,7 +28,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function (array $owners) {
                                 $this->testWatcher->called();
@@ -62,7 +61,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function (array $owners) {
                                 $this->testWatcher->called();
@@ -98,7 +97,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function () {
                                 $this->testWatcher->called();
@@ -122,7 +121,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function () use ($r) {
                                 $this->testWatcher->called();
@@ -131,7 +130,7 @@ class QueryAttributeResolverTest extends QueryTest
                             });
                         });
                     })
-                    ->attribute('summary', function (VarcharAttribute $attribute) {
+                    ->attribute('summary', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function () use ($r) {
                                 $this->testWatcher->called();
@@ -159,14 +158,14 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function (array $owners) {
                                 $owners[0]->apiResourcesSetAttribute('title', 'calculatedTitle');
                             });
                         });
                     })
-                    ->attribute('summary', function (VarcharAttribute $attribute) {
+                    ->attribute('summary', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function (array $owners) {
                                 $owners[0]->apiResourcesSetAttribute('summary', 'calculatedSummary');
@@ -195,7 +194,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function (array $owners) {
                                 foreach ($owners as $index => $owner) {
@@ -204,7 +203,7 @@ class QueryAttributeResolverTest extends QueryTest
                             });
                         });
                     })
-                    ->attribute('summary', function (VarcharAttribute $attribute) {
+                    ->attribute('summary', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function (array $owners) {
                                 foreach ($owners as $index => $owner) {
@@ -238,7 +237,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r
                                 ->load(function () {
@@ -267,7 +266,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r
                                 ->load(function (array $owners) {
@@ -286,7 +285,7 @@ class QueryAttributeResolverTest extends QueryTest
                                 });
                         });
                     })
-                    ->attribute('summary', function (VarcharAttribute $attribute) {
+                    ->attribute('summary', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r
                                 ->load(function (array $owners) {
@@ -330,7 +329,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function (array $owners) {
                                 $owners[0]->apiResourcesSetAttribute('title', 'calculatedTitle' . $this->testWatcher->countCalls);
@@ -339,7 +338,7 @@ class QueryAttributeResolverTest extends QueryTest
                             });
                         });
                     })
-                    ->relation('other', T('TYPE'), function (HasOneRelation $relation) {
+                    ->relation('other', T('TYPE'), function (Relation $relation) {
                         $relation->resolve(function (QueryRelationResolver $r) {
                             $r->load(function (array $owners) {
                                 $relatedModels = [];
@@ -395,7 +394,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->load(function (array $owners) {
                                 $this->testWatcher->called();
@@ -406,7 +405,7 @@ class QueryAttributeResolverTest extends QueryTest
                             });
                         });
                     })
-                    ->relation('others', Type::list(T('TYPE')), function (HasManyRelation $relation) {
+                    ->relation('others', Type::list(T('TYPE')), function (Relation $relation) {
                         $relation->resolve(function (QueryRelationResolver $r) {
                             $r->load(function (array $owners) {
                                 $relatedModels = [];
@@ -465,7 +464,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function () {
                         });
                     });
@@ -483,7 +482,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                         });
                     });
@@ -498,7 +497,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->select('something');
                         });
@@ -519,7 +518,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r
                                 ->load(function () {
@@ -539,7 +538,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->select('something', function ($model) {
                                 $this->testWatcher->selectFields($model->selectFields);
@@ -569,7 +568,7 @@ class QueryAttributeResolverTest extends QueryTest
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
                 $fields
-                    ->attribute('title', function (VarcharAttribute $attribute) {
+                    ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r->select('something');
                         });

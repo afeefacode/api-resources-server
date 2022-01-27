@@ -2,7 +2,6 @@
 
 namespace Afeefa\ApiResources\Eloquent;
 
-use Afeefa\ApiResources\DB\RelationRelatedData;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Resolver\Field\RelationResolverTrait;
 use Afeefa\ApiResources\Resolver\Mutation\MutationRelationResolver;
@@ -224,4 +223,13 @@ class EloquentRelationWrapper
     {
         return $this->owner->{$this->name}();
     }
+}
+
+class RelationRelatedData
+{
+    public ?string $id = null;
+
+    public array $updates = [];
+
+    public bool $saved = true;
 }

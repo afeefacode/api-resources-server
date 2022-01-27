@@ -11,7 +11,6 @@ use Closure;
  * @method Relation validate(Closure $callback)
  * @method Relation validator(Validator $validator)
  * @method Relation required(bool $required = true)
- * @method Relation allowed(bool $allowed = true)
  * @method Relation resolve(string|callable|Closure $classOrCallback)
  * @method Relation resolveSave(string|callable|Closure $classOrCallback)
  * @method Relation resolveParam(string $key, $value)
@@ -19,6 +18,8 @@ use Closure;
  */
 class Relation extends Field
 {
+    protected static string $type = 'Afeefa.Relation';
+
     protected RelatedType $relatedType;
 
     protected bool $isUpdate = false;

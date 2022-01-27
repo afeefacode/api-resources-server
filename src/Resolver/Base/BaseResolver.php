@@ -2,11 +2,11 @@
 
 namespace Afeefa\ApiResources\Resolver\Base;
 
-use Afeefa\ApiResources\DB\TypeClassMap;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Type\Type;
+use Afeefa\ApiResources\Type\TypeClassMap;
 
 class BaseResolver implements ContainerAwareInterface
 {

@@ -26,8 +26,6 @@ class Field extends BagEntry
 
     protected bool $required = false;
 
-    protected bool $allowed = true;
-
     protected Closure $optionsRequestCallback;
 
     protected array $options = [];
@@ -139,6 +137,11 @@ class Field extends BagEntry
         return null;
     }
 
+    public function getValidator(): ?Validator
+    {
+        return $this->validator;
+    }
+
     public function validate($validatorOrCallback): Field
     {
         if ($validatorOrCallback instanceof Validator) {
@@ -173,17 +176,6 @@ class Field extends BagEntry
     public function isRequired(): bool
     {
         return $this->required;
-    }
-
-    public function allowed(bool $allowed = true): Field
-    {
-        $this->allowed = $allowed;
-        return $this;
-    }
-
-    public function isAllowed(): bool
-    {
-        return $this->allowed;
     }
 
     /**
@@ -262,8 +254,7 @@ class Field extends BagEntry
         return $this->container->create(static::class, function (Field $field) {
             $field
                 ->name($this->name)
-                ->required($this->required)
-                ->allowed(false);
+                ->required($this->required);
             if ($this->validator) {
                 $field->validator = $this->validator->clone();
             }

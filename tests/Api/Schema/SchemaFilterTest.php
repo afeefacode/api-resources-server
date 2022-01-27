@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\VarcharAttribute;
+use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Filter\Filter;
 use Afeefa\ApiResources\Filter\FilterBag;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
@@ -84,7 +84,7 @@ class SchemaFilterTest extends ApiResourcesTest
     {
         // auto save type with field 'name' into registry
         $this->typeBuilder()->type('Test.Type', function (FieldBag $fields) {
-            $fields->attribute('name', VarcharAttribute::class);
+            $fields->attribute('name', StringAttribute::class);
         })->get();
 
         $api = $this->createApiWithFilter('check', function (Filter $filter) {
@@ -136,11 +136,11 @@ class SchemaFilterTest extends ApiResourcesTest
             $addAction('test_action', function (Action $action) use ($filter) {
                 $action
                     ->filters(function (FilterBag $filters) use ($filter) {
-                            $filters->add('test_filter', $filter::class);
-                        })
+                        $filters->add('test_filter', $filter::class);
+                    })
                     ->response(T('Test.Type'))
                     ->resolve(function () {
-                        });
+                    });
             });
         });
 
