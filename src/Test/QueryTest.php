@@ -18,21 +18,21 @@ class QueryTest extends ApiResourcesTest
         $this->testWatcher = new TestWatcher();
     }
 
-    protected function createApiWithTypeAndAction(Closure $fieldsCallback, Closure $actionCallback): Api
+    protected function createApiWithTypeAndAction(Closure $fieldsCallback, $TypeClassOrClassesOrMeta, Closure $actionCallback): Api
     {
-        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $actionCallback) {
+        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $TypeClassOrClassesOrMeta, $actionCallback) {
             $addType('TYPE', $fieldsCallback);
-            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
-                $addAction('ACT', $actionCallback);
+            $addResource('RES', function (Closure $addAction) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+                $addAction('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
             });
         })->get();
     }
 
-    protected function createApiWithAction(Closure $actionCallback): Api
+    protected function createApiWithAction($TypeClassOrClassesOrMeta, Closure $actionCallback): Api
     {
-        return $this->apiBuilder()->api('API', function (Closure $addResource) use ($actionCallback) {
-            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
-                $addAction('ACT', $actionCallback);
+        return $this->apiBuilder()->api('API', function (Closure $addResource) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+            $addResource('RES', function (Closure $addAction) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+                $addAction('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
             });
         })->get();
     }

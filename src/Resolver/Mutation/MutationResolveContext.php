@@ -79,7 +79,7 @@ class MutationResolveContext implements ContainerAwareInterface
             if ($this->hasSaveRelation($type, $operation, $fieldName)) {
                 $relation = $this->getSaveRelation($type, $operation, $fieldName);
 
-                if ($relation->isList()) {
+                if ($relation->getRelatedType()->isList()) {
                     if (!is_array($value)) {
                         throw new ValidationFailedException("Value passed to the many relation {$fieldName} must be an array.");
                     }
@@ -89,7 +89,7 @@ class MutationResolveContext implements ContainerAwareInterface
                     }
                 }
 
-                $resolveCallback = $relation->getSaveResolve();
+                $resolveCallback = $relation->getResolve();
 
                 if ($resolveCallback) {
                     /** @var MutationRelationResolver */
@@ -147,7 +147,7 @@ class MutationResolveContext implements ContainerAwareInterface
                 // value is a scalar
                 if ($this->hasSaveAttribute($type, $operation, $fieldName)) {
                     $attribute = $this->getSaveAttribute($type, $operation, $fieldName);
-                    if (!$attribute->hasSaveResolver()) { // let resolvers provide value
+                    if (!$attribute->hasResolver()) { // let resolvers provide value
                         $saveFields[$fieldName] = $value;
                     }
                 }

@@ -18,9 +18,13 @@ class Field extends BagEntry
     use ToSchemaJsonTrait;
     use HasStaticTypeTrait;
 
+    protected string $name;
+
     protected $owner;
 
-    protected string $name;
+    protected bool $isMutation = false;
+
+    protected $default = null;
 
     protected ?Validator $validator = null;
 
@@ -37,10 +41,16 @@ class Field extends BagEntry
      */
     protected $resolveCallback = null;
 
-    /**
-     * @var string|callable|Closure
-     */
-    protected $resolveSaveCallback = null;
+    public function name(string $name): Field
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
 
     public function owner($owner): Field
     {
@@ -53,15 +63,26 @@ class Field extends BagEntry
         return $this->owner;
     }
 
-    public function name(string $name): Field
+    public function default($default): Field
     {
-        $this->name = $name;
+        $this->default = $default;
         return $this;
     }
 
-    public function getName(): string
+    public function hasDefaultValue(): bool
     {
-        return $this->name;
+        return $this->default !== null;
+    }
+
+    public function getDefaultValue()
+    {
+        return $this->default;
+    }
+
+    public function isMutation(bool $isMutation = true): Field
+    {
+        $this->isMutation = $isMutation;
+        return $this;
     }
 
     public function options(array $options): Field
@@ -214,61 +235,29 @@ class Field extends BagEntry
         throw new NotACallbackException("Resolve callback for field {$this->name} is not callable.");
     }
 
-    /**
-     * @param string|callable|Closure $classOrCallback
-     */
-    public function resolveSave($classOrCallback): Field
-    {
-        $this->resolveSaveCallback = $classOrCallback;
-        return $this;
-    }
-
-    public function hasSaveResolver(): bool
-    {
-        return isset($this->resolveSaveCallback);
-    }
-
-    public function getSaveResolve(): ?Closure
-    {
-        $callback = $this->resolveSaveCallback ?? null;
-
-        if (!$callback) {
-            throw new InvalidConfigurationException("Field {$this->name} does not have a save resolver.");
-        }
-
-        if (is_array($callback) && is_string($callback[0])) { // static class -> create instance
-            $callback[0] = $this->container->create($callback[0]);
-        }
-
-        if (is_callable($callback)) {
-            return Closure::fromCallable($callback);
-        } elseif ($callback instanceof Closure) {
-            return $callback;
-        }
-
-        throw new NotACallbackException("Save resolve callback for field {$this->name} is not callable.");
-    }
-
     public function clone(): Field
     {
         return $this->container->create(static::class, function (Field $field) {
             $field
                 ->name($this->name)
-                ->required($this->required);
+                ->required($this->required)
+                ->default($this->default)
+                ->isMutation($this->isMutation);
+
             if ($this->validator) {
                 $field->validator = $this->validator->clone();
             }
+
             if (isset($this->optionsRequestCallback)) {
                 $field->optionsRequestCallback = $this->optionsRequestCallback;
             }
+
             if (isset($this->options)) {
                 $field->options = $this->options;
             }
+
             if (isset($this->resolveCallback)) {
                 $field->resolveCallback = $this->resolveCallback;
-            }
-            if (isset($this->resolveSaveCallback)) {
-                $field->resolveSaveCallback = $this->resolveSaveCallback;
             }
         });
     }

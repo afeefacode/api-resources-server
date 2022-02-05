@@ -63,7 +63,7 @@ class ModelResolver
     public function list(QueryActionResolver $r)
     {
         $r
-            ->load(function () use ($r) {
+            ->get(function () use ($r) {
                 $request = $r->getRequest();
                 $action = $request->getAction();
                 $params = $request->getParams();
@@ -205,7 +205,7 @@ class ModelResolver
     public function get(QueryActionResolver $r)
     {
         $r
-            ->load(function () use ($r) {
+            ->get(function () use ($r) {
                 $request = $r->getRequest();
                 $selectFields = $r->getSelectFields();
 

@@ -4,17 +4,26 @@ namespace Afeefa\ApiResources\Resolver\Query;
 
 use Afeefa\ApiResources\Action\ActionResponse;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Field\Relation;
 use Closure;
 
 trait QueryResolverTrait
 {
     protected array $requestedFields = [];
 
-    protected ?Closure $loadCallback = null;
+    protected ?Closure $getCallback = null;
 
-    public function load(Closure $callback): self
+    protected ?Closure $countCallback = null;
+
+    public function get(Closure $callback): self
     {
-        $this->loadCallback = $callback;
+        $this->getCallback = $callback;
+        return $this;
+    }
+
+    public function count(Closure $callback): self
+    {
+        $this->countCallback = $callback;
         return $this;
     }
 
@@ -89,15 +98,28 @@ trait QueryResolverTrait
             // resolve relations
 
             foreach ($resolveContext->getRelationResolvers() as $relationResolver) {
+                if ($relationResolver->getRelation()->isRestrictedTo(Relation::RESTRICT_TO_COUNT)) {
+                    continue;
+                }
                 $relationResolver->addOwners($models);
                 $relationResolver->resolve();
             }
 
+            // resolve relation counts
+
+            foreach ($resolveContext->getRelationCountResolvers() as $relationResolver) {
+                if ($relationResolver->getRelation()->isRestrictedTo(Relation::RESTRICT_TO_GET)) {
+                    continue;
+                }
+                $relationResolver->addOwners($models);
+                $relationResolver->resolveCount();
+            }
+
             // mark visible fields
 
-            $getRequestedFieldNames = $this->getRequestedFieldNames($typeName);
+            $requestedFieldNames = $this->getRequestedFieldNames($typeName);
             foreach ($models as $model) {
-                $visibleFields = ['id', 'type', ...$getRequestedFieldNames];
+                $visibleFields = ['id', 'type', ...$requestedFieldNames];
                 $model->apiResourcesSetVisibleFields($visibleFields);
             }
         }

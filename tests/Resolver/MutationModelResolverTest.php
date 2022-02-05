@@ -675,7 +675,7 @@ class MutationModelResolverTest extends MutationRelationTest
 
     private function getApi(): Api
     {
-        return $this->createApiWithUpdateTypeAndAction(
+        return $this->createApiWithUpdateTypeAndMutation(
             function (FieldBag $fields) {
                 $fields
                     ->attribute('title', StringAttribute::class)
@@ -683,7 +683,7 @@ class MutationModelResolverTest extends MutationRelationTest
                     ->attribute('link_one_before_id', StringAttribute::class)
                     ->attribute('owner_id', StringAttribute::class)
                     ->relation('has_one', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveOwnerToRelated(function (string $id, string $typeName) {
                                     $this->testWatcher->info('hasOneSaveOwnerToRelated_' . $id);
@@ -708,7 +708,7 @@ class MutationModelResolverTest extends MutationRelationTest
                         });
                     })
                     ->relation('has_one_before', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveRelatedToOwner(function (?string $id, ?string $typeName) {
                                     $this->testWatcher->info('hasOneBeforeSaveRelatedToOwner_' . $id);
@@ -740,7 +740,7 @@ class MutationModelResolverTest extends MutationRelationTest
                         });
                     })
                     ->relation('has_many', Type::list(T('TYPE')), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasManyResolver $r) {
+                        $relation->resolve(function (MutationRelationHasManyResolver $r) {
                             $r
                                 ->saveOwnerToRelated(function (string $id, string $typeName) {
                                     $this->testWatcher->info('hasManySaveOwnerToRelated_' . $id);
@@ -766,7 +766,7 @@ class MutationModelResolverTest extends MutationRelationTest
                         });
                     })
                     ->relation('link_one_before', Type::link(T('TYPE')), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkOneResolver $r) {
                             $r->saveRelatedToOwner(function (?string $id, ?string $typeName) {
                                 $this->testWatcher->info('linkOneBeforeSave_' . $id);
                                 return ['link_one_before_id' => $id];
@@ -774,7 +774,7 @@ class MutationModelResolverTest extends MutationRelationTest
                         });
                     })
                     ->relation('link_one', Type::link(T('TYPE')), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkOneResolver $r) {
                             $r
                                 ->get(function (ModelInterface $owner) {
                                     $this->testWatcher->info('linkOneGet_' . $owner->id);
@@ -789,7 +789,7 @@ class MutationModelResolverTest extends MutationRelationTest
                         });
                     })
                     ->relation('link_many', Type::list(Type::link(T('TYPE'))), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkManyResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkManyResolver $r) {
                             $r
                                 ->get(function (ModelInterface $owner) {
                                     $this->testWatcher->info('linkManyGet_' . $owner->id);
@@ -805,10 +805,9 @@ class MutationModelResolverTest extends MutationRelationTest
                         });
                     });
             },
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) {
                         $r
                             ->get(function (string $id, string $typeName) {

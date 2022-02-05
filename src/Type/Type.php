@@ -45,12 +45,14 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
 
         $this->updateFields = $this->container
             ->create(FieldBag::class)
-            ->owner($this);
+            ->owner($this)
+            ->isMutation();
         $this->updateFields($this->updateFields);
 
         $this->createFields = $this->container
             ->create(FieldBag::class)
-            ->owner($this);
+            ->owner($this)
+            ->isMutation();
         $this->createFields($this->createFields, $this->updateFields);
     }
 

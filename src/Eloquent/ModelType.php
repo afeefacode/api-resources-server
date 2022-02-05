@@ -15,8 +15,8 @@ class ModelType extends Type
         parent::created();
 
         $this->addDefaultRelationResolvers($this->fields);
-        $this->addDefaultSaveRelationResolvers($this->updateFields);
-        $this->addDefaultSaveRelationResolvers($this->createFields);
+        $this->addDefaultMutationRelationResolvers($this->updateFields);
+        $this->addDefaultMutationRelationResolvers($this->createFields);
     }
 
     protected function addDefaultRelationResolvers(FieldBag $fields)
@@ -30,12 +30,12 @@ class ModelType extends Type
         }
     }
 
-    protected function addDefaultSaveRelationResolvers(FieldBag $fields)
+    protected function addDefaultMutationRelationResolvers(FieldBag $fields)
     {
         foreach (array_values($fields->getEntries()) as $entry) {
             if ($entry instanceof Relation) {
-                if (!$entry->hasSaveResolver()) {
-                    $entry->resolveSave([ModelRelationResolver::class, 'save_relation']);
+                if (!$entry->hasResolver()) {
+                    $entry->resolve([ModelRelationResolver::class, 'save_relation']);
                 }
             }
         }

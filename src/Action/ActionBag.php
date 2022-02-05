@@ -12,10 +12,24 @@ use Closure;
  */
 class ActionBag extends Bag
 {
-    public function add(string $name, Closure $callback): ActionBag
+    public function query(string $name, $TypeClassOrClassesOrMeta, Closure $callback): ActionBag
     {
-        $this->setDefinition($name, $callback, function (Action $action) use ($name) {
-            $action->name($name);
+        $this->setDefinition($name, $callback, function (Action $action) use ($name, $TypeClassOrClassesOrMeta) {
+            $action
+                ->name($name)
+                ->response($TypeClassOrClassesOrMeta);
+        });
+
+        return $this;
+    }
+
+    public function mutation(string $name, $TypeClassOrClassesOrMeta, Closure $callback): ActionBag
+    {
+        $this->setDefinition($name, $callback, function (Action $action) use ($name, $TypeClassOrClassesOrMeta) {
+            $action
+                ->name($name)
+                ->isMutation()
+                ->input($TypeClassOrClassesOrMeta);
         });
 
         return $this;

@@ -11,7 +11,6 @@ use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
  * @method Attribute validator(Validator $validator)
  * @method Attribute required(bool $required = true)
  * @method Attribute resolve(string|callable|Closure $classOrCallback)
- * @method Attribute resolveSave(string|callable|Closure $classOrCallback)
  * @method Attribute resolveParam(string $key, $value)
  * @method Attribute resolveParams(array $params)
 */
@@ -19,7 +18,7 @@ class Attribute extends Field
 {
     use HasStaticTypeTrait;
 
-    protected array $dependingAttributes;
+    protected array $dependingAttributes = [];
 
     public function select($attributeOrAttributes): Attribute
     {
@@ -34,6 +33,17 @@ class Attribute extends Field
 
     public function hasDependingAttributes(): bool
     {
-        return isset($this->dependingAttributes);
+        return count($this->dependingAttributes) > 0;
+    }
+
+    public function toSchemaJson(): array
+    {
+        $json = parent::toSchemaJson();
+
+        if ($this->isMutation && $this->hasDefaultValue()) {
+            $json['default'] = $this->default;
+        }
+
+        return $json;
     }
 }

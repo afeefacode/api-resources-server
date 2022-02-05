@@ -14,13 +14,15 @@ class Action extends BagEntry
 {
     protected string $name;
 
-    protected ActionParams $params;
+    protected bool $isMutation = false;
 
-    protected ActionInput $input;
+    protected ActionParams $params;
 
     protected FilterBag $filters;
 
-    protected ActionResponse $response;
+    protected ?ActionInput $input = null;
+
+    protected ?ActionResponse $response = null;
 
     /**
      * @var string|callable|Closure
@@ -36,6 +38,12 @@ class Action extends BagEntry
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function isMutation(bool $isMutation = true): Action
+    {
+        $this->isMutation = $isMutation;
+        return $this;
     }
 
     public function params(Closure $callback): Action
@@ -162,10 +170,6 @@ class Action extends BagEntry
 
     public function toSchemaJson(): array
     {
-        if (!isset($this->response)) {
-            throw new InvalidConfigurationException("Action {$this->name} does not have a response type.");
-        }
-
         if (!isset($this->resolveCallback)) {
             throw new InvalidConfigurationException("Action {$this->name} does not have a resolver.");
         }
@@ -174,7 +178,7 @@ class Action extends BagEntry
             $json['params'] = $this->params->toSchemaJson();
         }
 
-        if (isset($this->input)) {
+        if ($this->isMutation && $this->hasInput()) {
             $json['input'] = $this->input->toSchemaJson();
         }
 
@@ -182,7 +186,9 @@ class Action extends BagEntry
             $json['filters'] = $this->filters->toSchemaJson();
         }
 
-        $json['response'] = $this->response->toSchemaJson();
+        if ($this->hasResponse()) {
+            $json['response'] = $this->response->toSchemaJson();
+        }
 
         return $json;
     }

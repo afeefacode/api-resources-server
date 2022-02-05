@@ -26,7 +26,7 @@ class ModelRelationResolver
                 }
             })
 
-            ->load(function (array $owners) use ($r) {
+            ->get(function (array $owners) use ($r) {
                 $relationWrapper = $this->getEloquentRelation($r->getRelation());
                 $eloquentRelation = $relationWrapper->relation();
 

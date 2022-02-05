@@ -111,11 +111,10 @@ class ApiRequestTest extends ApiResourcesTest
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessage('Data passed to the mutation action ACT on resource RES must be an array or null.');
 
-        $api = $this->createApiWithAction(
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function ($r) {
                         $r->save(function () {
                         });
@@ -145,11 +144,10 @@ class ApiRequestTest extends ApiResourcesTest
         $this->expectException(ValidationFailedException::class);
         $this->expectExceptionMessage('Data passed to the mutation action ACT on resource RES must be an array or null.');
 
-        $api = $this->createApiWithAction(
+        $api = $this->createApiWithMutation(
+            fn () => Type::list(T('TYPE')),
             function (Action $action) {
                 $action
-                    ->input(Type::list(T('TYPE')))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionSimpleResolver $r) {
                         $r->save(function () {
                             return Model::fromSingle('TYPE');
@@ -172,11 +170,20 @@ class ApiRequestTest extends ApiResourcesTest
         ];
     }
 
-    private function createApiWithAction(Closure $actionCallback): Api
+    private function createApiWithAction($TypeClassOrClassesOrMeta, Closure $actionCallback): Api
     {
-        return $this->apiBuilder()->api('API', function (Closure $addResource) use ($actionCallback) {
-            $addResource('RES', function (Closure $addAction) use ($actionCallback) {
-                $addAction('ACT', $actionCallback);
+        return $this->apiBuilder()->api('API', function (Closure $addResource) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+            $addResource('RES', function (Closure $addAction) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+                $addAction('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
+            });
+        })->get();
+    }
+
+    private function createApiWithMutation($TypeClassOrClassesOrMeta, Closure $actionCallback): Api
+    {
+        return $this->apiBuilder()->api('API', function (Closure $addResource) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+            $addResource('RES', function (Closure $addAction, Closure $addMutation) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+                $addMutation('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
             });
         })->get();
     }

@@ -48,7 +48,7 @@ class QueryAttributeResolver extends BaseFieldResolver
 
         // query db
 
-        if (!$this->loadCallback) {
+        if (!$this->getCallback) {
             if (count($this->selectFields)) {
                 if ($this->selectCallback) {
                     foreach ($this->owners as $owner) {
@@ -58,9 +58,9 @@ class QueryAttributeResolver extends BaseFieldResolver
                 }
                 return; // only select fields are set up
             }
-            throw new MissingCallbackException("{$resolverForAttribute} needs to implement a load() method.");
+            throw new MissingCallbackException("{$resolverForAttribute} needs to implement a get() method.");
         }
-        $objects = ($this->loadCallback)($this->owners);
+        $objects = ($this->getCallback)($this->owners);
 
         // map results to owners
 

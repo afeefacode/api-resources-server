@@ -32,7 +32,7 @@ class MutationRelationLinkManyResolverTest extends MutationRelationTest
             function (FieldBag $fields) use ($missingCallback) {
                 $fields
                     ->relation('other', Type::list(Type::link(T('TYPE'))), function (Relation $relation) use ($missingCallback) {
-                        $relation->resolveSave(function (MutationRelationLinkManyResolver $r) use ($missingCallback) {
+                        $relation->resolve(function (MutationRelationLinkManyResolver $r) use ($missingCallback) {
                             if ($missingCallback !== 'get') {
                                 $r->get(fn () => null);
                             }
@@ -65,7 +65,7 @@ class MutationRelationLinkManyResolverTest extends MutationRelationTest
             function (FieldBag $fields) {
                 $fields
                     ->relation('other', Type::list(Type::link(T('TYPE'))), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkManyResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkManyResolver $r) {
                             $r
                                 ->get(fn () => [])
                                 ->link(fn () => null)
@@ -90,7 +90,7 @@ class MutationRelationLinkManyResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', Type::list(Type::link(T('TYPE'))), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkManyResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkManyResolver $r) {
                             $r
                                 ->get(function () {
                                     $this->testWatcher->info('get');
@@ -164,7 +164,7 @@ class MutationRelationLinkManyResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', Type::list(Type::link(T('TYPE'))), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkManyResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkManyResolver $r) {
                             $r
                                 ->get(function () {
                                     $this->testWatcher->info('get');
@@ -297,7 +297,7 @@ class MutationRelationLinkManyResolverTest extends MutationRelationTest
             function (FieldBag $fields) use ($return) {
                 $fields
                     ->relation('other', T('TYPE'), function (Relation $relation) use ($return) {
-                        $relation->resolveSave(function (MutationRelationLinkManyResolver $r) use ($return) {
+                        $relation->resolve(function (MutationRelationLinkManyResolver $r) use ($return) {
                             $r
                                 ->get(function () use ($return) {
                                     if ($return !== 'NOTHING') {

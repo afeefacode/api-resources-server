@@ -234,7 +234,7 @@ class MutationResolveContextTest extends ApiResourcesTest
     private function createRelationResolver(?Closure $callback = null): Closure
     {
         return function (Relation $relation) use ($callback) {
-            $relation->resolveSave(function (MutationRelationResolver $r) use ($callback) {
+            $relation->resolve(function (MutationRelationResolver $r) use ($callback) {
                 if ($callback) {
                     $callback($r);
                 }

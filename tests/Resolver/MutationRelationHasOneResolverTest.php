@@ -30,7 +30,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) use ($missingCallback) {
                 $fields
                     ->relation('other', T('TYPE'), function (Relation $relation) use ($missingCallback) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) use ($missingCallback) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) use ($missingCallback) {
                             if ($missingCallback !== 'get') {
                                 $r->get(fn () => null);
                             }
@@ -67,7 +67,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) {
                 $fields
                     ->relation('other', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->get(fn () => [])
                                 ->add(fn () => Model::fromSingle('TYPE'))
@@ -96,7 +96,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) use ($missingCallback) {
                 $fields
                     ->relation('other', T('TYPE'), function (Relation $relation) use ($missingCallback) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) use ($missingCallback) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) use ($missingCallback) {
                             $r->saveRelatedToOwner(fn () => null);
 
                             if ($missingCallback !== 'get') {
@@ -149,7 +149,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->get(function (ModelInterface $owner) use ($r) {
                                     $this->testWatcher->info('get');
@@ -349,7 +349,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->get(function () {
                                     $this->testWatcher->info('get'); // never called
@@ -437,7 +437,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveRelatedToOwner(function (?string $id, ?string $typeName) use ($r) {
                                     $this->testWatcher->info('save_to_owner');
@@ -558,7 +558,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveRelatedToOwner(function (?string $id, ?string $typeName) use ($r) {
                                     $this->testWatcher->info('save_to_owner');
@@ -799,7 +799,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) use ($return) {
                 $fields
                     ->relation('other', T('TYPE'), function (Relation $relation) use ($return) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) use ($return) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) use ($return) {
                             $r
                                 ->get(function () use ($return) {
                                     if ($return !== 'NOTHING') {
@@ -842,7 +842,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) use ($return) {
                 $fields
                     ->relation('other', T('TYPE'), function (Relation $relation) use ($return) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) use ($return) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) use ($return) {
                             $r
                                 ->saveRelatedToOwner(fn () => [])
                                 ->get(fn () => null)
@@ -887,7 +887,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) use ($return) {
                 $fields
                     ->relation('other', T('TYPE'), function (Relation $relation) use ($return) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) use ($return) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) use ($return) {
                             $r
                                 ->get(fn () => null)
                                 ->add(function () use ($return) {
@@ -934,7 +934,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->get(fn () => null)
                                 ->add(function (ModelInterface $owner, string $typeName, array $saveFields) use ($r) {
@@ -1008,7 +1008,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->get(function (ModelInterface $owner) {
                                     $childId = match ($owner->apiResourcesGetId()) {
@@ -1079,7 +1079,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveRelatedToOwner(fn (string $id, string $type) => [
                                     'related_id' => $id,
@@ -1149,7 +1149,7 @@ class MutationRelationHasOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveRelatedToOwner(fn (string $id, string $type) => [
                                     'related_id' => $id,

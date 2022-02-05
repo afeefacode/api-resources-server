@@ -32,6 +32,11 @@ class QueryResolveContext implements ContainerAwareInterface
      */
     protected ?array $relationResolvers = null;
 
+    /**
+     * @var QueryRelationResolver[]
+     */
+    protected ?array $relationCountResolvers = null;
+
     public function type(Type $type): QueryResolveContext
     {
         $this->type = $type;
@@ -64,6 +69,17 @@ class QueryResolveContext implements ContainerAwareInterface
             $this->relationResolvers = $this->createRelationResolvers();
         }
         return $this->relationResolvers;
+    }
+
+    /**
+     * @return QueryRelationResolver[]
+     */
+    public function getRelationCountResolvers(): array
+    {
+        if (!$this->relationCountResolvers) {
+            $this->relationCountResolvers = $this->createRelationResolvers(true);
+        }
+        return $this->relationCountResolvers;
     }
 
     public function getRequestedFields(): array
@@ -125,7 +141,7 @@ class QueryResolveContext implements ContainerAwareInterface
         return $attributeResolvers;
     }
 
-    protected function createRelationResolvers(): array
+    protected function createRelationResolvers(bool $forCounts = false): array
     {
         $type = $this->type;
 
@@ -134,6 +150,14 @@ class QueryResolveContext implements ContainerAwareInterface
         $requestedFields = $this->getRequestedFields();
 
         foreach ($requestedFields as $fieldName => $value) {
+            if ($forCounts) {
+                if (preg_match('/^count_(.+)/', $fieldName, $matches)) {
+                    $fieldName = $matches[1];
+                } else {
+                    continue;
+                }
+            }
+
             if ($type->hasRelation($fieldName)) {
                 $relation = $type->getRelation($fieldName);
                 $resolveCallback = $relation->getResolve();
@@ -165,7 +189,7 @@ class QueryResolveContext implements ContainerAwareInterface
 
                     $relationResolver
                         ->relation($relation)
-                        ->fields($value);
+                        ->fields($forCounts ? [] : $value);
                     $relationResolvers[$fieldName] = $relationResolver;
                 } else {
                     throw new InvalidConfigurationException("Relation {$fieldName} on type {$type::type()} does not have a relation resolver.");

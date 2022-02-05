@@ -41,8 +41,7 @@ function createApiWithSingleType(
 
     if (!$addActionCallback) {
         $addActionCallback = function (Closure $addAction) use ($typeName) {
-            $addAction('test_action', function (Action $action) use ($typeName) {
-                $action->response(T($typeName));
+            $addAction('test_action', T($typeName), function (Action $action) use ($typeName) {
                 $action->resolve(function () {
                 });
             });

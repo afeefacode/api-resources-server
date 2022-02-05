@@ -31,11 +31,10 @@ class MutationActionModelResolverTest extends MutationRelationTest
         $n = in_array($missingCallback, ['add', 'update']) ? 'n' : '';
         $this->expectExceptionMessage("Resolver for action ACT on resource RES needs to implement a{$n} {$missingCallback}() method.");
 
-        $api = $this->createApiWithAction(
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
             function (Action $action) use ($missingCallback) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) use ($missingCallback) {
                         if ($missingCallback !== 'get') {
                             $r->get(fn () => null);
@@ -68,11 +67,10 @@ class MutationActionModelResolverTest extends MutationRelationTest
 
     public function test_with_all_callbacks()
     {
-        $api = $this->createApiWithAction(
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) {
                         $r
                             ->get(fn () => [])
@@ -97,15 +95,14 @@ class MutationActionModelResolverTest extends MutationRelationTest
             $this->should_update = true;
         }
 
-        $api = $this->createApiWithUpdateTypeAndAction(
+        $api = $this->createApiWithUpdateTypeAndMutation(
             function (FieldBag $fields) {
                 $fields
                     ->attribute('name', StringAttribute::class);
             },
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) {
                         $r
                             ->get(function () {
@@ -163,16 +160,15 @@ class MutationActionModelResolverTest extends MutationRelationTest
      */
     public function test_save_fields($fields, $expectedFields)
     {
-        $api = $this->createApiWithUpdateTypeAndAction(
+        $api = $this->createApiWithUpdateTypeAndMutation(
             function (FieldBag $fields) {
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->attribute('title', StringAttribute::class);
             },
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) {
                         $r
                             ->get(fn () => null)
@@ -245,13 +241,13 @@ class MutationActionModelResolverTest extends MutationRelationTest
      */
     public function test_create_save_fields_relations($fields, $expectedFields, $expectedInfo)
     {
-        $api = $this->createApiWithUpdateTypeAndAction(
+        $api = $this->createApiWithUpdateTypeAndMutation(
             function (FieldBag $fields) {
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->attribute('title', StringAttribute::class)
                     ->relation('relation', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->get(function () {
                                     $this->testWatcher->info('relation_get');
@@ -268,7 +264,7 @@ class MutationActionModelResolverTest extends MutationRelationTest
                         });
                     })
                     ->relation('relation_before', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveRelatedToOwner(function (?string $id, ?string $typeName) {
                                     return [
@@ -290,7 +286,7 @@ class MutationActionModelResolverTest extends MutationRelationTest
                         });
                     })
                     ->relation('relation_after', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveOwnerToRelated(function (string $id, string $typeName) {
                                     return [
@@ -313,10 +309,9 @@ class MutationActionModelResolverTest extends MutationRelationTest
                         });
                     });
             },
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) {
                         $r
                             ->get(fn () => null)
@@ -426,13 +421,13 @@ class MutationActionModelResolverTest extends MutationRelationTest
      */
     public function test_update_save_fields_relations($fields, $expectedFields, $expectedInfo)
     {
-        $api = $this->createApiWithUpdateTypeAndAction(
+        $api = $this->createApiWithUpdateTypeAndMutation(
             function (FieldBag $fields) {
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->attribute('title', StringAttribute::class)
                     ->relation('relation', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->get(function () {
                                     $this->testWatcher->info('relation_get');
@@ -451,7 +446,7 @@ class MutationActionModelResolverTest extends MutationRelationTest
                         });
                     })
                     ->relation('relation_before', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveRelatedToOwner(function (?string $id, ?string $typeName) {
                                     return [
@@ -480,7 +475,7 @@ class MutationActionModelResolverTest extends MutationRelationTest
                         });
                     })
                     ->relation('relation_after', T('TYPE'), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationHasOneResolver $r) {
+                        $relation->resolve(function (MutationRelationHasOneResolver $r) {
                             $r
                                 ->saveOwnerToRelated(function (string $id, string $typeName) {
                                     return [
@@ -505,10 +500,9 @@ class MutationActionModelResolverTest extends MutationRelationTest
                         });
                     });
             },
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) {
                         $r
                             ->add(fn () => null)
@@ -622,11 +616,10 @@ class MutationActionModelResolverTest extends MutationRelationTest
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Add callback of mutation resolver for action ACT on resource RES must return a ModelInterface object.');
 
-        $api = $this->createApiWithAction(
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
             function (Action $action) use ($return) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) use ($return) {
                         $r
                             ->get(fn () => null)
@@ -667,11 +660,10 @@ class MutationActionModelResolverTest extends MutationRelationTest
             $this->expectExceptionMessage('Get callback of mutation resolver for action ACT on resource RES must return a ModelInterface object or null.');
         }
 
-        $api = $this->createApiWithAction(
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
             function (Action $action) use ($return) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) use ($return) {
                         $r
                             ->get(function () use ($return) {
@@ -705,15 +697,14 @@ class MutationActionModelResolverTest extends MutationRelationTest
      */
     public function test_delete($fields, $expectedInfo, $expectedInfo2)
     {
-        $api = $this->createApiWithUpdateTypeAndAction(
+        $api = $this->createApiWithUpdateTypeAndMutation(
             function (FieldBag $fields) {
                 $fields
                     ->attribute('name', StringAttribute::class);
             },
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->input(T('TYPE'))
-                    ->response(T('TYPE'))
                     ->resolve(function (MutationActionModelResolver $r) {
                         $r
                             ->get(function (string $id, string $typeName) {

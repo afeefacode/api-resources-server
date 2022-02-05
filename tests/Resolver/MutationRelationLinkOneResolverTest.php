@@ -32,7 +32,7 @@ class MutationRelationLinkOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) use ($missingCallback) {
                 $fields
                     ->relation('other', Type::link(T('TYPE')), function (Relation $relation) use ($missingCallback) {
-                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) use ($missingCallback) {
+                        $relation->resolve(function (MutationRelationLinkOneResolver $r) use ($missingCallback) {
                             if ($missingCallback !== 'get') {
                                 $r->get(fn () => null);
                             }
@@ -65,7 +65,7 @@ class MutationRelationLinkOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) {
                 $fields
                     ->relation('other', Type::link(T('TYPE')), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkOneResolver $r) {
                             $r
                                 ->get(fn () => [])
                                 ->link(fn () => null)
@@ -86,7 +86,7 @@ class MutationRelationLinkOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) {
                 $fields
                     ->relation('other', Type::link(T('TYPE')), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkOneResolver $r) {
                             $r->saveRelatedToOwner(fn () => []);
                         });
                     });
@@ -112,7 +112,7 @@ class MutationRelationLinkOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', Type::link(T('TYPE')), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkOneResolver $r) {
                             $r
                                 ->get(function (ModelInterface $owner) use ($r) {
                                     $this->testWatcher->info('get');
@@ -273,7 +273,7 @@ class MutationRelationLinkOneResolverTest extends MutationRelationTest
                 $fields
                     ->attribute('name', StringAttribute::class)
                     ->relation('other', Type::link(T('TYPE')), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkOneResolver $r) {
                             $r
                                 ->get(function () {
                                     $this->testWatcher->info('get'); // never called
@@ -349,7 +349,7 @@ class MutationRelationLinkOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) {
                 $fields
                     ->relation('other', Type::link(T('TYPE')), function (Relation $relation) {
-                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) {
+                        $relation->resolve(function (MutationRelationLinkOneResolver $r) {
                             $r->saveRelatedToOwner(function (?string $id, ?string $typeName) use ($r) {
                                 $this->testWatcher->info('save_to_owner');
 
@@ -427,7 +427,7 @@ class MutationRelationLinkOneResolverTest extends MutationRelationTest
             function (FieldBag $fields) use ($return) {
                 $fields
                     ->relation('other', T('TYPE'), function (Relation $relation) use ($return) {
-                        $relation->resolveSave(function (MutationRelationLinkOneResolver $r) use ($return) {
+                        $relation->resolve(function (MutationRelationLinkOneResolver $r) use ($return) {
                             $r
                                 ->get(function () use ($return) {
                                     if ($return !== 'NOTHING') {

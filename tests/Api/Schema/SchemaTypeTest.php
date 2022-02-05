@@ -3,7 +3,7 @@
 namespace Afeefa\ApiResources\Tests\Api\Schema;
 
 use Afeefa\ApiResources\Action\Action;
-use Afeefa\ApiResources\Exception\Exceptions\MissingTypeException;
+use Afeefa\ApiResources\Exception\Exceptions\NotATypeException;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
@@ -190,6 +190,86 @@ class SchemaTypeTest extends ApiResourcesTest
         $this->assertEquals($expectedTypesSchema, $schema['types']);
     }
 
+    public function test_attribute_default_value()
+    {
+        $api = createApiWithSingleType(
+            'Test.Type',
+            function (FieldBag $fields) {
+                $fields
+                    ->attribute('title', function (StringAttribute $a) {
+                        $a->default('title_default');
+                    });
+            },
+            function (FieldBag $fields) {
+                $fields
+                    ->attribute('title_update', function (StringAttribute $a) {
+                        $a->default('title_update_default');
+                    })
+                    ->attribute('title_update_create', function (StringAttribute $a) {
+                        $a->default('title_update_create_default');
+                    })
+                    ->attribute('title_update_create2', function (StringAttribute $a) {
+                        $a->default('title_update_create2_default');
+                    });
+            },
+            function (FieldBag $fields, FieldBag $updateFields) {
+                $fields
+                    ->from($updateFields, 'title_update_create', function (StringAttribute $a) {
+                        $a->default('title_update_create_default_create');
+                    })
+                    ->from($updateFields, 'title_update_create2')
+                    ->attribute('title_create', function (StringAttribute $a) {
+                        $a->default('title_create_default');
+                    });
+            }
+        );
+
+        $schema = $api->toSchemaJson();
+
+        // debug_dump($schema);
+
+        $expectedTypesSchema = [
+            'Test.Type' => [
+                'translations' => [],
+                'fields' => [
+                    'title' => [
+                        'type' => 'Afeefa.StringAttribute'
+                    ]
+                ],
+                'update_fields' => [
+                    'title_update' => [
+                        'type' => 'Afeefa.StringAttribute',
+                        'default' => 'title_update_default'
+                    ],
+                    'title_update_create' => [
+                        'type' => 'Afeefa.StringAttribute',
+                        'default' => 'title_update_create_default'
+                    ],
+                    'title_update_create2' => [
+                        'type' => 'Afeefa.StringAttribute',
+                        'default' => 'title_update_create2_default'
+                    ]
+                ],
+                'create_fields' => [
+                    'title_update_create' => [
+                        'type' => 'Afeefa.StringAttribute',
+                        'default' => 'title_update_create_default_create'
+                    ],
+                    'title_update_create2' => [
+                        'type' => 'Afeefa.StringAttribute',
+                        'default' => 'title_update_create2_default'
+                    ],
+                    'title_create' => [
+                        'type' => 'Afeefa.StringAttribute',
+                        'default' => 'title_create_default'
+                    ]
+                ]
+            ]
+        ];
+
+        $this->assertEquals($expectedTypesSchema, $schema['types']);
+    }
+
     public function test_type_not_in_action()
     {
         $this->typeBuilder()->type('Test.Type')->get();
@@ -205,13 +285,10 @@ class SchemaTypeTest extends ApiResourcesTest
     {
         $this->typeBuilder()->type('Test.Type')->get();
 
-        $api = createApiWithSingleResource(function (Closure $addAction) {
-            $addAction('type', function (Action $action) {
-                $action
-                    ->input(T('Test.Type'))
-                    ->response(T('Test.Type'))
-                    ->resolve(function () {
-                    });
+        $api = createApiWithSingleResource(function (Closure $addAction, Closure $addMutation) {
+            $addMutation('type', T('Test.Type'), function (Action $action) {
+                $action->resolve(function () {
+                });
             });
         });
 
@@ -225,7 +302,7 @@ class SchemaTypeTest extends ApiResourcesTest
         $this->typeBuilder()->type('Test.Type')->get();
 
         $api = createApiWithSingleResource(function (Closure $addAction) {
-            $addAction('type', function (Action $action) {
+            $addAction('type', T('Test.Type'), function (Action $action) {
                 $action
                     ->response(T('Test.Type'))
                     ->resolve(function () {
@@ -257,15 +334,14 @@ class SchemaTypeTest extends ApiResourcesTest
 
     public function test_add_with_missing_type()
     {
-        $this->expectException(MissingTypeException::class);
-        $this->expectExceptionMessageMatches('/^Missing type for class Afeefa\\\ApiResources\\\Test\\\TestType@anonymous/');
+        $this->expectException(NotATypeException::class);
+        $this->expectExceptionMessage('Value for response $TypeClassOrClasses is not a type or a list of types.');
 
         $type = $this->typeBuilder()->type()->get();
 
         $api = createApiWithSingleResource(function (Closure $addAction) use ($type) {
-            $addAction('type', function (Action $action) use ($type) {
+            $addAction('type', null, function (Action $action) use ($type) {
                 $action
-                    ->response($type::class)
                     ->resolve(function () {
                     });
             });

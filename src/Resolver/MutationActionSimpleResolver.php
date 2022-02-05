@@ -47,8 +47,8 @@ class MutationActionSimpleResolver extends BaseMutationActionResolver
             ->fieldsToSave($this->request->getFieldsToSave2());
 
         $model = ($this->saveCallback)($resolveContext->getSaveFields());
-        if (!$model instanceof ModelInterface) {
-            throw new InvalidConfigurationException("Save {$mustReturn} a ModelInterface object.");
+        if ($model !== null && !$model instanceof ModelInterface) {
+            throw new InvalidConfigurationException("Save {$mustReturn} a ModelInterface object or null.");
         }
 
         // forward if present
@@ -59,6 +59,11 @@ class MutationActionSimpleResolver extends BaseMutationActionResolver
             return $request->dispatch();
         }
 
+        return $this->returnResponse($model);
+    }
+
+    protected function returnResponse(?ModelInterface $model = null): array
+    {
         return [
             'data' => $model,
             'input' => json_decode(file_get_contents('php://input'), true),

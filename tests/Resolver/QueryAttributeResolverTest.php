@@ -30,7 +30,7 @@ class QueryAttributeResolverTest extends QueryTest
                 $fields
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 $this->testWatcher->called();
 
                                 foreach ($owners as $owner) {
@@ -63,7 +63,7 @@ class QueryAttributeResolverTest extends QueryTest
                 $fields
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 $this->testWatcher->called();
 
                                 foreach ($owners as $index => $owner) {
@@ -99,7 +99,7 @@ class QueryAttributeResolverTest extends QueryTest
                 $fields
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function () {
+                            $r->get(function () {
                                 $this->testWatcher->called();
                             });
                         });
@@ -123,7 +123,7 @@ class QueryAttributeResolverTest extends QueryTest
                 $fields
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function () use ($r) {
+                            $r->get(function () use ($r) {
                                 $this->testWatcher->called();
                                 $this->testWatcher->info('title');
                                 $this->testWatcher->info($r->getAttribute()->getName());
@@ -132,7 +132,7 @@ class QueryAttributeResolverTest extends QueryTest
                     })
                     ->attribute('summary', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function () use ($r) {
+                            $r->get(function () use ($r) {
                                 $this->testWatcher->called();
                                 $this->testWatcher->info('summary');
                                 $this->testWatcher->info($r->getAttribute()->getName());
@@ -160,14 +160,14 @@ class QueryAttributeResolverTest extends QueryTest
                 $fields
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 $owners[0]->apiResourcesSetAttribute('title', 'calculatedTitle');
                             });
                         });
                     })
                     ->attribute('summary', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 $owners[0]->apiResourcesSetAttribute('summary', 'calculatedSummary');
                             });
                         });
@@ -196,7 +196,7 @@ class QueryAttributeResolverTest extends QueryTest
                 $fields
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 foreach ($owners as $index => $owner) {
                                     $owner->apiResourcesSetAttribute('title', 'calculatedTitle' . $index);
                                 }
@@ -205,7 +205,7 @@ class QueryAttributeResolverTest extends QueryTest
                     })
                     ->attribute('summary', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 foreach ($owners as $index => $owner) {
                                     $owner->apiResourcesSetAttribute('summary', 'calculatedSummary' . $index);
                                 }
@@ -240,7 +240,7 @@ class QueryAttributeResolverTest extends QueryTest
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r
-                                ->load(function () {
+                                ->get(function () {
                                     return ['calculatedTitle'];
                                 })
                                 ->map(function (array $fieldValues) {
@@ -269,7 +269,7 @@ class QueryAttributeResolverTest extends QueryTest
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r
-                                ->load(function (array $owners) {
+                                ->get(function (array $owners) {
                                     $objects = [];
                                     foreach ($owners as $index => $owner) {
                                         $objects[] = ['owner' => $owner, 'title' => 'calculatedTitle' . $index];
@@ -288,7 +288,7 @@ class QueryAttributeResolverTest extends QueryTest
                     ->attribute('summary', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r
-                                ->load(function (array $owners) {
+                                ->get(function (array $owners) {
                                     $objects = [];
                                     foreach ($owners as $index => $owner) {
                                         $objects[] = ['owner' => $owner, 'summary' => 'calculatedSummary' . $index];
@@ -331,7 +331,7 @@ class QueryAttributeResolverTest extends QueryTest
                 $fields
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 $owners[0]->apiResourcesSetAttribute('title', 'calculatedTitle' . $this->testWatcher->countCalls);
 
                                 $this->testWatcher->called();
@@ -340,7 +340,7 @@ class QueryAttributeResolverTest extends QueryTest
                     })
                     ->relation('other', T('TYPE'), function (Relation $relation) {
                         $relation->resolve(function (QueryRelationResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 $relatedModels = [];
                                 foreach ($owners as $owner) {
                                     $relatedModel = Model::fromSingle('TYPE', []);
@@ -396,7 +396,7 @@ class QueryAttributeResolverTest extends QueryTest
                 $fields
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 $this->testWatcher->called();
 
                                 foreach ($owners as $index => $owner) {
@@ -407,12 +407,12 @@ class QueryAttributeResolverTest extends QueryTest
                     })
                     ->relation('others', Type::list(T('TYPE')), function (Relation $relation) {
                         $relation->resolve(function (QueryRelationResolver $r) {
-                            $r->load(function (array $owners) {
+                            $r->get(function (array $owners) {
                                 $relatedModels = [];
                                 foreach ($owners as $owner) {
                                     $otherModels = Model::fromList('TYPE', [[], [], []]);
                                     $owner->apiResourcesSetRelation('others', $otherModels);
-                                    $relatedModels = [...$relatedModels, ...$otherModels];
+                                    $relatedModels[] = $otherModels;
                                 }
                                 return $relatedModels;
                             });
@@ -477,7 +477,7 @@ class QueryAttributeResolverTest extends QueryTest
     public function test_no_load_callback()
     {
         $this->expectException(MissingCallbackException::class);
-        $this->expectExceptionMessage('Resolver for attribute title needs to implement a load() method.');
+        $this->expectExceptionMessage('Resolver for attribute title needs to implement a get() method.');
 
         $api = $this->createApiWithTypeAndAction(
             function (FieldBag $fields) {
@@ -521,7 +521,7 @@ class QueryAttributeResolverTest extends QueryTest
                     ->attribute('title', function (StringAttribute $attribute) {
                         $attribute->resolve(function (QueryAttributeResolver $r) {
                             $r
-                                ->load(function () {
+                                ->get(function () {
                                 })
                                 ->map(function () {
                                 });
@@ -585,14 +585,15 @@ class QueryAttributeResolverTest extends QueryTest
         $this->assertEquals($expectedFields, $model->jsonSerialize());
     }
 
-    protected function createApiWithTypeAndAction(Closure $fieldsCallback, ?Closure $actionCallback = null, bool $isList = false): Api
+    protected function createApiWithTypeAndAction(Closure $fieldsCallback, $TypeClassOrClassesOrMeta = null, ?Closure $actionCallback = null, bool $isList = false): Api
     {
+        $TypeClassOrClassesOrMeta ??= $isList ? fn () => Type::list(T('TYPE')) : fn () => T('TYPE');
+
         $actionCallback ??= function (Action $action) use ($isList) {
             $response = $isList ? Type::list(T('TYPE')) : T('TYPE');
             $action
-                ->response($response)
                 ->resolve(function (QueryActionResolver $r) use ($isList) {
-                    $r->load(function () use ($isList, $r) {
+                    $r->get(function () use ($isList, $r) {
                         $m = function () use ($r) {
                             return TestModel::fromSingle('TYPE', [])
                                 ->selectFields($r->getSelectFields());
@@ -608,7 +609,7 @@ class QueryAttributeResolverTest extends QueryTest
                 });
         };
 
-        return parent::createApiWithTypeAndAction($fieldsCallback, $actionCallback);
+        return parent::createApiWithTypeAndAction($fieldsCallback, $TypeClassOrClassesOrMeta, $actionCallback);
     }
 
     protected function request(Api $api, ?array $fields = null, ?array $params = null, ?array $filters = null)

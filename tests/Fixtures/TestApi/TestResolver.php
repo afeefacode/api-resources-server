@@ -10,7 +10,7 @@ class TestResolver
     public function get_types(QueryActionResolver $r)
     {
         $r
-            ->load(function () use ($r) {
+            ->get(function () use ($r) {
                 $request = $r->getRequest();
                 $fieldNames = $r->getRequestedFieldNames();
                 $filters = $request->getFilters();

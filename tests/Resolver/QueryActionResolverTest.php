@@ -15,20 +15,19 @@ use Afeefa\ApiResources\Test\QueryTest;
 use function Afeefa\ApiResources\Test\T;
 
 use Afeefa\ApiResources\Type\Type;
-
+use Closure;
 use stdClass;
 
 class QueryActionResolverTest extends QueryTest
 {
     public function test_calls()
     {
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(T('TYPE'), function (Action $action) {
             $action
-                ->response(T('TYPE'))
                 ->resolve(function (QueryActionResolver $r) {
                     $this->testWatcher->called();
 
-                    $r->load(function () {
+                    $r->get(function () {
                         $this->testWatcher->called();
                         return Model::fromSingle('TYPE', []);
                     });
@@ -44,11 +43,10 @@ class QueryActionResolverTest extends QueryTest
 
     public function test_calls_requested_fields()
     {
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(T('TYPE'), function (Action $action) {
             $action
-                ->response(T('TYPE'))
                 ->resolve(function (TestActionResolver $r) {
-                    $r->load(function () use ($r) {
+                    $r->get(function () use ($r) {
                         $this->testWatcher->info($r->countCalculateCalls);
 
                         $r->getRequestedFields();
@@ -72,9 +70,8 @@ class QueryActionResolverTest extends QueryTest
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Resolve callback for action ACT on resource RES must receive an ActionResolver as argument.');
 
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(T('TYPE'), function (Action $action) {
             $action
-                ->response(T('TYPE'))
                 ->resolve(function () {
                 });
         });
@@ -85,11 +82,10 @@ class QueryActionResolverTest extends QueryTest
     public function test_missing_load_callback()
     {
         $this->expectException(MissingCallbackException::class);
-        $this->expectExceptionMessage('Action resolver for action ACT on resource RES must provide a load callback.');
+        $this->expectExceptionMessage('Action resolver for action ACT on resource RES must provide a get callback.');
 
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(T('TYPE'), function (Action $action) {
             $action
-                ->response(T('TYPE'))
                 ->resolve(function (QueryActionResolver $r) {
                 });
         });
@@ -99,11 +95,10 @@ class QueryActionResolverTest extends QueryTest
 
     public function test_returns_single()
     {
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(T('TYPE'), function (Action $action) {
             $action
-                ->response(T('TYPE'))
                 ->resolve(function (QueryActionResolver $r) {
-                    $r->load(function () {
+                    $r->get(function () {
                         return TestModel::fromSingle('TYPE', []);
                     });
                 });
@@ -128,11 +123,10 @@ class QueryActionResolverTest extends QueryTest
      */
     public function test_returns_single_null($null)
     {
-        $api = $this->createApiWithAction(function (Action $action) use ($null) {
+        $api = $this->createApiWithAction(T('TYPE'), function (Action $action) use ($null) {
             $action
-                ->response(T('TYPE'))
                 ->resolve(function (QueryActionResolver $r) use ($null) {
-                    $r->load(function () use ($null) {
+                    $r->get(function () use ($null) {
                         if ($null !== 'NOTHING') {
                             return null;
                         }
@@ -158,11 +152,10 @@ class QueryActionResolverTest extends QueryTest
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return a ModelInterface object of type [TYPE].');
 
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(T('TYPE'), function (Action $action) {
             $action
-                ->response(T('TYPE'))
                 ->resolve(function (QueryActionResolver $r) {
-                    $r->load(function () {
+                    $r->get(function () {
                         return TestModel::fromSingle('TYPE_WRONG', []);
                     });
                 });
@@ -173,11 +166,10 @@ class QueryActionResolverTest extends QueryTest
 
     public function test_returns_single_with_union()
     {
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction([T('TYPE'), T('TYPE2')], function (Action $action) {
             $action
-                ->response([T('TYPE'), T('TYPE2')])
                 ->resolve(function (QueryActionResolver $r) {
-                    $r->load(function () {
+                    $r->get(function () {
                         return TestModel::fromSingle('TYPE2', []);
                     });
                 });
@@ -202,11 +194,10 @@ class QueryActionResolverTest extends QueryTest
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return a ModelInterface object of type [TYPE,TYPE2].');
 
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction([T('TYPE'), T('TYPE2')], function (Action $action) {
             $action
-                ->response([T('TYPE'), T('TYPE2')])
                 ->resolve(function (QueryActionResolver $r) {
-                    $r->load(function () {
+                    $r->get(function () {
                         return TestModel::fromSingle('TYPE_WRONG', []);
                     });
                 });
@@ -223,11 +214,10 @@ class QueryActionResolverTest extends QueryTest
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return a ModelInterface object.');
 
-        $api = $this->createApiWithAction(function (Action $action) use ($wrongModel) {
+        $api = $this->createApiWithAction(T('TYPE'), function (Action $action) use ($wrongModel) {
             $action
-                ->response(T('TYPE'))
                 ->resolve(function (QueryActionResolver $r) use ($wrongModel) {
-                    $r->load(function () use ($wrongModel) {
+                    $r->get(function () use ($wrongModel) {
                         return $wrongModel;
                     });
                 });
@@ -247,11 +237,10 @@ class QueryActionResolverTest extends QueryTest
 
     public function test_returns_list()
     {
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(Type::list(T('TYPE')), function (Action $action) {
             $action
-                ->response(Type::list(T('TYPE')))
                 ->resolve(function (QueryActionResolver $r) {
-                    $r->load(function () {
+                    $r->get(function () {
                         return TestModel::fromList('TYPE', [[], []]);
                     });
                 });
@@ -278,11 +267,10 @@ class QueryActionResolverTest extends QueryTest
 
     public function test_returns_list_with_union()
     {
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(Type::list([T('TYPE'), T('TYPE2')]), function (Action $action) {
             $action
-                ->response(Type::list([T('TYPE'), T('TYPE2')]))
                 ->resolve(function (QueryActionResolver $r) {
-                    $r->load(function () {
+                    $r->get(function () {
                         return TestModel::fromList('TYPE2', [[], []]);
                     });
                 });
@@ -309,11 +297,10 @@ class QueryActionResolverTest extends QueryTest
 
     public function test_returns_list_empty()
     {
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(Type::list(T('TYPE')), function (Action $action) {
             $action
-                ->response(Type::list(T('TYPE')))
                 ->resolve(function (QueryActionResolver $r) {
-                    $r->load(function () {
+                    $r->get(function () {
                         return Model::fromList('TYPE', []);
                     });
                 });
@@ -334,11 +321,10 @@ class QueryActionResolverTest extends QueryTest
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return an array of ModelInterface objects.');
 
-        $api = $this->createApiWithAction(function (Action $action) use ($wrongList) {
+        $api = $this->createApiWithAction(Type::list(T('TYPE')), function (Action $action) use ($wrongList) {
             $action
-                ->response(Type::list(T('TYPE')))
                 ->resolve(function (QueryActionResolver $r) use ($wrongList) {
-                    $r->load(function () use ($wrongList) {
+                    $r->get(function () use ($wrongList) {
                         return $wrongList;
                     });
                 });
@@ -365,11 +351,10 @@ class QueryActionResolverTest extends QueryTest
         $this->expectException(InvalidConfigurationException::class);
         $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return an array of ModelInterface objects.');
 
-        $api = $this->createApiWithAction(function (Action $action) use ($wrongModel) {
+        $api = $this->createApiWithAction(Type::list(T('TYPE')), function (Action $action) use ($wrongModel) {
             $action
-                ->response(Type::list(T('TYPE')))
                 ->resolve(function (QueryActionResolver $r) use ($wrongModel) {
-                    $r->load(function () use ($wrongModel) {
+                    $r->get(function () use ($wrongModel) {
                         return [
                             Model::fromSingle('TYPE', []),
                             $wrongModel
@@ -402,11 +387,11 @@ class QueryActionResolverTest extends QueryTest
                     ->attribute('name', StringAttribute::class)
                     ->attribute('title', StringAttribute::class);
             },
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->response(T('TYPE'))
                     ->resolve(function (QueryActionResolver $r) {
-                        $r->load(function () use ($r) {
+                        $r->get(function () use ($r) {
                             $this->testWatcher->requestedFields($r->getRequestedFieldNames());
                         });
                     });
@@ -429,11 +414,11 @@ class QueryActionResolverTest extends QueryTest
                     ->attribute('name', StringAttribute::class)
                     ->attribute('title', StringAttribute::class);
             },
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->response(T('TYPE'))
                     ->resolve(function (QueryActionResolver $r) {
-                        $r->load(function () use ($r) {
+                        $r->get(function () use ($r) {
                             $this->testWatcher->selectFields($r->getSelectFields());
                         });
                     });
@@ -453,11 +438,11 @@ class QueryActionResolverTest extends QueryTest
         $this->expectExceptionMessage('You need to pass a type name to getRequestedFields() in the resolver of action ACT on resource RES since the action returns an union type.');
 
         $api = $this->createApiWithAction(
+            [T('TYPE'), T('TYPE2')],
             function (Action $action) {
                 $action
-                    ->response([T('TYPE'), T('TYPE2')])
                     ->resolve(function (QueryActionResolver $r) {
-                        $r->load(function () use ($r) {
+                        $r->get(function () use ($r) {
                             $this->testWatcher->requestedFields($r->getRequestedFields());
                         });
                     });
@@ -476,11 +461,11 @@ class QueryActionResolverTest extends QueryTest
         $this->expectExceptionMessage('The type name passed to getRequestedFields() in the resolver of action ACT on resource RES is not supported by the action.');
 
         $api = $this->createApiWithAction(
+            $single ? T('TYPE') : [T('TYPE'), T('TYPE2')],
             function (Action $action) use ($single) {
                 $action
-                    ->response($single ? T('TYPE') : [T('TYPE'), T('TYPE2')])
                     ->resolve(function (QueryActionResolver $r) {
-                        $r->load(function () use ($r) {
+                        $r->get(function () use ($r) {
                             $this->testWatcher->requestedFields($r->getRequestedFields('TYPE3'));
                         });
                     });
@@ -496,12 +481,32 @@ class QueryActionResolverTest extends QueryTest
         $this->expectExceptionMessage('You need to pass a type name to getSelectFields() in the resolver of action ACT on resource RES since the action returns an union type.');
 
         $api = $this->createApiWithAction(
+            [T('TYPE'), T('TYPE2')],
             function (Action $action) {
                 $action
-                    ->response([T('TYPE'), T('TYPE2')])
                     ->resolve(function (QueryActionResolver $r) {
-                        $r->load(function () use ($r) {
-                            $this->testWatcher->selectFields($r->getSelectFields());
+                        $r->get(function () use ($r) {
+                            $r->getSelectFields();
+                        });
+                    });
+            }
+        );
+
+        $this->request($api);
+    }
+
+    public function test_select_fields_union_missing_type2()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('You need to pass a type name to getSelectFields() in the resolver of action ACT on resource RES since the action returns an union type.');
+
+        $api = $this->createApiWithAction(
+            [T('TYPE'), T('TYPE2')],
+            function (Action $action) {
+                $action
+                    ->resolve(function (QueryActionResolver $r) {
+                        $r->get(function (ApiRequest $request, Closure $getSelectFields) {
+                            $getSelectFields();
                         });
                     });
             }
@@ -519,12 +524,35 @@ class QueryActionResolverTest extends QueryTest
         $this->expectExceptionMessage('The type name passed to getSelectFields() in the resolver of action ACT on resource RES is not supported by the action.');
 
         $api = $this->createApiWithAction(
+            $single ? T('TYPE') : [T('TYPE'), T('TYPE2')],
             function (Action $action) use ($single) {
                 $action
-                    ->response($single ? T('TYPE') : [T('TYPE'), T('TYPE2')])
                     ->resolve(function (QueryActionResolver $r) {
-                        $r->load(function () use ($r) {
-                            $this->testWatcher->selectFields($r->getSelectFields('TYPE3'));
+                        $r->get(function () use ($r) {
+                            $r->getSelectFields('TYPE3');
+                        });
+                    });
+            }
+        );
+
+        $this->request($api);
+    }
+
+    /**
+     * @dataProvider wrongTypeNameToSelectFieldsDataProvider
+     */
+    public function test_select_fields_wrong_type2($single)
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('The type name passed to getSelectFields() in the resolver of action ACT on resource RES is not supported by the action.');
+
+        $api = $this->createApiWithAction(
+            $single ? T('TYPE') : [T('TYPE'), T('TYPE2')],
+            function (Action $action) use ($single) {
+                $action
+                    ->resolve(function (QueryActionResolver $r) {
+                        $r->get(function (ApiRequest $request, Closure $getSelectFields) {
+                            $getSelectFields('TYPE3');
                         });
                     });
             }
@@ -552,11 +580,11 @@ class QueryActionResolverTest extends QueryTest
                     ->attribute('name', StringAttribute::class)
                     ->attribute('title', StringAttribute::class);
             },
+            fn () => T('TYPE'),
             function (Action $action) {
                 $action
-                    ->response(T('TYPE'))
                     ->resolve(function (QueryActionResolver $r) {
-                        $r->load(function () {
+                        $r->get(function () {
                             return TestModel::fromSingle('TYPE', []);
                         });
                     });
@@ -606,11 +634,10 @@ class QueryActionResolverTest extends QueryTest
 
     public function test_request()
     {
-        $api = $this->createApiWithAction(function (Action $action) {
+        $api = $this->createApiWithAction(T('TYPE'), function (Action $action) {
             $action
-                ->response(T('TYPE'))
                 ->resolve(function (QueryActionResolver $r) {
-                    $r->load(function () use ($r) {
+                    $r->get(function () use ($r) {
                         $this->testWatcher->request($r->getRequest());
                     });
                 });

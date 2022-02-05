@@ -15,7 +15,7 @@ class TestResource extends Resource
 
     protected function actions(ActionBag $actions): void
     {
-        $actions->add('get_types', function (Action $action) {
+        $actions->query('get_types', Type::list(TestType::class), function (Action $action) {
             $action
                 ->filters(function (FilterBag $filters) {
                     $filters->add('page_size', function (PageSizeFilter $filter) {
@@ -24,8 +24,6 @@ class TestResource extends Resource
                             ->default(5);
                     });
                 })
-
-                ->response(Type::list(TestType::class))
 
                 ->resolve([TestResolver::class, 'get_types']);
         });

@@ -14,6 +14,8 @@ class FieldBag extends Bag
 {
     protected $owner;
 
+    protected bool $isMutation = false;
+
     public function owner($owner): FieldBag
     {
         $this->owner = $owner;
@@ -23,6 +25,12 @@ class FieldBag extends Bag
     public function getOwner()
     {
         return $this->owner;
+    }
+
+    public function isMutation(bool $isMutation = true): FieldBag
+    {
+        $this->isMutation = $isMutation;
+        return $this;
     }
 
     public function getAttribute(string $name, Closure $callback = null): Attribute
@@ -48,7 +56,8 @@ class FieldBag extends Bag
         $this->container->create($classOrCallback, function (Attribute $attribute) use ($name) {
             $attribute
                 ->owner($this->getOwner())
-                ->name($name);
+                ->name($name)
+                ->isMutation($this->isMutation);
             $this->setInternal($name, $attribute);
         });
 
@@ -61,6 +70,7 @@ class FieldBag extends Bag
             $relation
                 ->owner($this->getOwner())
                 ->name($name)
+                ->isMutation($this->isMutation)
                 ->typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta);
             $this->setInternal($name, $relation);
         });

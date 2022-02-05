@@ -12,68 +12,30 @@ use Closure;
  * @method Relation validator(Validator $validator)
  * @method Relation required(bool $required = true)
  * @method Relation resolve(string|callable|Closure $classOrCallback)
- * @method Relation resolveSave(string|callable|Closure $classOrCallback)
  * @method Relation resolveParam(string $key, $value)
  * @method Relation resolveParams(array $params)
+ * @method Relation isMutation(bool $isMutation)
  */
 class Relation extends Field
 {
+    public const RESTRICT_TO_GET = 'get';
+    public const RESTRICT_TO_COUNT = 'count';
+
     protected static string $type = 'Afeefa.Relation';
 
     protected RelatedType $relatedType;
 
-    protected bool $isUpdate = false;
+    protected ?string $restrictTo = null;
 
-    protected bool $isAdd = false;
-
-    protected bool $isDelete = false;
-
-    public function updatesItems(bool $updates = true): Relation
+    public function restrictTo(?string $restrictTo): Relation
     {
-        $this->isUpdate = $updates;
+        $this->restrictTo = $restrictTo;
         return $this;
     }
 
-    public function shallUpdateItems(): bool
+    public function isRestrictedTo(string $restrictedTo): bool
     {
-        return $this->isUpdate;
-    }
-
-    public function addsItems(bool $adds = true): Relation
-    {
-        $this->isAdd = $adds;
-        return $this;
-    }
-
-    public function shallAddItems(): bool
-    {
-        return $this->isAdd;
-    }
-
-    public function deletesItems(bool $deletes = true): Relation
-    {
-        $this->isDelete = $deletes;
-        return $this;
-    }
-
-    public function shallDeleteItems(): bool
-    {
-        return $this->isDelete;
-    }
-
-    public function isSingle(): bool
-    {
-        return !$this->isList();
-    }
-
-    public function isList(): bool
-    {
-        return $this->relatedType->isList();
-    }
-
-    public function isLink(): bool
-    {
-        return $this->relatedType->isLink();
+        return $this->restrictTo === $restrictedTo;
     }
 
     public function typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta): Relation

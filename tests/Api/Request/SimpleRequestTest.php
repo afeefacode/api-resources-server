@@ -19,11 +19,10 @@ class SimpleRequestTest extends ApiResourcesTest
     {
         $api = $this->apiBuilder()->api('API', function (Closure $addResource) {
             $addResource('RES', function (Closure $addAction) {
-                $addAction('ACT', function (Action $action) {
+                $addAction('ACT', T('TYPE'), function (Action $action) {
                     $action
-                        ->response(T('TYPE'))
                         ->resolve(function (QueryActionResolver $resolver) {
-                            $resolver->load(function () {
+                            $resolver->get(function () {
                                 return Model::fromSingle('TYPE', [
                                     'id' => '123',
                                     'name' => 'test'
@@ -85,11 +84,10 @@ class SimpleRequestTest extends ApiResourcesTest
             });
 
             $addResource('RES', function (Closure $addAction) {
-                $addAction('ACT', function (Action $action) {
+                $addAction('ACT', T('TYPE'), function (Action $action) {
                     $action
-                        ->response(T('TYPE'))
                         ->resolve(function (QueryActionResolver $resolver) {
-                            $resolver->load(function () {
+                            $resolver->get(function () {
                                 return Model::fromSingle('TYPE', [
                                     'id' => '123',
                                     'name' => 'test'

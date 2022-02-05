@@ -51,10 +51,19 @@ class TestResource extends Resource
     protected function actions(ActionBag $actions): void
     {
         if (static::$addActionCallback) {
-            $addAction = function (string $name, Closure $actionCallback) use ($actions): void {
-                $actions->add($name, $actionCallback);
+            $addAction = function (string $name, $TypeClassOrClassesOrMeta, Closure $actionCallback) use ($actions): void {
+                if ($TypeClassOrClassesOrMeta instanceof Closure) {
+                    $TypeClassOrClassesOrMeta = $TypeClassOrClassesOrMeta();
+                }
+                $actions->query($name, $TypeClassOrClassesOrMeta, $actionCallback);
             };
-            (static::$addActionCallback)($addAction);
+            $addMutation = function (string $name, $TypeClassOrClassesOrMeta, Closure $actionCallback) use ($actions): void {
+                if ($TypeClassOrClassesOrMeta instanceof Closure) {
+                    $TypeClassOrClassesOrMeta = $TypeClassOrClassesOrMeta();
+                }
+                $actions->mutation($name, $TypeClassOrClassesOrMeta, $actionCallback);
+            };
+            (static::$addActionCallback)($addAction, $addMutation);
         }
     }
 }

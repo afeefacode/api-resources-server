@@ -36,8 +36,15 @@ class TypeClassMap implements ContainerAwareInterface
 
     public function createUsedTypesForAction(Action $action, array $types = []): array
     {
-        $TypeClasses = $action->getResponse()->getAllTypeClasses();
-        return $this->createUsedTypes($types, $TypeClasses);
+        if ($action->hasResponse()) {
+            $ResponseTypeClasses = $action->getResponse()->getAllTypeClasses();
+            $types = $this->createUsedTypes($types, $ResponseTypeClasses);
+        }
+        if ($action->hasInput()) {
+            $InputTypeClasses = $action->getInput()->getAllTypeClasses();
+            $types = $this->createUsedTypes($types, $InputTypeClasses);
+        }
+        return $types;
     }
 
     protected function createUsedTypes(array $types, array $TypeClasses): array
