@@ -19,11 +19,6 @@ trait AttributeResolverTrait
         return $this->attribute;
     }
 
-    public function getResolveParams(): array
-    {
-        return $this->attribute->getResolveParams();
-    }
-
     public function getResolveParam(string $name)
     {
         return $this->attribute->getResolveParam($name);

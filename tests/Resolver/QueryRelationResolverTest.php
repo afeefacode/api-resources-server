@@ -1272,6 +1272,36 @@ class QueryRelationResolverTest extends QueryTest
     }
 
     /**
+     * @dataProvider loadArrayOfModelsDataprovider
+     */
+    public function test_get_list_returns_list_of_models($returnValue)
+    {
+        $api = $this->createApiWithTypeAndAction(
+            function (FieldBag $fields) use ($returnValue) {
+                $fields
+                    ->relation('others', Type::list(T('TYPE')), function (Relation $relation) use ($returnValue) {
+                        $relation->resolve(function (QueryRelationResolver $r) use ($returnValue) {
+                            $r
+                                ->get(fn () => $returnValue);
+                        });
+                    });
+            }
+        );
+
+        $this->requestSingle($api, ['others' => true]);
+
+        $this->assertTrue(true);
+    }
+
+    public function loadArrayOfModelsDataprovider()
+    {
+        return [
+            'return empty' => [[]],
+            'return empty' => [[[Model::fromSingle('TYPE')], [Model::fromSingle('TYPE')]]],
+        ];
+    }
+
+    /**
      * @dataProvider requestFieldsDataProvider
      */
     public function test_requested_fields($fields, $expectedFields)
@@ -1579,7 +1609,6 @@ class QueryRelationResolverTest extends QueryTest
                     ->relation('other', T('TYPE'), function (Relation $relation) {
                         $relation->resolve(function (TestRelationResolver $r) {
                             $r->get(function () use ($r) {
-                                $this->testWatcher->info($r->getResolveParams());
                                 $this->testWatcher->info($r->getResolveParam('key'));
                                 return [];
                             });
@@ -1590,7 +1619,34 @@ class QueryRelationResolverTest extends QueryTest
 
         $this->request($api, ['other' => true]);
 
-        $this->assertEquals([['key' => 'value'], 'value'], $this->testWatcher->info);
+        $this->assertEquals(['value'], $this->testWatcher->info);
+    }
+
+    public function test_request_params()
+    {
+        $api = $this->createApiWithTypeAndAction(
+            function (FieldBag $fields) {
+                $fields
+                    ->relation('other', T('TYPE'), function (Relation $relation) {
+                        $relation->resolve(function (TestRelationResolver $r) {
+                            $r->get(function () use ($r) {
+                                $this->testWatcher->info($r->getParams());
+                                return [];
+                            });
+                        }, ['key' => 'value']);
+                    });
+            }
+        );
+
+        $this->request($api, [
+            'other' => [
+                '__params' => [
+                    'a' => 'b'
+                ]
+            ]
+        ]);
+
+        $this->assertEquals([['a' => 'b']], $this->testWatcher->info);
     }
 
     protected function createApiWithTypeAndAction(Closure $fieldsCallback, $TypeClassOrClassesOrMeta = null, ?Closure $actionCallback = null, bool $isList = false): Api

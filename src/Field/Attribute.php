@@ -10,9 +10,8 @@ use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
  * @method Attribute validate(Closure $callback)
  * @method Attribute validator(Validator $validator)
  * @method Attribute required(bool $required = true)
- * @method Attribute resolve(string|callable|Closure $classOrCallback)
- * @method Attribute resolveParam(string $key, $value)
- * @method Attribute resolveParams(array $params)
+ * @method Attribute resolve(string|callable|Closure $classOrCallback, array $params = [])
+ * @method Attribute isMutation(bool $isMutation)
 */
 class Attribute extends Field
 {

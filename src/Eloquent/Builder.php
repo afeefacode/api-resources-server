@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Eloquent;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 class Builder extends EloquentBuilder
@@ -22,9 +23,9 @@ class Builder extends EloquentBuilder
      *
      * @see parent::eagerLoadRelation()
      */
-    public function afeefaEagerLoadRelation(array $models, string $name, array $selectFields, array $relationCounts)
+    public function afeefaEagerLoadRelation(array $models, string $relationName, array $selectFields, array $relationCounts, array $params)
     {
-        $relation = $this->getRelation($name);
+        $relation = $this->getRelation($relationName);
 
         $relatedTable = $relation->getRelated()->getTable();
         $selectFields = array_map(function ($field) use ($relatedTable) {
@@ -37,18 +38,35 @@ class Builder extends EloquentBuilder
         // will add a '*' column by default, which we don't want.
         $relation->select($selectFields);
 
+        $limit = $params['limit'] ?? null;
+        if ($limit) {
+            $relation->limit($limit);
+        }
+
         if (count($relationCounts)) {
             $relation->withCount($relationCounts);
         }
 
         $relatedModels = $relation->get();
 
-        $relation->match(
-            $relation->initRelation($models, $name),
+        $ownersWithRelation = $relation->match(
+            $relation->initRelation($models, $relationName),
             $relatedModels,
-            $name
+            $relationName
         );
 
-        return $relatedModels;
+        $result = [];
+
+        foreach ($ownersWithRelation as $owner) {
+            $item = $owner->$relationName;
+            if ($item instanceof Collection) {
+                $item = $item->all();
+            } elseif (!$item) {
+                continue;
+            }
+            $result[$owner->id] = $item;
+        }
+
+        return $result;
     }
 }

@@ -1,6 +1,6 @@
 {
     "name": "afeefa/api-resources-server",
-    "version": "0.0.72",
+    "version": "0.0.73",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -18,7 +18,8 @@
         "phpunit/phpunit": "^9.5",
         "catfan/medoo": "^2.1",
         "afeefa/debug-dump-log": "^0",
-        "illuminate/database": "^8.66"
+        "illuminate/database": "^8.66",
+        "staudenmeir/eloquent-eager-limit": "^1.5"
     },
     "autoload": {
         "psr-4": {

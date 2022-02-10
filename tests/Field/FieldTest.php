@@ -30,7 +30,6 @@ class FieldTest extends ApiResourcesTest
         $this->assertFalse($field->hasResolver());
         $this->assertFalse($field->hasResolver());
         $this->assertFalse($field->hasResolveParam('something'));
-        $this->assertSame([], $field->getResolveParams());
     }
 
     public function test_options()
@@ -80,7 +79,6 @@ class FieldTest extends ApiResourcesTest
         $this->assertFalse($field->hasResolver());
         $this->assertFalse($field->hasResolver());
         $this->assertFalse($field->hasResolveParam('something'));
-        $this->assertSame([], $field->getResolveParams());
     }
 
     public function test_clone_required()

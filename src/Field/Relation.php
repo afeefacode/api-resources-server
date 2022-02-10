@@ -11,9 +11,7 @@ use Closure;
  * @method Relation validate(Closure $callback)
  * @method Relation validator(Validator $validator)
  * @method Relation required(bool $required = true)
- * @method Relation resolve(string|callable|Closure $classOrCallback)
- * @method Relation resolveParam(string $key, $value)
- * @method Relation resolveParams(array $params)
+ * @method Relation resolve(string|callable|Closure $classOrCallback, array $params = [])
  * @method Relation isMutation(bool $isMutation)
  */
 class Relation extends Field

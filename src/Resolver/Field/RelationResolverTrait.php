@@ -19,11 +19,6 @@ trait RelationResolverTrait
         return $this->relation;
     }
 
-    public function getResolveParams(): array
-    {
-        return $this->relation->getResolveParams();
-    }
-
     public function getResolveParam(string $name)
     {
         return $this->relation->getResolveParam($name);

@@ -24,7 +24,10 @@ class ModelType extends Type
         foreach (array_values($fields->getEntries()) as $entry) {
             if ($entry instanceof Relation) {
                 if (!$entry->hasResolver()) {
-                    $entry->resolve([ModelRelationResolver::class, 'get_relation']);
+                    $entry->resolve(
+                        [ModelRelationResolver::class, 'get_relation'],
+                        ['is_eloquent_relation' => true]
+                    );
                 }
             }
         }

@@ -123,18 +123,6 @@ class Field extends BagEntry
         return null;
     }
 
-    public function resolveParams(array $params): Field
-    {
-        $this->resolveParams = $params;
-        return $this;
-    }
-
-    public function resolveParam(string $key, $value): Field
-    {
-        $this->resolveParams[$key] = $value;
-        return $this;
-    }
-
     public function hasResolveParam(string $name): bool
     {
         return isset($this->resolveParams[$name]);
@@ -142,12 +130,7 @@ class Field extends BagEntry
 
     public function getResolveParam(string $name)
     {
-        return $this->resolveParams[$name];
-    }
-
-    public function getResolveParams(): array
-    {
-        return $this->resolveParams;
+        return $this->resolveParams[$name] ?? null;
     }
 
     public function getValidatorClass(): ?string

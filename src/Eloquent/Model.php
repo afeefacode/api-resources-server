@@ -4,9 +4,12 @@ namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Model\ModelInterface;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class Model extends EloquentModel implements ModelInterface
 {
+    use HasEagerLimit;
+
     public static $type = 'Model';
 
     protected $visibleFields = [];

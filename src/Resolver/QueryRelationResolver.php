@@ -50,6 +50,11 @@ class QueryRelationResolver extends BaseFieldResolver
         return $this->ownerIdFields ?? [];
     }
 
+    public function getParams(): array
+    {
+        return $this->fields['__params'] ?? [];
+    }
+
     public function getSelectFields(?string $typeName = null): array
     {
         $relationName = $this->relation->getName();
