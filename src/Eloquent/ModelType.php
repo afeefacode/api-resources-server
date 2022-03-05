@@ -38,7 +38,22 @@ class ModelType extends Type
         foreach (array_values($fields->getEntries()) as $entry) {
             if ($entry instanceof Relation) {
                 if (!$entry->hasResolver()) {
-                    $entry->resolve([ModelRelationResolver::class, 'save_relation']);
+                    $isList = $entry->getRelatedType()->isList();
+                    $isLink = $entry->getRelatedType()->isLink();
+
+                    if ($isLink) {
+                        if ($isList) {
+                            $entry->resolve([ModelRelationResolver::class, 'save_link_many_relation']);
+                        } else {
+                            $entry->resolve([ModelRelationResolver::class, 'save_link_one_relation']);
+                        }
+                    } else {
+                        if ($isList) {
+                            $entry->resolve([ModelRelationResolver::class, 'save_has_many_relation']);
+                        } else {
+                            $entry->resolve([ModelRelationResolver::class, 'save_has_one_relation']);
+                        }
+                    }
                 }
             }
         }

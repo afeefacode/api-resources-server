@@ -14,18 +14,11 @@ class Model extends EloquentModel implements ModelInterface
 
     protected $visibleFields = [];
 
-    protected $casts = [
-        'id' => 'string'
-    ];
+    protected $keyType = 'string';
 
     public function getTypeAttribute(): string
     {
         return static::$type;
-    }
-
-    public function getUniqueFields(): array
-    {
-        return [];
     }
 
     public function apiResourcesGetId(): ?string

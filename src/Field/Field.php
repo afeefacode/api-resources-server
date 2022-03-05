@@ -223,6 +223,7 @@ class Field extends BagEntry
         return $this->container->create(static::class, function (Field $field) {
             $field
                 ->name($this->name)
+                ->owner($this->owner)
                 ->required($this->required)
                 ->default($this->default)
                 ->isMutation($this->isMutation);

@@ -5,6 +5,8 @@ namespace Afeefa\ApiResources\Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class Builder extends EloquentBuilder
 {
@@ -24,6 +26,46 @@ class Builder extends EloquentBuilder
      * @see parent::eagerLoadRelation()
      */
     public function afeefaEagerLoadRelation(array $models, string $relationName, array $selectFields, array $relationCounts, array $params)
+    {
+        $this->with($relationName, function (Relation $relation) use ($selectFields, $relationCounts, $params) {
+            // do not alias columns which are morphed to
+            if (!$relation instanceof MorphTo) {
+                $relatedTable = $relation->getRelated()->getTable();
+                $selectFields = array_map(function ($field) use ($relatedTable) {
+                    return $relatedTable . '.' . $field;
+                }, $selectFields);
+            }
+
+            $relation->select($selectFields);
+
+            $limit = $params['limit'] ?? null;
+            if ($limit) {
+                $relation->limit($limit);
+            }
+
+            if (count($relationCounts)) {
+                $relation->withCount($relationCounts);
+            }
+        });
+
+        $ownersWithRelation = $this->eagerLoadRelations($models);
+
+        $result = [];
+
+        foreach ($ownersWithRelation as $owner) {
+            $item = $owner->$relationName;
+            if ($item instanceof Collection) {
+                $item = $item->all();
+            } elseif (!$item) {
+                continue;
+            }
+            $result[$owner->id] = $item;
+        }
+
+        return $result;
+    }
+
+    public function _afeefaEagerLoadRelation(array $models, string $relationName, array $selectFields, array $relationCounts, array $params)
     {
         $relation = $this->getRelation($relationName);
 
