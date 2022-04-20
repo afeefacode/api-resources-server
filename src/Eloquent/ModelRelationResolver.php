@@ -12,7 +12,8 @@ use Afeefa\ApiResources\Resolver\QueryRelationResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 
@@ -45,11 +46,11 @@ class ModelRelationResolver
 
                 // select field on the relation prior matching the related to its owner
                 $selectFields = $r->getSelectFields();
-                if ($eloquentRelation instanceof HasMany) { // reference to the owner in the related table
+                if ($eloquentRelation instanceof HasOneOrMany) { // reference to the owner in the related table
                     $selectFields[] = $eloquentRelation->getForeignKeyName();
-                }
-                if ($eloquentRelation instanceof HasOne) { // reference to the owner in the related table
-                    $selectFields[] = $eloquentRelation->getForeignKeyName();
+                    if ($eloquentRelation instanceof MorphOneOrMany) { // reference to the owner in the related table
+                        $selectFields[] = $eloquentRelation->getMorphType();
+                    }
                 }
 
                 $relationCounts = $this->getRelationCountsOfRelation($r);
