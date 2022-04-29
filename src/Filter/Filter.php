@@ -116,11 +116,11 @@ class Filter extends BagEntry
             $json['default'] = $this->default;
         }
 
-        if (isset($this->options)) {
-            $json['options'] = $this->options;
-        } elseif (isset($this->optionsRequestCallback)) {
+        if (isset($this->optionsRequestCallback)) {
             $request = $this->getOptionsRequest();
             $json['options_request'] = $request->toSchemaJson();
+        } elseif (isset($this->options)) {
+            $json['options'] = $this->options;
         }
 
         if ($this->hasNullAsOption()) {
