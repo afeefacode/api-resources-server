@@ -66,6 +66,47 @@ class ModelRelationResolver
 
     public function save_has_one_relation(MutationRelationHasOneResolver $r)
     {
+        $r
+            ->saveRelatedToOwner(function (?string $id) use ($r) {
+                $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
+                if ($eloquentRelation instanceof BelongsTo) { // reference to the related in the owner table
+                    return [$eloquentRelation->getForeignKeyName() => $id];
+                }
+            })
+            ->get(function (Model $owner) use ($r) {
+                $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
+                return $eloquentRelation->get()->first();
+            })
+            ->addBeforeOwner(function (string $typeName, array $saveFields) use ($r) {
+                $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
+                $relatedModel = $eloquentRelation->getRelated();
+                if (!empty($saveFields)) {
+                    $relatedModel->fillable(array_keys($saveFields));
+                    $relatedModel->fill($saveFields);
+                }
+                $relatedModel->save();
+                return $relatedModel->fresh();
+            })
+            ->add(function (Model $owner, string $typeName, array $saveFields) use ($r) {
+                $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
+                $relatedModel = $eloquentRelation->getRelated();
+                if (!empty($saveFields)) {
+                    $relatedModel->fillable(array_keys($saveFields));
+                    $relatedModel->fill($saveFields);
+                }
+                $relatedModel->save();
+                return $relatedModel->fresh();
+            })
+            ->update(function (Model $owner, Model $modelToUpdate, array $saveFields) use ($r) {
+                if (!empty($saveFields)) {
+                    $modelToUpdate->fillable(array_keys($saveFields));
+                    $modelToUpdate->fill($saveFields);
+                    $modelToUpdate->save();
+                }
+            })
+            ->delete(function (Model $owner, Model $modelToDelete) use ($r) {
+                $modelToDelete->delete();
+            });
     }
 
     public function save_has_many_relation(MutationRelationHasManyResolver $r)

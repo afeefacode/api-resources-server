@@ -25,6 +25,8 @@ class Relation extends Field
 
     protected ?string $restrictTo = null;
 
+    protected ?Closure $additionalSaveFieldsCallback = null;
+
     public function restrictTo(?string $restrictTo): Relation
     {
         $this->restrictTo = $restrictTo;
@@ -34,6 +36,22 @@ class Relation extends Field
     public function isRestrictedTo(string $restrictedTo): bool
     {
         return $this->restrictTo === $restrictedTo;
+    }
+
+    public function setAdditionalSaveFields(Closure $callback): self
+    {
+        $this->additionalSaveFieldsCallback = $callback;
+        return $this;
+    }
+
+    public function hasAdditionalSaveFieldsCallback(): bool
+    {
+        return !!$this->additionalSaveFieldsCallback;
+    }
+
+    public function getAdditionalSaveFieldsCallback(): ?Closure
+    {
+        return $this->additionalSaveFieldsCallback;
     }
 
     public function typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta): Relation

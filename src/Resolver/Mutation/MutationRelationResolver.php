@@ -69,7 +69,7 @@ class MutationRelationResolver extends BaseFieldResolver
 
     public function getSaveRelatedToOwnerFields(): array
     {
-        return ($this->saveRelatedToOwnerCallback)($this->resolvedId, $this->resolvedType);
+        return ($this->saveRelatedToOwnerCallback)($this->resolvedId, $this->resolvedType) ?? [];
     }
 
     public function saveOwnerToRelated(Closure $callback): self
@@ -138,5 +138,15 @@ class MutationRelationResolver extends BaseFieldResolver
 
     public function resolve(): void
     {
+    }
+
+    protected function addAdditionalSaveFields(array $saveFields): array
+    {
+        $relation = $this->getRelation();
+        // add additional relation specific save fields
+        if ($relation->hasAdditionalSaveFieldsCallback()) {
+            $saveFields = array_merge($saveFields, $relation->getAdditionalSaveFieldsCallback()($saveFields));
+        }
+        return $saveFields;
     }
 }

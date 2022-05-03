@@ -51,6 +51,7 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
             } else { // create owner -> create related
                 if (is_array($this->fieldsToSave)) { // add related only if data present
                     $related = $this->resolveModel(null, Operation::CREATE, $typeName, $this->fieldsToSave, function ($saveFields) use ($typeName, $mustReturn) {
+                        $saveFields = $this->addAdditionalSaveFields($saveFields);
                         $addedModel = ($this->addBeforeOwnerCallback)($typeName, $saveFields);
                         if (!$addedModel instanceof ModelInterface) {
                             throw new InvalidConfigurationException("AddBeforeOwner {$mustReturn} a ModelInterface object.");
@@ -86,6 +87,7 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
                 }
                 // update related
                 return $this->resolveModel($owner, Operation::UPDATE, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $existingModel) {
+                    $saveFields = $this->addAdditionalSaveFields($saveFields);
                     ($this->updateCallback)($owner, $existingModel, $saveFields);
                     return $existingModel;
                 });
@@ -94,6 +96,7 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
             if (is_array($fieldsToSave)) {
                 // add related
                 return $this->resolveModel($owner, Operation::CREATE, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
+                    $saveFields = $this->addAdditionalSaveFields($saveFields);
                     $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                     if (!$addedModel instanceof ModelInterface) {
                         throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");
@@ -105,6 +108,7 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
             if (is_array($fieldsToSave)) {
                 // add related
                 return $this->resolveModel($owner, Operation::CREATE, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
+                    $saveFields = $this->addAdditionalSaveFields($saveFields);
                     $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                     if (!$addedModel instanceof ModelInterface) {
                         throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");

@@ -13,8 +13,6 @@ class BaseMutationActionResolver extends BaseActionResolver
 
     protected ?Closure $forwardCallback = null;
 
-    protected array $relatedSaveFields = [];
-
     public function forward(Closure $callback): BaseMutationActionResolver
     {
         $this->forwardCallback = $callback;

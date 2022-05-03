@@ -73,11 +73,13 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
                 $existingModel = $getExistingModelById($single['id'] ?? null);
                 if ($existingModel) {
                     $this->resolveModel($owner, Operation::UPDATE, $typeName, $single, function (array $saveFields) use ($owner, $existingModel) {
+                        $saveFields = $this->addAdditionalSaveFields($saveFields);
                         ($this->updateCallback)($owner, $existingModel, $saveFields);
                         return $existingModel;
                     });
                 } else {
                     $this->resolveModel($owner, Operation::CREATE, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
+                        $saveFields = $this->addAdditionalSaveFields($saveFields);
                         $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                         if (!$addedModel instanceof ModelInterface) {
                             throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");
@@ -89,6 +91,7 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
         } else { // create, only add
             foreach ($data as $single) {
                 $this->resolveModel($owner, Operation::CREATE, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
+                    $saveFields = $this->addAdditionalSaveFields($saveFields);
                     $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                     if (!$addedModel instanceof ModelInterface) {
                         throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");
