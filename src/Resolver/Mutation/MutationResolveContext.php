@@ -97,31 +97,23 @@ class MutationResolveContext implements ContainerAwareInterface
 
                     $this->container->call(
                         $resolveCallback,
-                        function (DependencyResolver $r) {
+                        function (DependencyResolver $r) use (&$mutationRelationResolver, $relation, $value) {
                             if ($r->isOf(MutationRelationResolver::class)) {
-                                $r->create();
-                            }
-                        },
-                        function () use (&$mutationRelationResolver) {
-                            $arguments = func_get_args();
-                            foreach ($arguments as $argument) {
-                                if ($argument instanceof MutationRelationResolver) {
-                                    $mutationRelationResolver = $argument;
-                                }
+                                $r->create(function (MutationRelationResolver $resolver) use (&$mutationRelationResolver, $relation, $value) {
+                                    $resolver
+                                        ->relation($relation)
+                                        ->fieldsToSave($value);
+                                    if ($this->owner) {
+                                        $resolver->addOwner($this->owner);
+                                    }
+                                    $mutationRelationResolver = $resolver;
+                                });
                             }
                         }
                     );
 
                     if (!$mutationRelationResolver) {
                         throw new InvalidConfigurationException("Resolve callback for save relation {$fieldName} on type {$type::type()} must receive a MutationRelationResolver as argument.");
-                    }
-
-                    $mutationRelationResolver
-                        ->relation($relation)
-                        ->fieldsToSave($value);
-
-                    if ($this->owner) {
-                        $mutationRelationResolver->addOwner($this->owner);
                     }
 
                     $relationResolvers[$fieldName] = $mutationRelationResolver;

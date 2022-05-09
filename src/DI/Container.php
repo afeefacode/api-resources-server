@@ -101,6 +101,7 @@ class Container implements ContainerInterface
                         $instance = $resolver->getFix();
                     } elseif ($resolver->shouldCreate()) { // create instance
                         $instance = $this->createInstance($TypeClass);
+                        $resolver->initInstance($instance);
                     }
                 }
 

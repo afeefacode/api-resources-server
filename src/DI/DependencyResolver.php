@@ -2,6 +2,8 @@
 
 namespace Afeefa\ApiResources\DI;
 
+use Closure;
+
 class DependencyResolver
 {
     protected string $TypeClass;
@@ -9,6 +11,8 @@ class DependencyResolver
     protected int $index = 0;
 
     protected ?object $fix = null;
+
+    protected ?Closure $initFunction = null;
 
     protected bool $create = false;
 
@@ -45,15 +49,23 @@ class DependencyResolver
         return $this->fix;
     }
 
-    public function create(): DependencyResolver
+    public function create(?Closure $initFunction = null): DependencyResolver
     {
         $this->create = true;
+        $this->initFunction = $initFunction;
         return $this;
     }
 
     public function shouldCreate(): bool
     {
         return $this->create;
+    }
+
+    public function initInstance(object $instance): void
+    {
+        if ($this->initFunction) {
+            ($this->initFunction)($instance);
+        };
     }
 
     public function isOf(string $TypeClass): bool

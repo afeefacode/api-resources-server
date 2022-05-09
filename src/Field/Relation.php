@@ -72,6 +72,11 @@ class Relation extends Field
         /** @var Relation */
         $relation = parent::clone();
         $relation->relatedType = $this->relatedType;
+
+        if ($this->additionalSaveFieldsCallback) {
+            $relation->additionalSaveFieldsCallback = $this->additionalSaveFieldsCallback;
+        }
+
         return $relation;
     }
 

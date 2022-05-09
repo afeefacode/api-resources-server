@@ -12,6 +12,7 @@ use Afeefa\ApiResources\Resolver\QueryRelationResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -66,26 +67,36 @@ class ModelRelationResolver
 
     public function save_has_one_relation(MutationRelationHasOneResolver $r)
     {
-        $r
-            ->saveRelatedToOwner(function (?string $id) use ($r) {
-                $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
-                if ($eloquentRelation instanceof BelongsTo) { // reference to the related in the owner table
+        $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
+
+        if ($eloquentRelation instanceof HasOne) { // reference to the owner in the related table
+            $r
+                ->saveOwnerToRelated(function (string $id, string $typeName) use ($eloquentRelation) {
                     return [$eloquentRelation->getForeignKeyName() => $id];
-                }
-            })
+                });
+        }
+
+        if ($eloquentRelation instanceof BelongsTo) { // reference to the owner in the related table
+            $r
+                ->saveRelatedToOwner(function (?string $id) use ($eloquentRelation) {
+                    return [$eloquentRelation->getForeignKeyName() => $id];
+                })
+                ->addBeforeOwner(function (string $typeName, array $saveFields) use ($r) {
+                    $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
+                    $relatedModel = $eloquentRelation->getRelated();
+                    if (!empty($saveFields)) {
+                        $relatedModel->fillable(array_keys($saveFields));
+                        $relatedModel->fill($saveFields);
+                    }
+                    $relatedModel->save();
+                    return $relatedModel->fresh();
+                });
+        }
+
+        $r
             ->get(function (Model $owner) use ($r) {
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
                 return $eloquentRelation->get()->first();
-            })
-            ->addBeforeOwner(function (string $typeName, array $saveFields) use ($r) {
-                $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
-                $relatedModel = $eloquentRelation->getRelated();
-                if (!empty($saveFields)) {
-                    $relatedModel->fillable(array_keys($saveFields));
-                    $relatedModel->fill($saveFields);
-                }
-                $relatedModel->save();
-                return $relatedModel->fresh();
             })
             ->add(function (Model $owner, string $typeName, array $saveFields) use ($r) {
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
