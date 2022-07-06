@@ -21,6 +21,8 @@ class MutationResolveContext implements ContainerAwareInterface
 
     protected ?ModelInterface $owner = null;
 
+    protected ?string $operation = null;
+
     protected ?array $fieldsToSave = null;
 
     /**
@@ -40,8 +42,17 @@ class MutationResolveContext implements ContainerAwareInterface
         return $this;
     }
 
+    public function operation(string $operation): self
+    {
+        $this->operation = $operation;
+        return $this;
+    }
+
     public function getOperation(): string
     {
+        if ($this->operation) {
+            return $this->operation;
+        }
         return isset($this->fieldsToSave['id']) ? Operation::UPDATE : Operation::CREATE;
     }
 

@@ -18,7 +18,7 @@ trait MutationResolverTrait
 
     protected function resolveModel(?ModelInterface $owner, string $ownerOperation, string $typeName, array $fieldsToSave, Closure $resolveCallback): ModelInterface
     {
-        $resolveContext = $this->createResolveContext($typeName, $fieldsToSave);
+        $resolveContext = $this->createResolveContext($typeName, $ownerOperation, $fieldsToSave);
 
         // resolve relations before this model (relation can only be hasOne or linkOne)
 
@@ -71,10 +71,11 @@ trait MutationResolverTrait
         return $owner;
     }
 
-    private function createResolveContext(string $typeName, array $fieldsToSave): MutationResolveContext
+    private function createResolveContext(string $typeName, string $operation, array $fieldsToSave): MutationResolveContext
     {
         return $this->container->create(MutationResolveContext::class)
             ->type($this->getTypeByName($typeName))
+            ->operation($operation)
             ->fieldsToSave($fieldsToSave);
     }
 }

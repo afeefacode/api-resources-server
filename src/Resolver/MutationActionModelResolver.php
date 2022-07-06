@@ -74,7 +74,7 @@ class MutationActionModelResolver extends BaseMutationActionResolver
 
         /** @var ModelInterface */
         $existingModel = null;
-        /** @var ModelsInterface */
+        /** @var ModelInterface */
         $model = null;
 
         $input = $action->getInput();

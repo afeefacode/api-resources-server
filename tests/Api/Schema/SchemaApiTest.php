@@ -50,7 +50,6 @@ class SchemaApiTest extends ApiResourcesTest
             ],
             'types' => [
                 'Test.Type' => [
-                    'translations' => [],
                     'fields' => [
                         'title' => [
                             'type' => 'Afeefa.StringAttribute',

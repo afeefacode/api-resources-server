@@ -49,7 +49,6 @@ class SchemaValidatorTest extends ApiResourcesTest
 
         $expectedTypesSchema = [
             'Test.Type' => [
-                'translations' => [],
                 'fields' => [
                     'title' => [
                         'type' => 'Afeefa.StringAttribute',

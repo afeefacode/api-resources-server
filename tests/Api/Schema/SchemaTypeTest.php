@@ -35,7 +35,6 @@ class SchemaTypeTest extends ApiResourcesTest
 
         $expectedTypesSchema = [
             'Test.Type' => [
-                'translations' => [],
                 'fields' => [
                     'title' => [
                         'type' => 'Afeefa.StringAttribute'
@@ -80,7 +79,6 @@ class SchemaTypeTest extends ApiResourcesTest
 
         $expectedTypesSchema = [
             'Test.Type' => [
-                'translations' => [],
                 'fields' => [
                     'title' => [
                         'type' => 'Afeefa.StringAttribute',
@@ -121,7 +119,6 @@ class SchemaTypeTest extends ApiResourcesTest
 
         $expectedTypesSchema = [
             'Test.Type' => [
-                'translations' => [],
                 'fields' => [
                     'title' => [
                         'type' => 'Afeefa.StringAttribute',
@@ -162,7 +159,6 @@ class SchemaTypeTest extends ApiResourcesTest
 
         $expectedTypesSchema = [
             'Test.Type' => [
-                'translations' => [],
                 'fields' => [
                     'title' => [
                         'type' => 'Afeefa.StringAttribute'
@@ -230,7 +226,6 @@ class SchemaTypeTest extends ApiResourcesTest
 
         $expectedTypesSchema = [
             'Test.Type' => [
-                'translations' => [],
                 'fields' => [
                     'title' => [
                         'type' => 'Afeefa.StringAttribute'
@@ -367,7 +362,6 @@ class SchemaTypeTest extends ApiResourcesTest
 
         $expectedTypesSchema = [
             'Test.Type' => [
-                'translations' => [],
                 'fields' => [
                     'other_type' => [
                         'type' => 'Afeefa.Relation',
@@ -386,7 +380,6 @@ class SchemaTypeTest extends ApiResourcesTest
                 'create_fields' => []
             ],
             'Test.Type2' => [
-                'translations' => [],
                 'fields' => [],
                 'update_fields' => [],
                 'create_fields' => []
@@ -413,7 +406,6 @@ class SchemaTypeTest extends ApiResourcesTest
 
         $expectedTypesSchema = [
             'Test.Type' => [
-                'translations' => [],
                 'fields' => [
                     'other_types' => [
                         'type' => 'Afeefa.Relation',
@@ -434,7 +426,6 @@ class SchemaTypeTest extends ApiResourcesTest
                 'create_fields' => []
             ],
             'Test.Type2' => [
-                'translations' => [],
                 'fields' => [],
                 'update_fields' => [],
                 'create_fields' => []
@@ -462,7 +453,6 @@ class SchemaTypeTest extends ApiResourcesTest
 
         $expectedTypesSchema = [
             'Test.Type' => [
-                'translations' => [],
                 'fields' => [
                     'other_type' => [
                         'type' => 'Afeefa.Relation',
@@ -482,13 +472,11 @@ class SchemaTypeTest extends ApiResourcesTest
                 'create_fields' => []
             ],
             'Test.Type2' => [
-                'translations' => [],
                 'fields' => [],
                 'update_fields' => [],
                 'create_fields' => []
             ],
             'Test.Type3' => [
-                'translations' => [],
                 'fields' => [],
                 'update_fields' => [],
                 'create_fields' => []
