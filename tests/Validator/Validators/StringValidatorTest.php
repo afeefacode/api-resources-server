@@ -56,6 +56,21 @@ class StringValidatorTest extends TestCase
         }
     }
 
+    public function test_null()
+    {
+        /** @var StringValidator */
+        $validator = (new Container())
+            ->create(StringValidator::class)
+            ->null();
+
+        foreach ([
+            'a',
+            null
+        ] as $value) {
+            $this->assertTrue($validator->validate($value));
+        }
+    }
+
     public function test_min()
     {
         /** @var StringValidator */

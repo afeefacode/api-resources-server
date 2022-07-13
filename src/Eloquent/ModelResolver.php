@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Api\ApiRequest;
+use Afeefa\ApiResources\Api\NotFoundException;
 use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
 use Afeefa\ApiResources\Filter\Filters\PageFilter;
@@ -229,7 +230,13 @@ class ModelResolver
                     $query->where('id', $request->getParam('id'));
                 }
 
-                return $query->first();
+                $model = $query->first();
+
+                if (!$model) {
+                    throw new NotFoundException('Model not found');
+                }
+
+                return $model;
             });
     }
 
