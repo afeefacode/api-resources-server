@@ -11,7 +11,6 @@ use Afeefa\ApiResources\Resolver\MutationRelationLinkOneResolver;
 use Afeefa\ApiResources\Resolver\QueryRelationResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
@@ -125,8 +124,13 @@ class ModelRelationResolver
         $r
             ->saveOwnerToRelated(function (string $id, string $typeName) use ($r) {
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
-                if ($eloquentRelation instanceof HasMany) { // reference to the owner in the related table
-                    return [$eloquentRelation->getForeignKeyName() => $id];
+
+                if ($eloquentRelation instanceof HasOneOrMany) { // reference to the owner in the related table
+                    $ownerFields = [$eloquentRelation->getForeignKeyName() => $id]; // owner_id
+                    if ($eloquentRelation instanceof MorphOneOrMany) {
+                        $ownerFields[$eloquentRelation->getMorphType()] = $typeName; // owner_type
+                    }
+                    return $ownerFields;
                 }
             })
             ->get(function (Model $owner) use ($r) {
