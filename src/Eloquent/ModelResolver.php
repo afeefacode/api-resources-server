@@ -12,6 +12,7 @@ use Afeefa\ApiResources\Resolver\ActionResult;
 use Afeefa\ApiResources\Resolver\MutationActionModelResolver;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Closure;
+use Illuminate\Database\Capsule\Manager as DB;
 use Illuminate\Database\Query\Builder as EloquentBuilder;
 
 class ModelResolver
@@ -243,6 +244,12 @@ class ModelResolver
     public function save(MutationActionModelResolver $r)
     {
         $r
+            ->transaction(function (Closure $execute) {
+                return DB::transaction(function () use ($execute) {
+                    return $execute();
+                });
+            })
+
             ->get(function (string $id) {
                 $query = $this->ModelClass::query();
                 return $query

@@ -11,6 +11,8 @@ use Closure;
 
 class MutationActionModelResolver extends BaseMutationActionResolver
 {
+    protected ?Closure $transactionCallback = null;
+
     protected ?Closure $getCallback = null;
 
     protected ?Closure $addCallback = null;
@@ -18,6 +20,12 @@ class MutationActionModelResolver extends BaseMutationActionResolver
     protected ?Closure $updateCallback = null;
 
     protected ?Closure $deleteCallback = null;
+
+    public function transaction(Closure $callback): self
+    {
+        $this->transactionCallback = $callback;
+        return $this;
+    }
 
     public function get(Closure $callback): self
     {
@@ -44,6 +52,13 @@ class MutationActionModelResolver extends BaseMutationActionResolver
     }
 
     public function resolve(): array
+    {
+        return $this->wrapInTransaction(function () {
+            return $this->_resolve();
+        });
+    }
+
+    protected function _resolve(): array
     {
         $action = $this->request->getAction();
 
@@ -131,5 +146,13 @@ class MutationActionModelResolver extends BaseMutationActionResolver
             'input' => json_decode(file_get_contents('php://input'), true),
             'request' => $this->request
         ];
+    }
+
+    protected function wrapInTransaction(Closure $execute): array
+    {
+        if ($this->transactionCallback) {
+            return ($this->transactionCallback)($execute);
+        }
+        return $execute();
     }
 }

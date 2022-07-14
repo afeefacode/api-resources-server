@@ -36,6 +36,8 @@ class Builder extends EloquentBuilder
                 }, $selectFields);
             }
 
+            // select $selectFields before counts, since withCount()
+            // will add a '*' column by default, which we don't want.
             $relation->select($selectFields);
 
             $limit = $params['limit'] ?? null;
