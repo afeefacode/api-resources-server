@@ -77,6 +77,22 @@ class ModelResource extends Resource
         $query->orderBy($field, $direction);
     }
 
+    protected function beforeAdd(Model $model, array $saveFields): void
+    {
+    }
+
+    protected function afterAdd(Model $model, array $saveFields): void
+    {
+    }
+
+    protected function beforeUpdate(Model $model, array $saveFields): void
+    {
+    }
+
+    protected function afterUpdate(Model $model, array $saveFields): void
+    {
+    }
+
     protected function getEloquentResolver(): ModelResolver
     {
         $type = $this->container->get($this->ModelTypeClass);
@@ -93,6 +109,18 @@ class ModelResource extends Resource
             })
             ->param(function (string $name, $value, Builder $query) {
                 $this->param($name, $value, $query);
+            })
+            ->beforeAdd(function (Model $model, array $saveFields) {
+                $this->beforeAdd($model, $saveFields);
+            })
+            ->afterAdd(function (Model $model, array $saveFields) {
+                $this->afterAdd($model, $saveFields);
+            })
+            ->beforeUpdate(function (Model $model, array $saveFields) {
+                $this->beforeUpdate($model, $saveFields);
+            })
+            ->afterUpdate(function (Model $model, array $saveFields) {
+                $this->afterUpdate($model, $saveFields);
             });
     }
 

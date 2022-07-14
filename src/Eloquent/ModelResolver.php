@@ -25,6 +25,10 @@ class ModelResolver
     protected Closure $filterFunction;
     protected Closure $searchFunction;
     protected Closure $orderFunction;
+    protected Closure $beforeAddFunction;
+    protected Closure $afterAddFunction;
+    protected Closure $beforeUpdateFunction;
+    protected Closure $afterUpdateFunction;
 
     public function type(ModelType $type): ModelResolver
     {
@@ -60,6 +64,30 @@ class ModelResolver
     public function order(Closure $orderFunction): ModelResolver
     {
         $this->orderFunction = $orderFunction;
+        return $this;
+    }
+
+    public function beforeAdd(Closure $beforeAddFunction): ModelResolver
+    {
+        $this->beforeAddFunction = $beforeAddFunction;
+        return $this;
+    }
+
+    public function afterAdd(Closure $afterAddFunction): ModelResolver
+    {
+        $this->afterAddFunction = $afterAddFunction;
+        return $this;
+    }
+
+    public function beforeUpdate(Closure $beforeUpdateFunction): ModelResolver
+    {
+        $this->beforeUpdateFunction = $beforeUpdateFunction;
+        return $this;
+    }
+
+    public function afterUpdate(Closure $afterUpdateFunction): ModelResolver
+    {
+        $this->afterUpdateFunction = $afterUpdateFunction;
         return $this;
     }
 
@@ -265,7 +293,11 @@ class ModelResolver
                     $model->fill($saveFields);
                 }
 
+                ($this->beforeAddFunction)($model, $saveFields);
+
                 $model->save();
+
+                ($this->afterAddFunction)($model, $saveFields);
 
                 return $model;
             })
@@ -273,7 +305,13 @@ class ModelResolver
             ->update(function (Model $model, array $saveFields) {
                 if (!empty($saveFields)) {
                     $model->fillable(array_keys($saveFields));
-                    $model->update($saveFields);
+                    $model->fill($saveFields);
+
+                    ($this->beforeUpdateFunction)($model, $saveFields);
+
+                    $model->save();
+
+                    ($this->afterUpdateFunction)($model, $saveFields);
                 }
             })
 
