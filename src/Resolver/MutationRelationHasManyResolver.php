@@ -48,6 +48,11 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
             }
         }
 
+        if ($relation->hasSkipRelatedIfCallback()) {
+            $skipIf = $relation->getSkipRelatedIfCallback();
+            $data = array_filter($data, fn ($single) => !$skipIf($single));
+        }
+
         if ($this->ownerOperation === Operation::UPDATE) {
             $existingModels = ($this->getCallback)($owner);
             if (!is_array($existingModels)) {

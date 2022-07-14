@@ -37,6 +37,13 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
         $typeName = $relation->getRelatedType()->getAllTypeNames()[0];
         $owner = $this->owners[0] ?? null;
 
+        if ($relation->hasSkipRelatedIfCallback()) {
+            $skipIf = $relation->getSkipRelatedIfCallback();
+            if ($skipIf($this->fieldsToSave)) {
+                $this->fieldsToSave = null;
+            }
+        }
+
         // A.b_id
 
         if ($this->saveRelatedToOwnerCallback) {

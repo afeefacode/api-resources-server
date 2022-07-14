@@ -27,6 +27,8 @@ class Relation extends Field
 
     protected ?Closure $additionalSaveFieldsCallback = null;
 
+    protected ?Closure $skipRelatedIfCallback = null;
+
     public function restrictTo(?string $restrictTo): Relation
     {
         $this->restrictTo = $restrictTo;
@@ -52,6 +54,22 @@ class Relation extends Field
     public function getAdditionalSaveFieldsCallback(): ?Closure
     {
         return $this->additionalSaveFieldsCallback;
+    }
+
+    public function skipRelatedIf(Closure $callback): self
+    {
+        $this->skipRelatedIfCallback = $callback;
+        return $this;
+    }
+
+    public function hasSkipRelatedIfCallback(): bool
+    {
+        return !!$this->skipRelatedIfCallback;
+    }
+
+    public function getSkipRelatedIfCallback(): ?Closure
+    {
+        return $this->skipRelatedIfCallback;
     }
 
     public function typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta): Relation
