@@ -288,12 +288,12 @@ class ModelResolver
             ->add(function (string $typeName, array $saveFields) {
                 $model = new $this->ModelClass();
 
+                $saveFields = ($this->beforeAddFunction)($model, $saveFields);
+
                 if (!empty($saveFields)) {
                     $model->fillable(array_keys($saveFields));
                     $model->fill($saveFields);
                 }
-
-                ($this->beforeAddFunction)($model, $saveFields);
 
                 $model->save();
 
@@ -303,11 +303,11 @@ class ModelResolver
             })
 
             ->update(function (Model $model, array $saveFields) {
+                $saveFields = ($this->beforeUpdateFunction)($model, $saveFields);
+
                 if (!empty($saveFields)) {
                     $model->fillable(array_keys($saveFields));
                     $model->fill($saveFields);
-
-                    ($this->beforeUpdateFunction)($model, $saveFields);
 
                     $model->save();
 

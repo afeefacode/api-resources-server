@@ -77,16 +77,18 @@ class ModelResource extends Resource
         $query->orderBy($field, $direction);
     }
 
-    protected function beforeAdd(Model $model, array $saveFields): void
+    protected function beforeAdd(Model $model, array $saveFields): array
     {
+        return $saveFields;
     }
 
     protected function afterAdd(Model $model, array $saveFields): void
     {
     }
 
-    protected function beforeUpdate(Model $model, array $saveFields): void
+    protected function beforeUpdate(Model $model, array $saveFields): array
     {
+        return $saveFields;
     }
 
     protected function afterUpdate(Model $model, array $saveFields): void
@@ -111,13 +113,13 @@ class ModelResource extends Resource
                 $this->param($name, $value, $query);
             })
             ->beforeAdd(function (Model $model, array $saveFields) {
-                $this->beforeAdd($model, $saveFields);
+                return $this->beforeAdd($model, $saveFields);
             })
             ->afterAdd(function (Model $model, array $saveFields) {
                 $this->afterAdd($model, $saveFields);
             })
             ->beforeUpdate(function (Model $model, array $saveFields) {
-                $this->beforeUpdate($model, $saveFields);
+                return $this->beforeUpdate($model, $saveFields);
             })
             ->afterUpdate(function (Model $model, array $saveFields) {
                 $this->afterUpdate($model, $saveFields);
