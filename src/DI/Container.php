@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\DI;
 
 use Afeefa\ApiResources\Exception\Exceptions\NotACallbackException;
+use Afeefa\ApiResources\Exception\Exceptions\NotATypeException;
 use Closure;
 use Psr\Container\ContainerInterface;
 
@@ -43,6 +44,14 @@ class Container implements ContainerInterface
             $instance = null;
             if (!$this->has($TypeClass)) {
                 $definition = $this->config[$TypeClass] ?? null;
+
+                // if a single instance is set via config, register and return this instance
+                if ($definition instanceof $TypeClass) {
+                    $this->register($TypeClass, $definition);
+                    return $definition;
+                }
+
+                // if get should always create a new instance, then do not register
                 $register = !($definition instanceof CreateDefinition);
                 $instance = $this->createInstance($TypeClass, null, $register);
             } else {
@@ -163,18 +172,24 @@ class Container implements ContainerInterface
     private function createInstance($classOrCallback, Closure $resolveCallback = null, $register = false): object
     {
         [$TypeClass, $callback] = classOrCallback($classOrCallback);
-        if ($callback) {
+        if ($callback) { // callback and no type class given
             $TypeClasses = getCallbackArgumentTypes($classOrCallback, 1, 1); // min 1 max 1
             $TypeClass = $TypeClasses[0];
         }
 
+        $instance = null;
+
         $definition = $this->config[$TypeClass] ?? null;
-        if ($definition instanceof FactoryDefinition) {
+
+        if ($definition instanceof FactoryDefinition) { // call a factory
             $instance = $definition();
-        } elseif ($definition instanceof $TypeClass) {
-            $instance = $definition;
-        } else {
-            $instance = new $TypeClass();
+        }
+
+        if (!$instance) {
+            if (!class_exists($TypeClass)) { // possibly interface
+                throw new NotATypeException("{$TypeClass} can not be instantiated to create a new instance.");
+            }
+            $instance = new $TypeClass(); // create new instance from class
         }
 
         if ($definition instanceof CreateDefinition) {

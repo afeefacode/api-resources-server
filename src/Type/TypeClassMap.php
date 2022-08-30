@@ -55,8 +55,8 @@ class TypeClassMap implements ContainerAwareInterface
                 $types[$TypeClass] = $type;
                 $this->add(get_class($type));
 
-                $TypeClasses = $type->getAllRelatedTypeClasses();
-                $types = $this->createUsedTypes($types, $TypeClasses);
+                $RelatedTypeClasses = $type->getAllRelatedTypeClasses();
+                $types = $this->createUsedTypes($types, $RelatedTypeClasses);
             }
         }
         return $types;

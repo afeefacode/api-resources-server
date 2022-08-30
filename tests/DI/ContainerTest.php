@@ -9,8 +9,10 @@ use Afeefa\ApiResources\DI\DependencyResolver;
 use function Afeefa\ApiResources\DI\factory;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackArgumentException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingTypeHintException;
+use Afeefa\ApiResources\Exception\Exceptions\NotATypeException;
 use Afeefa\ApiResources\Exception\Exceptions\NotATypeOrCallbackException;
 use Afeefa\ApiResources\Exception\Exceptions\TooManyCallbackArgumentsException;
+use Afeefa\ApiResources\Tests\DI\Fixtures\TestInterface;
 use Afeefa\ApiResources\Tests\DI\Fixtures\TestModel;
 use Afeefa\ApiResources\Tests\DI\Fixtures\TestService;
 use Afeefa\ApiResources\Tests\DI\Fixtures\TestService2;
@@ -80,6 +82,10 @@ class ContainerTest extends TestCase
 
         $this->assertSame($service3, $service3Again);
         $this->assertEquals('TestService3', $service3Again->name);
+
+        $this->assertFalse($container->has(TestService::class));
+        $this->assertTrue($container->has(TestService2::class));
+        $this->assertTrue($container->has(TestService3::class));
     }
 
     public function test_create_with_config2()
@@ -122,6 +128,43 @@ class ContainerTest extends TestCase
         $this->assertFalse($container->has(TestService2::class));
     }
 
+    public function test_create_with_config_interface()
+    {
+        $config = [
+            TestInterface::class => new TestService()
+        ];
+
+        $container = new Container($config);
+
+        $this->assertCount(1, $container->entries());
+        $this->assertTrue($container->has(Container::class));
+        $this->assertFalse($container->has(TestInterface::class));
+
+        $container->get(TestInterface::class);
+
+        $this->assertTrue($container->has(TestInterface::class));
+    }
+
+    public function test_create_with_config_interface_not_implements()
+    {
+        $this->expectException(NotATypeException::class);
+        $this->expectExceptionMessage(TestInterface::class . ' can not be instantiated to create a new instance.');
+
+        $TestService = new class () {};
+
+        $config = [
+            TestInterface::class => $TestService
+        ];
+
+        $container = new Container($config);
+
+        $this->assertCount(1, $container->entries());
+        $this->assertTrue($container->has(Container::class));
+        $this->assertFalse($container->has(TestInterface::class));
+
+        $container->get(TestInterface::class);
+    }
+
     public function test_get_creates_entry()
     {
         $container = new Container();
@@ -152,6 +195,20 @@ class ContainerTest extends TestCase
         $this->assertCount(2, $container->entries());
 
         $this->assertTrue($container->has(TestService::class));
+    }
+
+    public function test_get_interface_cannot_be_created()
+    {
+        $this->expectException(NotATypeException::class);
+        $this->expectExceptionMessage(TestInterface::class . ' can not be instantiated to create a new instance.');
+
+        $container = new Container();
+
+        $this->assertCount(1, $container->entries());
+        $this->assertTrue($container->has(Container::class));
+        $this->assertFalse($container->has(TestInterface::class));
+
+        $container->get(TestInterface::class);
     }
 
     public function test_get_with_callback_closure()
@@ -228,7 +285,7 @@ class ContainerTest extends TestCase
     public function test_get_with_callback_callable_not_accessible()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a class string: array');
+        $this->expectExceptionMessage('Argument is not a class or interface string: array');
 
         $container = new Container();
 
@@ -238,7 +295,7 @@ class ContainerTest extends TestCase
     public function test_get_with_callback_callable_invalid()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a class string: array');
+        $this->expectExceptionMessage('Argument is not a class or interface string: array');
 
         $container = new Container();
 
@@ -248,7 +305,7 @@ class ContainerTest extends TestCase
     public function test_get_with_invalid_type()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a known class: InvalidType');
+        $this->expectExceptionMessage('Argument is not a known class or interface: InvalidType');
 
         $container = new Container();
 
@@ -387,6 +444,27 @@ class ContainerTest extends TestCase
         $this->assertFalse($container->has(TestService::class));
     }
 
+    public function test_create_interface()
+    {
+        $this->expectException(NotATypeException::class);
+        $this->expectExceptionMessage(TestInterface::class . ' can not be instantiated to create a new instance.');
+
+        $container = new Container();
+        $container->create(TestInterface::class);
+    }
+
+    public function test_create_interface2()
+    {
+        $this->expectException(NotATypeException::class);
+        $this->expectExceptionMessage(TestInterface::class . ' can not be instantiated to create a new instance.');
+
+        $container = new Container([
+            TestInterface::class => new TestService()
+        ]);
+
+        $container->create(TestInterface::class);
+    }
+
     public function test_create_with_callback_closure()
     {
         $container = new Container();
@@ -476,6 +554,59 @@ class ContainerTest extends TestCase
         $container = new Container();
 
         $callback = function (TestService $service) {
+            $service->name = 'test';
+            return $service;
+        };
+
+        $service = $container->call($callback);
+
+        $this->assertSame('test', $service->name);
+
+        $this->assertCount(2, $container->entries());
+
+        // no new entry:
+
+        $service = $container->call($callback);
+
+        $this->assertSame('test', $service->name);
+
+        $this->assertCount(2, $container->entries());
+    }
+
+    public function test_call_closure_interface()
+    {
+        $container = new Container([
+            TestInterface::class => new TestService()
+        ]);
+
+        $callback = function (TestInterface $service) {
+            $service->name = 'test';
+            return $service;
+        };
+
+        $service = $container->call($callback);
+
+        $this->assertSame('test', $service->name);
+
+        $this->assertCount(2, $container->entries());
+
+        // no new entry:
+
+        $service = $container->call($callback);
+
+        $this->assertSame('test', $service->name);
+
+        $this->assertCount(2, $container->entries());
+    }
+
+    public function test_call_closure_interface_cannot_be_created()
+    {
+        $this->expectException(NotATypeException::class);
+        $this->expectExceptionMessage(TestInterface::class . ' can not be instantiated to create a new instance.');
+
+        $container = new Container();
+
+        $callback = function (TestInterface $service) {
             $service->name = 'test';
             return $service;
         };

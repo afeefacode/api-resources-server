@@ -30,11 +30,11 @@ function classOrCallback($classOrCallback): array
     }
 
     if (!is_string($classOrCallback)) {
-        throw new NotATypeOrCallbackException('Argument is not a class string: ' . gettype($classOrCallback));
+        throw new NotATypeOrCallbackException('Argument is not a class or interface string: ' . gettype($classOrCallback));
     }
 
-    if (!class_exists($classOrCallback)) {
-        throw new NotATypeOrCallbackException('Argument is not a known class: ' . $classOrCallback);
+    if (!class_exists($classOrCallback) && !interface_exists($classOrCallback)) {
+        throw new NotATypeOrCallbackException('Argument is not a known class or interface: ' . $classOrCallback);
     }
 
     return [$classOrCallback, null];
@@ -51,8 +51,8 @@ function getCallbackArgumentTypes(Closure $callback, $min = 0, $max = 10): array
         $type = $param->getType();
         if ($type instanceof ReflectionNamedType) {
             $TypeClass = $type->getName();
-            if (!class_exists($TypeClass)) {
-                throw new NotATypeException("Class {$TypeClass} is not known.");
+            if (!class_exists($TypeClass) && !interface_exists($TypeClass)) {
+                throw new NotATypeException("Class or interface {$TypeClass} is not known.");
             }
             $TypeClasses[] = $TypeClass;
             continue;

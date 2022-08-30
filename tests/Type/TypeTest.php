@@ -24,7 +24,7 @@ class TypeTest extends ApiResourcesTest
     public function test_wrong_attribute_type()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a known class: Hoho');
+        $this->expectExceptionMessage('Argument is not a known class or interface: Hoho');
 
         $this->typeBuilder()->type('Test.Type', function (FieldBag $fields) {
             $fields->attribute('name', 'Hoho');

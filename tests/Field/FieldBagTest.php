@@ -29,7 +29,7 @@ class FieldBagTest extends ApiResourcesTest
     public function test_wrong_attribute_type()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a known class: Hoho');
+        $this->expectExceptionMessage('Argument is not a known class or interface: Hoho');
 
         $fields = $this->container->create(FieldBag::class);
         $fields->attribute('name', 'Hoho');
@@ -60,7 +60,7 @@ class FieldBagTest extends ApiResourcesTest
     public function test_wrong_relation_type()
     {
         $this->expectException(NotATypeOrCallbackException::class);
-        $this->expectExceptionMessage('Argument is not a known class: RelationClass');
+        $this->expectExceptionMessage('Argument is not a known class or interface: RelationClass');
 
         $fields = $this->container->create(FieldBag::class);
         $fields->relation('name', T('Test.Type'), 'RelationClass');

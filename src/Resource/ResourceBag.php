@@ -19,7 +19,7 @@ class ResourceBag extends Bag
     public function add($classOrCallback): ResourceBag
     {
         [$ResourceClass, $callback] = classOrCallback($classOrCallback);
-        if ($callback) {
+        if ($callback) { // callback and no resource class given
             $ResourceClass = getCallbackArgumentType($callback);
         }
 
