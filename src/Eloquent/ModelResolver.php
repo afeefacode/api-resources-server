@@ -14,6 +14,7 @@ use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Closure;
 use Illuminate\Database\Capsule\Manager as DB;
 use Illuminate\Database\Query\Builder as EloquentBuilder;
+use stdClass;
 
 class ModelResolver
 {
@@ -288,7 +289,9 @@ class ModelResolver
             ->add(function (string $typeName, array $saveFields) {
                 $model = new $this->ModelClass();
 
-                $saveFields = ($this->beforeAddFunction)($model, $saveFields);
+                $meta = new stdClass();
+
+                $saveFields = ($this->beforeAddFunction)($model, $saveFields, $meta);
 
                 if (!empty($saveFields)) {
                     $model->fillable(array_keys($saveFields));
@@ -297,13 +300,15 @@ class ModelResolver
 
                 $model->save();
 
-                ($this->afterAddFunction)($model, $saveFields);
+                ($this->afterAddFunction)($model, $saveFields, $meta);
 
                 return $model;
             })
 
             ->update(function (Model $model, array $saveFields) {
-                $saveFields = ($this->beforeUpdateFunction)($model, $saveFields);
+                $meta = new stdClass();
+
+                $saveFields = ($this->beforeUpdateFunction)($model, $saveFields, $meta);
 
                 if (!empty($saveFields)) {
                     $model->fillable(array_keys($saveFields));
@@ -311,7 +316,7 @@ class ModelResolver
 
                     $model->save();
 
-                    ($this->afterUpdateFunction)($model, $saveFields);
+                    ($this->afterUpdateFunction)($model, $saveFields, $meta);
                 }
             })
 

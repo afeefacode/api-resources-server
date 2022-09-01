@@ -15,6 +15,7 @@ use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
 use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Type\Type;
 use Illuminate\Database\Eloquent\Builder;
+use stdClass;
 
 class ModelResource extends Resource
 {
@@ -77,21 +78,21 @@ class ModelResource extends Resource
         $query->orderBy($field, $direction);
     }
 
-    protected function beforeAdd(Model $model, array $saveFields): array
+    protected function beforeAdd(Model $model, array $saveFields, stdClass $meta): array
     {
         return $saveFields;
     }
 
-    protected function afterAdd(Model $model, array $saveFields): void
+    protected function afterAdd(Model $model, array $saveFields, stdClass $meta): void
     {
     }
 
-    protected function beforeUpdate(Model $model, array $saveFields): array
+    protected function beforeUpdate(Model $model, array $saveFields, stdClass $meta): array
     {
         return $saveFields;
     }
 
-    protected function afterUpdate(Model $model, array $saveFields): void
+    protected function afterUpdate(Model $model, array $saveFields, stdClass $meta): void
     {
     }
 
@@ -112,17 +113,17 @@ class ModelResource extends Resource
             ->param(function (string $name, $value, Builder $query) {
                 $this->param($name, $value, $query);
             })
-            ->beforeAdd(function (Model $model, array $saveFields) {
-                return $this->beforeAdd($model, $saveFields);
+            ->beforeAdd(function (Model $model, array $saveFields, stdClass $meta) {
+                return $this->beforeAdd($model, $saveFields, $meta);
             })
-            ->afterAdd(function (Model $model, array $saveFields) {
-                $this->afterAdd($model, $saveFields);
+            ->afterAdd(function (Model $model, array $saveFields, stdClass $meta) {
+                $this->afterAdd($model, $saveFields, $meta);
             })
-            ->beforeUpdate(function (Model $model, array $saveFields) {
-                return $this->beforeUpdate($model, $saveFields);
+            ->beforeUpdate(function (Model $model, array $saveFields, stdClass $meta) {
+                return $this->beforeUpdate($model, $saveFields, $meta);
             })
-            ->afterUpdate(function (Model $model, array $saveFields) {
-                $this->afterUpdate($model, $saveFields);
+            ->afterUpdate(function (Model $model, array $saveFields, stdClass $meta) {
+                $this->afterUpdate($model, $saveFields, $meta);
             });
     }
 
