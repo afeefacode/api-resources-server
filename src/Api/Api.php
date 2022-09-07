@@ -18,6 +18,7 @@ class Api implements ContainerAwareInterface
     use HasStaticTypeTrait;
 
     protected ResourceBag $resources;
+    protected array $AdditionalValidatorClasses = [];
 
     public function created(): void
     {
@@ -59,6 +60,12 @@ class Api implements ContainerAwareInterface
         $request->api($this);
         $request->fromInput();
         return $request->dispatch();
+    }
+
+    public function registerValidator(string $ValidatorClass): Api
+    {
+        $this->AdditionalValidatorClasses[] = $ValidatorClass;
+        return $this;
     }
 
     public function toSchemaJson(): array
@@ -106,7 +113,10 @@ class Api implements ContainerAwareInterface
         $validators = [];
 
         foreach ($types as $type) {
-            $ValidatorClasses = $type->getAllValidatorClasses();
+            $ValidatorClasses = [
+                ...$this->AdditionalValidatorClasses,
+                ...$type->getAllValidatorClasses()
+            ];
             foreach ($ValidatorClasses as $ValidatorClass) {
                 if (!isset($validators[$ValidatorClass])) {
                     $validators[$ValidatorClass] = $this->container->get($ValidatorClass);
