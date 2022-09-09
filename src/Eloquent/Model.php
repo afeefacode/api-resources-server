@@ -4,6 +4,7 @@ namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Model\ModelInterface;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Illuminate\Events\Dispatcher;
 use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class Model extends EloquentModel implements ModelInterface
@@ -15,6 +16,32 @@ class Model extends EloquentModel implements ModelInterface
     protected $visibleFields = [];
 
     protected $keyType = 'string';
+
+    public static function boot()
+    {
+        parent::boot();
+
+        if (!static::$dispatcher) {
+            $dispatcher = new Dispatcher();
+            static::setEventDispatcher($dispatcher);
+        }
+
+        static::created(function (Model $model) {
+            $model->afterCreate();
+        });
+
+        static::updated(function ($model) {
+            $model->afterUpdate();
+        });
+
+        static::deleting(function ($model) {
+            $model->beforeDelete();
+        });
+
+        static::deleted(function ($model) {
+            $model->afterDelete();
+        });
+    }
 
     public function getTypeAttribute(): string
     {
@@ -55,5 +82,25 @@ class Model extends EloquentModel implements ModelInterface
         }
 
         return $json;
+    }
+
+    protected function afterCreate()
+    {
+        // fill in in sub class
+    }
+
+    protected function afterUpdate()
+    {
+        // fill in in sub class
+    }
+
+    protected function beforeDelete()
+    {
+        // fill in in sub class
+    }
+
+    protected function afterDelete()
+    {
+        // fill in in sub class
     }
 }
