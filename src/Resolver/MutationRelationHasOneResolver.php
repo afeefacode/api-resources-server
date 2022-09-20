@@ -87,6 +87,17 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
                 throw new InvalidConfigurationException("Get {$mustReturn} a ModelInterface object or null.");
             }
 
+            // no or wrong data[id] given means create a new related object
+            // and remove old one beforehand if existed
+            // TODO to be tested
+            // if ($existingModel) {
+            //     $updateId = $fieldsToSave['id'] ?? null;
+            //     if ($existingModel->apiResourcesGetId() !== $updateId) {
+            //         ($this->deleteCallback)($owner, $existingModel);
+            //         $existingModel = null;
+            //     }
+            // }
+
             if ($existingModel) {
                 if ($fieldsToSave === null) { // delete related
                     ($this->deleteCallback)($owner, $existingModel);
