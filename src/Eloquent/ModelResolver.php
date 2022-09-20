@@ -239,9 +239,9 @@ class ModelResolver
                 $request = $r->getRequest();
                 $selectFields = $r->getSelectFields();
 
-                $relatedTable = (new $this->type::$ModelClass())->getTable();
-                $selectFields = array_map(function ($field) use ($relatedTable) {
-                    return $relatedTable . '.' . $field;
+                $table = (new $this->ModelClass())->getTable();
+                $selectFields = array_map(function ($field) use ($table) {
+                    return $table . '.' . $field;
                 }, $selectFields);
 
                 /** @var EloquentBuilder */
