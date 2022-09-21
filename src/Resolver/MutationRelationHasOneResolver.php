@@ -57,7 +57,7 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
                 $related = $this->handleSaveRelated($owner, $typeName, $mustReturn, $this->fieldsToSave);
             } else { // create owner -> create related
                 if (is_array($this->fieldsToSave)) { // add related only if data present
-                    $related = $this->resolveModel(null, Operation::CREATE, $typeName, $this->fieldsToSave, function ($saveFields) use ($typeName, $mustReturn) {
+                    $related = $this->resolveModel(null, $typeName, $this->fieldsToSave, function ($saveFields) use ($typeName, $mustReturn) {
                         $saveFields = $this->addAdditionalSaveFields($saveFields);
                         $addedModel = ($this->addBeforeOwnerCallback)($typeName, $saveFields);
                         if (!$addedModel instanceof ModelInterface) {
@@ -104,7 +104,7 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
                     return null;
                 }
                 // update related
-                return $this->resolveModel($owner, Operation::UPDATE, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $existingModel) {
+                return $this->resolveModel($existingModel, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $existingModel) {
                     $saveFields = $this->addAdditionalSaveFields($saveFields);
                     ($this->updateCallback)($owner, $existingModel, $saveFields);
                     return $existingModel;
@@ -113,7 +113,7 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
 
             if (is_array($fieldsToSave)) {
                 // add related
-                return $this->resolveModel($owner, Operation::CREATE, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
+                return $this->resolveModel(null, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
                     $saveFields = $this->addAdditionalSaveFields($saveFields);
                     $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                     if (!$addedModel instanceof ModelInterface) {
@@ -125,7 +125,7 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
         } else {
             if (is_array($fieldsToSave)) {
                 // add related
-                return $this->resolveModel($owner, Operation::CREATE, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
+                return $this->resolveModel(null, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
                     $saveFields = $this->addAdditionalSaveFields($saveFields);
                     $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                     if (!$addedModel instanceof ModelInterface) {

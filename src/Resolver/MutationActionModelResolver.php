@@ -2,7 +2,6 @@
 
 namespace Afeefa\ApiResources\Resolver;
 
-use Afeefa\ApiResources\Api\Operation;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Model\ModelInterface;
@@ -115,7 +114,6 @@ class MutationActionModelResolver extends BaseMutationActionResolver
         } else {
             $model = $this->resolveModel(
                 $existingModel,
-                $existingModel ? Operation::UPDATE : Operation::CREATE,
                 $typeName,
                 $this->request->getFieldsToSave2(),
                 function ($saveFields) use ($existingModel, $typeName, $mustReturn) {

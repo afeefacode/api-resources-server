@@ -77,13 +77,13 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
             foreach ($data as $single) {
                 $existingModel = $getExistingModelById($single['id'] ?? null);
                 if ($existingModel) {
-                    $this->resolveModel($owner, Operation::UPDATE, $typeName, $single, function (array $saveFields) use ($owner, $existingModel) {
+                    $this->resolveModel($existingModel, $typeName, $single, function (array $saveFields) use ($owner, $existingModel) {
                         $saveFields = $this->addAdditionalSaveFields($saveFields);
                         ($this->updateCallback)($owner, $existingModel, $saveFields);
                         return $existingModel;
                     });
                 } else {
-                    $this->resolveModel($owner, Operation::CREATE, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
+                    $this->resolveModel(null, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
                         $saveFields = $this->addAdditionalSaveFields($saveFields);
                         $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                         if (!$addedModel instanceof ModelInterface) {
@@ -95,7 +95,7 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
             }
         } else { // create, only add
             foreach ($data as $single) {
-                $this->resolveModel($owner, Operation::CREATE, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
+                $this->resolveModel(null, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
                     $saveFields = $this->addAdditionalSaveFields($saveFields);
                     $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                     if (!$addedModel instanceof ModelInterface) {

@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Resolver\Mutation;
 
+use Afeefa\ApiResources\Api\Operation;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Resolver\Base\BaseResolver;
 use Closure;
@@ -16,8 +17,10 @@ trait MutationResolverTrait
         return $this;
     }
 
-    protected function resolveModel(?ModelInterface $owner, string $ownerOperation, string $typeName, array $fieldsToSave, Closure $resolveCallback): ModelInterface
+    protected function resolveModel(?ModelInterface $existingModel, string $typeName, array $fieldsToSave, Closure $resolveCallback): ModelInterface
     {
+        $ownerOperation = $existingModel ? Operation::UPDATE : Operation::CREATE;
+
         $resolveContext = $this->createResolveContext($typeName, $ownerOperation, $fieldsToSave);
 
         // resolve relations before this model (relation can only be hasOne or linkOne)
@@ -29,8 +32,8 @@ trait MutationResolverTrait
         foreach ($relationResolvers as $relationResolver) {
             if ($relationResolver->shouldSaveRelatedToOwner()) {
                 $relationResolver->ownerOperation($ownerOperation);
-                if ($owner) {
-                    $relationResolver->addOwner($owner);
+                if ($existingModel) {
+                    $relationResolver->addOwner($existingModel);
                 }
                 $relationResolver->resolve();
                 $relatedSaveFields = array_merge($relatedSaveFields, $relationResolver->getSaveRelatedToOwnerFields());
@@ -41,7 +44,7 @@ trait MutationResolverTrait
 
         $saveFields = array_merge($resolveContext->getSaveFields(), $this->ownerSaveFields, $relatedSaveFields);
 
-        $owner = $resolveCallback($saveFields);
+        $model = $resolveCallback($saveFields);
 
         // resolve relations after this model
 
@@ -56,19 +59,19 @@ trait MutationResolverTrait
 
             if ($relationResolver->shouldSaveOwnerToRelated()) {
                 $ownerSaveFields = $relationResolver->getSaveOwnerToRelatedFields(
-                    $owner->apiResourcesGetId(),
-                    $owner->apiResourcesGetType()
+                    $model->apiResourcesGetId(),
+                    $model->apiResourcesGetType()
                 );
             }
 
             $relationResolver
                 ->ownerOperation($ownerOperation)
-                ->addOwner($owner)
+                ->addOwner($model)
                 ->ownerSaveFields($ownerSaveFields)
                 ->resolve();
         }
 
-        return $owner;
+        return $model;
     }
 
     private function createResolveContext(string $typeName, string $operation, array $fieldsToSave): MutationResolveContext
