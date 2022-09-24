@@ -42,7 +42,14 @@ trait MutationResolverTrait
 
         // resolve this model
 
-        $saveFields = array_merge($resolveContext->getSaveFields(), $this->ownerSaveFields, $relatedSaveFields);
+        /**
+         * If we have a reflexive recursive relation: owner->related->owner, we will establish
+         * the relation by taking the ownerSaveFields in favor of the $relatedSaveFields which
+         * in the case of create operation will have the owner_id set to null which would then
+         * override the owner_id passed from ownerSaveFields, so the order is, that owner relation
+         * fields override related relation fields.
+         */
+        $saveFields = array_merge($resolveContext->getSaveFields(), $relatedSaveFields, $this->ownerSaveFields);
 
         $model = $resolveCallback($saveFields);
 
