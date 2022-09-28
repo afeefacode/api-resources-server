@@ -86,7 +86,16 @@ class MutationResolveContext implements ContainerAwareInterface
         $operation = $this->getOperation();
 
         $relationResolvers = [];
-        foreach ($fieldsToSave as $fieldName => $value) {
+        foreach ($fieldsToSave as $fieldNameWithOperation => $value) {
+            // allow for relation#add or relation#delete, which are useful for (has|link)Many relations
+            preg_match('/(\w+)(?:#(add|delete))?$/', $fieldNameWithOperation, $matches);
+            $fieldName = $matches[1];
+            $relatedOperation = isset($matches[2])
+                ? ($matches[2] === 'add'
+                    ? Operation::ADD_RELATED
+                    : Operation::DELETE_RELATED)
+                : null;
+
             if ($this->hasSaveRelation($type, $operation, $fieldName)) {
                 $relation = $this->getSaveRelation($type, $operation, $fieldName);
 
@@ -127,6 +136,7 @@ class MutationResolveContext implements ContainerAwareInterface
                         throw new InvalidConfigurationException("Resolve callback for save relation {$fieldName} on type {$type::type()} must receive a MutationRelationResolver as argument.");
                     }
 
+                    $mutationRelationResolver->relatedOperation($relatedOperation);
                     $relationResolvers[$fieldName] = $mutationRelationResolver;
                 } else {
                     throw new InvalidConfigurationException("Relation {$fieldName} on type {$type::type()} does not have a relation resolver.");

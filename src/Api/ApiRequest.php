@@ -173,7 +173,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         return $this;
     }
 
-    public function getFieldsToSave2(): ?array
+    public function getFieldsToSave(): ?array
     {
         return $this->fieldsToSave;
     }

@@ -26,6 +26,7 @@ class ModelResolver
     protected Closure $filterFunction;
     protected Closure $searchFunction;
     protected Closure $orderFunction;
+    protected Closure $beforeResolveFunction;
     protected Closure $beforeAddFunction;
     protected Closure $afterAddFunction;
     protected Closure $beforeUpdateFunction;
@@ -65,6 +66,12 @@ class ModelResolver
     public function order(Closure $orderFunction): ModelResolver
     {
         $this->orderFunction = $orderFunction;
+        return $this;
+    }
+
+    public function beforeResolve(Closure $beforeResolveFunction): ModelResolver
+    {
+        $this->beforeResolveFunction = $beforeResolveFunction;
         return $this;
     }
 
@@ -277,6 +284,10 @@ class ModelResolver
                 return DB::transaction(function () use ($execute) {
                     return $execute();
                 });
+            })
+
+            ->beforeResolve(function (array $params, ?array $data) {
+                return ($this->beforeResolveFunction)($params, $data);
             })
 
             ->get(function (string $id) {

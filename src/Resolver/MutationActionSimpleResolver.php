@@ -44,7 +44,7 @@ class MutationActionSimpleResolver extends BaseMutationActionResolver
 
         $resolveContext = $this->container->create(MutationResolveContext::class)
             ->type($this->getTypeByName($typeName))
-            ->fieldsToSave($this->request->getFieldsToSave2());
+            ->fieldsToSave($this->request->getFieldsToSave());
 
         $model = ($this->saveCallback)($resolveContext->getSaveFields());
         if ($model !== null && !$model instanceof ModelInterface) {

@@ -12,6 +12,8 @@ class MutationActionModelResolver extends BaseMutationActionResolver
 {
     protected ?Closure $transactionCallback = null;
 
+    protected ?Closure $beforeResolveCallback = null;
+
     protected ?Closure $getCallback = null;
 
     protected ?Closure $addCallback = null;
@@ -23,6 +25,12 @@ class MutationActionModelResolver extends BaseMutationActionResolver
     public function transaction(Closure $callback): self
     {
         $this->transactionCallback = $callback;
+        return $this;
+    }
+
+    public function beforeResolve(Closure $callback): self
+    {
+        $this->beforeResolveCallback = $callback;
         return $this;
     }
 
@@ -59,6 +67,14 @@ class MutationActionModelResolver extends BaseMutationActionResolver
 
     protected function _resolve(): array
     {
+        if ($this->beforeResolveCallback) {
+            $params = $this->request->getParams();
+            $fieldsToSave = $this->request->getFieldsToSave();
+            [$params, $fieldsToSave] = ($this->beforeResolveCallback)($params, $fieldsToSave);
+            $this->request->params($params);
+            $this->request->fieldsToSave($fieldsToSave);
+        }
+
         $action = $this->request->getAction();
 
         // if errors
@@ -109,13 +125,13 @@ class MutationActionModelResolver extends BaseMutationActionResolver
 
         // delete
 
-        if ($existingModel && $this->request->getFieldsToSave2() === null) {
+        if ($existingModel && $this->request->getFieldsToSave() === null) {
             ($this->deleteCallback)($existingModel);
         } else {
             $model = $this->resolveModel(
                 $existingModel,
                 $typeName,
-                $this->request->getFieldsToSave2(),
+                $this->request->getFieldsToSave(),
                 function ($saveFields) use ($existingModel, $typeName, $mustReturn) {
                     if ($existingModel) {
                         ($this->updateCallback)($existingModel, $saveFields);

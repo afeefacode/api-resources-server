@@ -16,9 +16,6 @@ class MutationRelationResolver extends BaseFieldResolver
     use MutationResolverTrait;
     use RelationResolverTrait;
 
-    /**
-     * array or null
-     */
     protected ?array $fieldsToSave;
 
     protected MutationResolveContext $resolveContext;
@@ -43,13 +40,12 @@ class MutationRelationResolver extends BaseFieldResolver
 
     protected ?string $ownerOperation = null;
 
+    protected ?string $relatedOperation; // null, add_related, delete_related
+
     protected ?string $resolvedId = null;
 
     protected ?string $resolvedType = null;
 
-    /**
-     * fieldsToSave can be null
-     */
     public function fieldsToSave(?array $fieldsToSave): self
     {
         $this->fieldsToSave = $fieldsToSave;
@@ -91,6 +87,12 @@ class MutationRelationResolver extends BaseFieldResolver
     public function ownerOperation(string $ownerOperation): self
     {
         $this->ownerOperation = $ownerOperation;
+        return $this;
+    }
+
+    public function relatedOperation(?string $operation): self
+    {
+        $this->relatedOperation = $operation;
         return $this;
     }
 

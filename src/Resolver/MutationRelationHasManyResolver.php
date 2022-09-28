@@ -67,22 +67,44 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
             $getExistingModelById = fn ($id) => array_values(array_filter($existingModels, fn ($m) => $m->apiResourcesGetId() === $id))[0] ?? null;
             $getSavedDataById = fn ($id) => array_values(array_filter($data, fn ($single) => ($single['id'] ?? null) === $id))[0] ?? null;
 
-            foreach ($existingModels as $existingModel) {
-                $id = $existingModel->apiResourcesGetId();
-                if (!$getSavedDataById($id)) {
-                    ($this->deleteCallback)($owner, $existingModel);
+            if ($this->relatedOperation !== Operation::ADD_RELATED) { // DEFAULT or DELETE_RELATED, ignore when ADD_RELATED
+                foreach ($existingModels as $existingModel) {
+                    $id = $existingModel->apiResourcesGetId();
+                    // delete if DEFAULT + not included any longer
+                    if (!$this->relatedOperation && !$getSavedDataById($id)) {
+                        ($this->deleteCallback)($owner, $existingModel);
+                    }
+                    // or DELETE_RELATED and included in data
+                    if ($this->relatedOperation === Operation::DELETE_RELATED && $getSavedDataById($id)) {
+                        ($this->deleteCallback)($owner, $existingModel);
+                    }
                 }
             }
 
-            foreach ($data as $single) {
-                $existingModel = $getExistingModelById($single['id'] ?? null);
-                if ($existingModel) {
-                    $this->resolveModel($existingModel, $typeName, $single, function (array $saveFields) use ($owner, $existingModel) {
-                        $saveFields = $this->addAdditionalSaveFields($saveFields);
-                        ($this->updateCallback)($owner, $existingModel, $saveFields);
-                        return $existingModel;
-                    });
-                } else {
+            if ($this->relatedOperation !== Operation::DELETE_RELATED) { // ignore when DELETE_RELATED
+                foreach ($data as $single) {
+                    $existingModel = $getExistingModelById($single['id'] ?? null);
+                    if ($existingModel) {
+                        $this->resolveModel($existingModel, $typeName, $single, function (array $saveFields) use ($owner, $existingModel) {
+                            $saveFields = $this->addAdditionalSaveFields($saveFields);
+                            ($this->updateCallback)($owner, $existingModel, $saveFields);
+                            return $existingModel;
+                        });
+                    } else {
+                        $this->resolveModel(null, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
+                            $saveFields = $this->addAdditionalSaveFields($saveFields);
+                            $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
+                            if (!$addedModel instanceof ModelInterface) {
+                                throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");
+                            }
+                            return $addedModel;
+                        });
+                    }
+                }
+            }
+        } else { // create, only add
+            if ($this->relatedOperation !== Operation::DELETE_RELATED) { // ignore when DELETE_RELATED
+                foreach ($data as $single) {
                     $this->resolveModel(null, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
                         $saveFields = $this->addAdditionalSaveFields($saveFields);
                         $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
@@ -92,17 +114,6 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
                         return $addedModel;
                     });
                 }
-            }
-        } else { // create, only add
-            foreach ($data as $single) {
-                $this->resolveModel(null, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
-                    $saveFields = $this->addAdditionalSaveFields($saveFields);
-                    $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
-                    if (!$addedModel instanceof ModelInterface) {
-                        throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");
-                    }
-                    return $addedModel;
-                });
             }
         }
     }
