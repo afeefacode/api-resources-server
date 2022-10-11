@@ -25,7 +25,7 @@ class SchemaFilterTest extends ApiResourcesTest
             $filter
                 ->options([true, false])
                 ->default('default')
-                ->nullIsOption(true);
+                ->nullIsOption();
         });
 
         $schema = $api->toSchemaJson();
@@ -55,7 +55,8 @@ class SchemaFilterTest extends ApiResourcesTest
     {
         $api = $this->createApiWithFilter('check', function (Filter $filter) {
             $filter
-                ->options([null, true, false]);
+                ->options([null, true, false])
+                ->noneIsOption();
         });
 
         $schema = $api->toSchemaJson();
@@ -67,7 +68,8 @@ class SchemaFilterTest extends ApiResourcesTest
                         'check' => [
                             'type' => 'Test.Filter',
                             'options' => [null, true, false],
-                            'null_is_option' => true
+                            'null_is_option' => true,
+                            'none_is_option' => true
                         ]
                     ],
                     'response' => [

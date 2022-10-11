@@ -22,6 +22,10 @@ class Filter extends BagEntry
 
     protected bool $nullIsOption = false;
 
+    protected bool $allIsOption = false;
+
+    protected bool $noneIsOption = false;
+
     protected bool $defaultValueSet = false;
 
     public function created(): void
@@ -49,6 +53,28 @@ class Filter extends BagEntry
     public function hasNullAsOption(): bool
     {
         return $this->nullIsOption || $this->hasOption(null);
+    }
+
+    public function allIsOption(bool $allIsOption = true): Filter
+    {
+        $this->allIsOption = $allIsOption;
+        return $this;
+    }
+
+    public function hasAllAsOption(): bool
+    {
+        return $this->allIsOption;
+    }
+
+    public function noneIsOption(bool $noneIsOption = true): Filter
+    {
+        $this->noneIsOption = $noneIsOption;
+        return $this;
+    }
+
+    public function hasNoneAsOption(): bool
+    {
+        return $this->noneIsOption;
     }
 
     public function default($default): Filter
@@ -125,6 +151,14 @@ class Filter extends BagEntry
 
         if ($this->hasNullAsOption()) {
             $json['null_is_option'] = true;
+        }
+
+        if ($this->hasAllAsOption()) {
+            $json['all_is_option'] = true;
+        }
+
+        if ($this->hasNoneAsOption()) {
+            $json['none_is_option'] = true;
         }
 
         return $json;
