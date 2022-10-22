@@ -4,7 +4,7 @@ namespace Afeefa\ApiResources\Model;
 
 class SimpleModel extends Model
 {
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         foreach ($this as $name => $value) {
             if ($name === 'visibleFields') {
@@ -14,6 +14,7 @@ class SimpleModel extends Model
         }
 
         $json = parent::jsonSerialize();
+
         return $json;
     }
 }

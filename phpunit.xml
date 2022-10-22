@@ -1,5 +1,5 @@
 <phpunit
-  bootstrap="vendor/autoload.php"
+  bootstrap="phpunit.php"
   colors="true"
 >
   <testsuites>

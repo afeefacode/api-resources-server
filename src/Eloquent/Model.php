@@ -73,7 +73,7 @@ class Model extends EloquentModel implements ModelInterface
         $this->visibleFields = $fields;
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         $json = [];
 

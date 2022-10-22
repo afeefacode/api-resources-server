@@ -237,7 +237,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         return $json;
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         $json = [
             'api' => $this->api::type(),

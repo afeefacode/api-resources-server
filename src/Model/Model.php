@@ -64,7 +64,7 @@ class Model implements ModelInterface, JsonSerializable
         $this->visibleFields = $fields;
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         $json = [];
 
