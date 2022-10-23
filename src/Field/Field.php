@@ -41,7 +41,7 @@ class Field extends BagEntry
      */
     protected $resolveCallback = null;
 
-    public function name(string $name): Field
+    public function name(string $name): static
     {
         $this->name = $name;
         return $this;
@@ -52,7 +52,7 @@ class Field extends BagEntry
         return $this->name;
     }
 
-    public function owner($owner): Field
+    public function owner($owner): static
     {
         $this->owner = $owner;
         return $this;
@@ -63,7 +63,7 @@ class Field extends BagEntry
         return $this->owner;
     }
 
-    public function default($default): Field
+    public function default($default): static
     {
         $this->default = $default;
         return $this;
@@ -79,13 +79,13 @@ class Field extends BagEntry
         return $this->default;
     }
 
-    public function isMutation(bool $isMutation = true): Field
+    public function isMutation(bool $isMutation = true): static
     {
         $this->isMutation = $isMutation;
         return $this;
     }
 
-    public function options(array $options): Field
+    public function options(array $options): static
     {
         $this->options = $options;
         return $this;
@@ -101,7 +101,7 @@ class Field extends BagEntry
         return $this->options;
     }
 
-    public function optionsRequest(Closure $callback): Field
+    public function optionsRequest(Closure $callback): static
     {
         $this->optionsRequestCallback = $callback;
         return $this;
@@ -146,7 +146,7 @@ class Field extends BagEntry
         return $this->validator;
     }
 
-    public function validate($validatorOrCallback): Field
+    public function validate($validatorOrCallback): static
     {
         if ($validatorOrCallback instanceof Validator) {
             $this->validator = $validatorOrCallback;
@@ -171,7 +171,7 @@ class Field extends BagEntry
         return $this;
     }
 
-    public function required(bool $required = true): Field
+    public function required(bool $required = true): static
     {
         $this->required = $required;
         return $this;
@@ -185,7 +185,7 @@ class Field extends BagEntry
     /**
      * @param string|callable|Closure $classOrCallback
      */
-    public function resolve($classOrCallback, array $params = []): Field
+    public function resolve($classOrCallback, array $params = []): static
     {
         $this->resolveCallback = $classOrCallback;
         $this->resolveParams = $params;
@@ -218,7 +218,7 @@ class Field extends BagEntry
         throw new NotACallbackException("Resolve callback for field {$this->name} is not callable.");
     }
 
-    public function clone(): Field
+    public function clone(): static
     {
         return $this->container->create(static::class, function (Field $field) {
             $field

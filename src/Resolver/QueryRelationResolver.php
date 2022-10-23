@@ -11,10 +11,6 @@ use Afeefa\ApiResources\Resolver\Query\QueryResolverTrait;
 use Closure;
 use Generator;
 
-/**
- * @method QueryRelationResolver relation(Relation $relation)
- * @method QueryRelationResolver ownerIdFields($ownerIdFields)
- */
 class QueryRelationResolver extends BaseFieldResolver
 {
     use QueryResolverTrait;

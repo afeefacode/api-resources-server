@@ -8,7 +8,7 @@ trait RelationResolverTrait
 {
     protected Relation $relation;
 
-    public function relation(Relation $relation): self
+    public function relation(Relation $relation): static
     {
         $this->relation = $relation;
         return $this;

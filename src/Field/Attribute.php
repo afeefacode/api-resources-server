@@ -4,15 +4,6 @@ namespace Afeefa\ApiResources\Field;
 
 use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
 
-/**
- * @method Attribute owner($owner)
- * @method Attribute name(string $name)
- * @method Attribute validate(Closure $callback)
- * @method Attribute validator(Validator $validator)
- * @method Attribute required(bool $required = true)
- * @method Attribute resolve(string|callable|Closure $classOrCallback, array $params = [])
- * @method Attribute isMutation(bool $isMutation)
-*/
 class Attribute extends Field
 {
     use HasStaticTypeTrait;

@@ -6,11 +6,6 @@ use Afeefa\ApiResources\Resolver\Field\BaseFieldResolver;
 use Afeefa\ApiResources\Resolver\Field\RelationResolverTrait;
 use Closure;
 
-/**
- * @method MutationRelationResolver ownerIdFields($ownerIdFields)
- * @method MutationRelationResolver addOwner($owner)
- * @method MutationRelationResolver relation(Relation $relation)
- */
 class MutationRelationResolver extends BaseFieldResolver
 {
     use MutationResolverTrait;

@@ -22,7 +22,7 @@ class Model implements ModelInterface, JsonSerializable
         return $models;
     }
 
-    public static function fromSingle(string $type, $object = []): ModelInterface
+    public static function fromSingle(string $type, $object = []): static
     {
         if ($object instanceof ModelInterface) {
             return $object;

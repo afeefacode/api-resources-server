@@ -4,14 +4,13 @@ namespace Afeefa\ApiResources\Resolver\Mutation;
 
 use Afeefa\ApiResources\Api\Operation;
 use Afeefa\ApiResources\Model\ModelInterface;
-use Afeefa\ApiResources\Resolver\Base\BaseResolver;
 use Closure;
 
 trait MutationResolverTrait
 {
     protected array $ownerSaveFields = [];
 
-    public function ownerSaveFields(array $ownerSaveFields): BaseResolver
+    public function ownerSaveFields(array $ownerSaveFields): static
     {
         $this->ownerSaveFields = $ownerSaveFields;
         return $this;

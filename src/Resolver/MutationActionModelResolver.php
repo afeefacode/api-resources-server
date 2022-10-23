@@ -10,8 +10,6 @@ use Closure;
 
 class MutationActionModelResolver extends BaseMutationActionResolver
 {
-    protected ?Closure $transactionCallback = null;
-
     protected ?Closure $beforeResolveCallback = null;
 
     protected ?Closure $getCallback = null;
@@ -21,12 +19,6 @@ class MutationActionModelResolver extends BaseMutationActionResolver
     protected ?Closure $updateCallback = null;
 
     protected ?Closure $deleteCallback = null;
-
-    public function transaction(Closure $callback): self
-    {
-        $this->transactionCallback = $callback;
-        return $this;
-    }
 
     public function beforeResolve(Closure $callback): self
     {
@@ -58,31 +50,31 @@ class MutationActionModelResolver extends BaseMutationActionResolver
         return $this;
     }
 
-    public function resolve(): array
-    {
-        return $this->wrapInTransaction(function () {
-            return $this->_resolve();
-        });
-    }
-
     protected function _resolve(): array
     {
+        // if errors
+
+        [$resourceType, $actionName] = $this->getResourceAndActionNames();
+        $mustReturn = "callback of mutation resolver for action {$actionName} on resource {$resourceType} must return";
+        $needsToImplement = "Resolver for action {$actionName} on resource {$resourceType} needs to implement";
+
         if ($this->beforeResolveCallback) {
             $params = $this->request->getParams();
             $fieldsToSave = $this->request->getFieldsToSave();
-            [$params, $fieldsToSave] = ($this->beforeResolveCallback)($params, $fieldsToSave);
+            $result = ($this->beforeResolveCallback)($params, $fieldsToSave);
+
+            if (!is_array($result) || !array_is_list($result) || count($result) !== 2) {
+                throw new InvalidConfigurationException("BeforeResolve {$mustReturn} an array of [params, fieldsToSave].");
+            }
+
+            [$params, $fieldsToSave] = $result;
+            if (!is_array($params) || !is_array($fieldsToSave)) {
+                throw new InvalidConfigurationException("BeforeResolve {$mustReturn} an array of [params, fieldsToSave].");
+            }
+
             $this->request->params($params);
             $this->request->fieldsToSave($fieldsToSave);
         }
-
-        $action = $this->request->getAction();
-
-        // if errors
-
-        $actionName = $action->getName();
-        $resourceType = $this->request->getResource()::type();
-        $mustReturn = "callback of mutation resolver for action {$actionName} on resource {$resourceType} must return";
-        $needsToImplement = "Resolver for action {$actionName} on resource {$resourceType} needs to implement";
 
         if (!$this->getCallback) {
             throw new MissingCallbackException("{$needsToImplement} a get() method.");
@@ -107,14 +99,13 @@ class MutationActionModelResolver extends BaseMutationActionResolver
         /** @var ModelInterface */
         $model = null;
 
-        $input = $action->getInput();
-
+        $input = $this->getInput();
         if ($input->isUnion() && !$this->request->hasParam('type')) {
             throw new InvalidConfigurationException('Must specify a type in the payload of the union action {$actionName} on resource {$resourceType}');
         };
 
-        $id = $this->request->getParam('id', null);
         $typeName = $input->isUnion() ? $this->request->getParam('type') : $input->getTypeClass()::type();
+        $id = $this->request->getParam('id', null);
 
         if ($id) {
             $existingModel = ($this->getCallback)($id, $typeName);
@@ -160,13 +151,5 @@ class MutationActionModelResolver extends BaseMutationActionResolver
             'input' => json_decode(file_get_contents('php://input'), true),
             'request' => $this->request
         ];
-    }
-
-    protected function wrapInTransaction(Closure $execute): array
-    {
-        if ($this->transactionCallback) {
-            return ($this->transactionCallback)($execute);
-        }
-        return $execute();
     }
 }

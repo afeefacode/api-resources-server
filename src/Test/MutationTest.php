@@ -11,7 +11,7 @@ use Afeefa\ApiResources\Resolver\MutationActionModelResolver;
 use Afeefa\ApiResources\Tests\Resolver\TestWatcher;
 use Closure;
 
-class MutationRelationTest extends ApiResourcesTest
+class MutationTest extends ApiResourcesTest
 {
     protected TestWatcher $testWatcher;
 

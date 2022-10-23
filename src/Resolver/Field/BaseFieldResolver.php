@@ -12,13 +12,13 @@ class BaseFieldResolver extends BaseResolver
      */
     protected array $owners = [];
 
-    public function addOwner(ModelInterface $owner): BaseFieldResolver
+    public function addOwner(ModelInterface $owner): static
     {
         $this->owners[] = $owner;
         return $this;
     }
 
-    public function addOwners(array $owner): BaseFieldResolver
+    public function addOwners(array $owner): static
     {
         $this->owners = $owner;
         return $this;

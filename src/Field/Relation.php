@@ -5,15 +5,6 @@ namespace Afeefa\ApiResources\Field;
 use Afeefa\ApiResources\Type\RelatedType;
 use Closure;
 
-/**
- * @method Relation owner($owner)
- * @method Relation name(string $name)
- * @method Relation validate(Closure $callback)
- * @method Relation validator(Validator $validator)
- * @method Relation required(bool $required = true)
- * @method Relation resolve(string|callable|Closure $classOrCallback, array $params = [])
- * @method Relation isMutation(bool $isMutation)
- */
 class Relation extends Field
 {
     public const RESTRICT_TO_GET = 'get';
@@ -27,7 +18,7 @@ class Relation extends Field
 
     protected ?Closure $additionalSaveFieldsCallback = null;
 
-    protected ?Closure $skipRelatedIfCallback = null;
+    protected ?Closure $skipSaveRelatedIfCallback = null;
 
     public function restrictTo(?string $restrictTo): Relation
     {
@@ -56,20 +47,20 @@ class Relation extends Field
         return $this->additionalSaveFieldsCallback;
     }
 
-    public function skipRelatedIf(Closure $callback): self
+    public function skipSaveRelatedIf(Closure $callback): self
     {
-        $this->skipRelatedIfCallback = $callback;
+        $this->skipSaveRelatedIfCallback = $callback;
         return $this;
     }
 
-    public function hasSkipRelatedIfCallback(): bool
+    public function hasSkipSaveRelatedIfCallback(): bool
     {
-        return !!$this->skipRelatedIfCallback;
+        return !!$this->skipSaveRelatedIfCallback;
     }
 
-    public function getSkipRelatedIfCallback(): ?Closure
+    public function getSkipSaveRelatedIfCallback(): ?Closure
     {
-        return $this->skipRelatedIfCallback;
+        return $this->skipSaveRelatedIfCallback;
     }
 
     public function typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta): Relation
@@ -85,7 +76,7 @@ class Relation extends Field
         return $this->relatedType;
     }
 
-    public function clone(): Relation
+    public function clone(): static
     {
         /** @var Relation */
         $relation = parent::clone();
@@ -93,6 +84,10 @@ class Relation extends Field
 
         if ($this->additionalSaveFieldsCallback) {
             $relation->additionalSaveFieldsCallback = $this->additionalSaveFieldsCallback;
+        }
+
+        if ($this->skipSaveRelatedIfCallback) {
+            $relation->skipSaveRelatedIfCallback = $this->skipSaveRelatedIfCallback;
         }
 
         return $relation;

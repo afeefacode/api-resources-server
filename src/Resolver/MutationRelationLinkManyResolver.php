@@ -35,38 +35,53 @@ class MutationRelationLinkManyResolver extends MutationRelationResolver
         $data = $this->fieldsToSave;
 
         if ($this->ownerOperation === Operation::UPDATE) {
-            $existingModels = ($this->getCallback)($owner);
-            if (!is_array($existingModels)) {
-                throw new InvalidConfigurationException("Get {$mustReturn} an array of ModelInterface objects.");
-            }
-            foreach ($existingModels as $existingModel) {
-                if (!$existingModel instanceof ModelInterface) {
+            $existingModels = [];
+
+            if (!$this->relatedOperation || count($data)) { // if DELETE_RELATED or ADD_RELATED and no data given, we skip getting the existing models
+                $existingModels = ($this->getCallback)($owner);
+                if (!is_array($existingModels)) {
                     throw new InvalidConfigurationException("Get {$mustReturn} an array of ModelInterface objects.");
+                }
+                foreach ($existingModels as $existingModel) {
+                    if (!$existingModel instanceof ModelInterface) {
+                        throw new InvalidConfigurationException("Get {$mustReturn} an array of ModelInterface objects.");
+                    }
                 }
             }
 
             $getExistingModelById = fn ($id) => array_values(array_filter($existingModels, fn ($m) => $m->apiResourcesGetId() === $id))[0] ?? null;
             $getSavedDataById = fn ($id) => array_values(array_filter($data, fn ($single) => ($single['id'] ?? null) === $id))[0] ?? null;
 
-            foreach ($existingModels as $existingModel) {
-                $id = $existingModel->apiResourcesGetId();
-                if (!$getSavedDataById($id)) {
-                    ($this->unlinkCallback)($owner, $existingModel);
+            if ($this->relatedOperation !== Operation::ADD_RELATED) { // DEFAULT or DELETE_RELATED, ignore when ADD_RELATED
+                foreach ($existingModels as $existingModel) {
+                    $id = $existingModel->apiResourcesGetId();
+                    // delete if DEFAULT + not included any longer
+                    if (!$this->relatedOperation && !$getSavedDataById($id)) {
+                        ($this->unlinkCallback)($owner, $existingModel);
+                    }
+                    // or DELETE_RELATED and included in data
+                    if ($this->relatedOperation === Operation::DELETE_RELATED && $getSavedDataById($id)) {
+                        ($this->unlinkCallback)($owner, $existingModel);
+                    }
                 }
             }
 
-            foreach ($data as $single) {
-                if (isset($single['id'])) {
-                    $existingModel = $getExistingModelById($single['id']);
-                    if (!$existingModel) {
-                        ($this->linkCallback)($owner, $single['id'], $typeName);
+            if ($this->relatedOperation !== Operation::DELETE_RELATED) { // ignore when DELETE_RELATED
+                foreach ($data as $single) {
+                    if (isset($single['id'])) {
+                        $existingModel = $getExistingModelById($single['id']);
+                        if (!$existingModel) {
+                            ($this->linkCallback)($owner, $single['id'], $typeName);
+                        }
                     }
                 }
             }
         } else { // create, only link
-            foreach ($data as $single) {
-                if (isset($single['id'])) {
-                    ($this->linkCallback)($owner, $single['id'], $typeName);
+            if ($this->relatedOperation !== Operation::DELETE_RELATED) { // ignore when DELETE_RELATED
+                foreach ($data as $single) {
+                    if (isset($single['id'])) {
+                        ($this->linkCallback)($owner, $single['id'], $typeName);
+                    }
                 }
             }
         }

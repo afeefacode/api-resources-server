@@ -11,13 +11,12 @@ use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\MutationActionSimpleResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationHasOneResolver;
-use Afeefa\ApiResources\Test\MutationRelationTest;
-
+use Afeefa\ApiResources\Test\MutationTest;
 use function Afeefa\ApiResources\Test\T;
-
+use Closure;
 use stdClass;
 
-class MutationActionSimpleResolverTest extends MutationRelationTest
+class MutationActionSimpleResolverTest extends MutationTest
 {
     public function test_missing_save_callback()
     {
@@ -325,5 +324,50 @@ class MutationActionSimpleResolverTest extends MutationRelationTest
             'array' => [null],
             'array' => ['NOTHING']
         ];
+    }
+
+    public function test_transaction()
+    {
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
+            function (Action $action) {
+                $action
+                    ->resolve(function (MutationActionSimpleResolver $r) {
+                        $r
+                            ->transaction(function (Closure $execute) {
+                                $this->testWatcher->info('startTransaction');
+                                $execute();
+                                $this->testWatcher->info('endTransaction');
+                                return ['data' => 'null'];
+                            })
+                            ->save(function () {
+                                $this->testWatcher->info('save');
+                                return Model::fromSingle('TYPE', []);
+                            });
+                    });
+            }
+        );
+
+        $this->request($api);
+
+        $this->assertEquals(['startTransaction', 'save', 'endTransaction'], $this->testWatcher->info);
+    }
+
+    public function test_transaction_does_not_return_result_array()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Transaction callback of mutation resolver for action ACT on resource RES must return a result array with at least a data field.');
+
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
+            function (Action $action) {
+                $action
+                    ->resolve(function (MutationActionSimpleResolver $r) {
+                        $r->transaction(fn () => null);
+                    });
+            }
+        );
+
+        $this->request($api);
     }
 }

@@ -12,13 +12,12 @@ use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Resolver\MutationActionModelResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationHasOneResolver;
-use Afeefa\ApiResources\Test\MutationRelationTest;
-
+use Afeefa\ApiResources\Test\MutationTest;
 use function Afeefa\ApiResources\Test\T;
-
+use Closure;
 use stdClass;
 
-class MutationActionModelResolverTest extends MutationRelationTest
+class MutationActionModelResolverTest extends MutationTest
 {
     private $should_update = false;
 
@@ -606,6 +605,134 @@ class MutationActionModelResolverTest extends MutationRelationTest
         ];
 
         return $data;
+    }
+
+    public function test_before_resolve()
+    {
+        $api = $this->createApiWithUpdateTypeAndMutation(
+            function (FieldBag $fields) {
+                $fields
+                    ->attribute('name', StringAttribute::class);
+            },
+            fn () => T('TYPE'),
+            function (Action $action) {
+                $action
+                    ->resolve(function (MutationActionModelResolver $r) {
+                        $r
+                            ->beforeResolve(function ($params, $fieldsToSave) {
+                                $this->testWatcher->info('beforeResolve');
+                                $this->testWatcher->info2([$params, $fieldsToSave]);
+
+                                $fieldsToSave['name'] = 'other_name';
+                                return [$params, $fieldsToSave];
+                            })
+                            ->get(fn () => null)
+                            ->add(function (string $typeName, array $saveFields) use ($r) {
+                                $this->testWatcher->info2($saveFields);
+                                return Model::fromSingle('TYPE');
+                            })
+                            ->update(fn () => null)
+                            ->delete(fn () => null);
+                    });
+            }
+        );
+
+        $this->request(
+            $api,
+            params: ['id' => '123'],
+            data: ['name' => 'my_name']
+        );
+
+        $this->assertEquals(['beforeResolve'], $this->testWatcher->info);
+        $this->assertEquals([
+            [['id' => '123'], ['name' => 'my_name']],
+            ['name' => 'other_name']
+        ], $this->testWatcher->info2);
+    }
+
+    public function test_transaction()
+    {
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
+            function (Action $action) {
+                $action
+                    ->resolve(function (MutationActionModelResolver $r) {
+                        $r
+                            ->transaction(function (Closure $execute) {
+                                $this->testWatcher->info('startTransaction');
+                                $execute();
+                                $this->testWatcher->info('endTransaction');
+                                return ['data' => 'null'];
+                            })
+                            ->get(fn () => null)
+                            ->update(fn () => null)
+                            ->add(function () {
+                                $this->testWatcher->info('add');
+                                return Model::fromSingle('TYPE', []);
+                            })
+                            ->delete(fn () => null);
+                    });
+            }
+        );
+
+        $this->request($api);
+
+        $this->assertEquals(['startTransaction', 'add', 'endTransaction'], $this->testWatcher->info);
+    }
+
+    public function test_transaction_does_not_return_result_array()
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Transaction callback of mutation resolver for action ACT on resource RES must return a result array with at least a data field.');
+
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
+            function (Action $action) {
+                $action
+                    ->resolve(function (MutationActionModelResolver $r) {
+                        $r->transaction(fn () => null);
+                    });
+            }
+        );
+
+        $this->request($api);
+    }
+
+    /**
+     * @dataProvider beforeResolveDoesNotReturnArrayDataProvider
+     */
+    public function test_before_resolve_does_not_return_array($return)
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('BeforeResolve callback of mutation resolver for action ACT on resource RES must return an array of [params, fieldsToSave].');
+
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
+            function (Action $action) use ($return) {
+                $action
+                    ->resolve(function (MutationActionModelResolver $r) use ($return) {
+                        $r->beforeResolve(function () use ($return) {
+                            if ($return !== 'NOTHING') {
+                                return $return;
+                            }
+                        });
+                    });
+            }
+        );
+
+        $this->request($api);
+    }
+
+    public function beforeResolveDoesNotReturnArrayDataProvider()
+    {
+        return [
+            'null' => [null],
+            'null' => ['a' => 1, 'b' => 2],
+            'array' => [[]],
+            'string' => ['string'],
+            'object' => [new stdClass()],
+            'nothing' => ['NOTHING']
+        ];
     }
 
     /**

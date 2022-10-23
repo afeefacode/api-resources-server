@@ -48,19 +48,23 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
             }
         }
 
-        if ($relation->hasSkipRelatedIfCallback()) {
-            $skipIf = $relation->getSkipRelatedIfCallback();
+        if ($relation->hasSkipSaveRelatedIfCallback()) {
+            $skipIf = $relation->getSkipSaveRelatedIfCallback();
             $data = array_filter($data, fn ($single) => !$skipIf($single));
         }
 
         if ($this->ownerOperation === Operation::UPDATE) {
-            $existingModels = ($this->getCallback)($owner);
-            if (!is_array($existingModels)) {
-                throw new InvalidConfigurationException("Get {$mustReturn} an array of ModelInterface objects.");
-            }
-            foreach ($existingModels as $existingModel) {
-                if (!$existingModel instanceof ModelInterface) {
+            $existingModels = [];
+
+            if (!$this->relatedOperation || count($data)) { // if DELETE_RELATED or ADD_RELATED and no data given, we skip getting the existing models
+                $existingModels = ($this->getCallback)($owner);
+                if (!is_array($existingModels)) {
                     throw new InvalidConfigurationException("Get {$mustReturn} an array of ModelInterface objects.");
+                }
+                foreach ($existingModels as $existingModel) {
+                    if (!$existingModel instanceof ModelInterface) {
+                        throw new InvalidConfigurationException("Get {$mustReturn} an array of ModelInterface objects.");
+                    }
                 }
             }
 

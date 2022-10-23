@@ -3,7 +3,6 @@
 namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Field\Relation;
-use Afeefa\ApiResources\Resolver\Field\RelationResolverTrait;
 use Afeefa\ApiResources\Resolver\MutationRelationHasManyResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationHasOneResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationLinkManyResolver;
@@ -19,8 +18,6 @@ use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 
 class ModelRelationResolver
 {
-    use RelationResolverTrait;
-
     public function get_relation(QueryRelationResolver $r)
     {
         $r

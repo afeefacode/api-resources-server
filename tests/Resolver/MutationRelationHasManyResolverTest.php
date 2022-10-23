@@ -10,14 +10,14 @@ use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Resolver\MutationRelationHasManyResolver;
-use Afeefa\ApiResources\Test\MutationRelationTest;
+use Afeefa\ApiResources\Test\MutationTest;
 
 use function Afeefa\ApiResources\Test\T;
 
 use Afeefa\ApiResources\Type\Type;
 use stdClass;
 
-class MutationRelationHasManyResolverTest extends MutationRelationTest
+class MutationRelationHasManyResolverTest extends MutationTest
 {
     /**
      * @dataProvider missingCallbacksDataProvider
@@ -620,5 +620,258 @@ class MutationRelationHasManyResolverTest extends MutationRelationTest
         $this->assertEquals($expectedInfo, $this->testWatcher->info);
         $this->assertEquals($expectedInfo2, $this->testWatcher->info2);
         $this->assertEquals($expectedSaveFields, $this->testWatcher->saveFields);
+    }
+
+    private $test_related_operation_existingData = [];
+
+    /**
+     * @dataProvider relatedOperationAddDataProvider
+     */
+    public function test_related_operation($existingData, $params, $data, $expectedInfo)
+    {
+        $this->test_related_operation_add_existingData = $existingData;
+
+        $api = $this->createApiWithUpdateType(
+            function (FieldBag $fields) {
+                $fields
+                    ->attribute('name', StringAttribute::class)
+                    ->relation('others', Type::list(T('TYPE')), function (Relation $relation) {
+                        $relation->resolve(function (MutationRelationHasManyResolver $r) {
+                            $r
+                                ->get(function () {
+                                    $this->testWatcher->info('get');
+                                    return Model::fromList('TYPE', $this->test_related_operation_add_existingData);
+                                })
+                                ->add(function (ModelInterface $owner, string $typeName, array $saveFields) use ($r) {
+                                    $this->testWatcher->info('add:' . $saveFields['name']);
+                                    return Model::fromSingle('TYPE');
+                                })
+                                ->update(function (ModelInterface $owner, ModelInterface $modelToUpdate, array $saveFields) {
+                                    $this->testWatcher->info('update:' . $saveFields['name']);
+                                })
+                                ->delete(function (ModelInterface $owner, ModelInterface $modelToDelete) {
+                                    $this->testWatcher->info('delete:' . $modelToDelete->apiResourcesGetId());
+                                });
+                        });
+                    });
+            }
+        );
+
+        $this->request($api, params: $params, data: $data);
+        $this->assertEquals($expectedInfo, $this->testWatcher->info);
+    }
+
+    public function relatedOperationAddDataProvider()
+    {
+        // $data, $expectedInfo, $expectedInfo2, $expectedSaveFields
+        return [
+            'new_owner_default' => [
+                'existing' => [],
+                'params' => [],
+                'data' => [
+                    'others' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'add:name4',
+                    'add:name5'
+                ],
+            ],
+            'new_owner_add' => [
+                'existing' => [],
+                'params' => [],
+                'data' => [
+                    'others#add' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'add:name4',
+                    'add:name5'
+                ],
+            ],
+            'new_owner_delete' => [
+                'existing' => [],
+                'params' => [],
+                'data' => [
+                    'others#delete' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [],
+            ],
+
+            'existing_owner_no_existing_relations_default' => [
+                'existing' => [],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'get',
+                    'add:name4',
+                    'add:name5'
+                ],
+            ],
+            'existing_owner_no_existing_relations_add' => [
+                'existing' => [],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others#add' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'get',
+                    'add:name4',
+                    'add:name5'
+                ],
+            ],
+            'existing_owner_no_existing_relations_delete' => [
+                'existing' => [],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others#delete' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => ['get'],
+            ],
+
+            'existing_owner_existing_relations_default' => [
+                'existing' => [['id' => '9']],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'get',
+                    'delete:9',
+                    'add:name4',
+                    'add:name5'
+                ],
+            ],
+            'existing_owner_existing_relations_default2' => [
+                'existing' => [['id' => '9']],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others' => []
+                ],
+                'info' => [
+                    'get',
+                    'delete:9'
+                ],
+            ],
+            'existing_owner_existing_relations_default3' => [
+                'existing' => [['id' => '9'], ['id' => '10']],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['id' => '10', 'name' => 'name10'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'get',
+                    'delete:9',
+                    'add:name4',
+                    'update:name10',
+                    'add:name5'
+                ],
+            ],
+
+            'existing_owner_existing_relations_add' => [
+                'existing' => [['id' => '9']],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others#add' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'get',
+                    'add:name4',
+                    'add:name5'
+                ],
+            ],
+            'existing_owner_existing_relations_add2' => [
+                'existing' => [['id' => '9']],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others#add' => []
+                ],
+                'info' => [],
+            ],
+            'existing_owner_existing_relations_add3' => [
+                'existing' => [['id' => '9'], ['id' => '10']],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others#add' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['id' => '10', 'name' => 'name10'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'get',
+                    'add:name4',
+                    'update:name10',
+                    'add:name5'
+                ],
+            ],
+
+            'existing_owner_existing_relations_delete' => [
+                'existing' => [['id' => '9']],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others#delete' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['id' => '9', 'name' => 'name9'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'get',
+                    'delete:9'
+                ],
+            ],
+            'existing_owner_existing_relations_delete2' => [
+                'existing' => [['id' => '9']],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others#delete' => []
+                ],
+                'info' => [],
+            ],
+            'existing_owner_existing_relations_delete3' => [
+                'existing' => [['id' => '9'], ['id' => '10']],
+                'params' => ['id' => '1'],
+                'data' => [
+                    'others#delete' => [
+                        ['id' => '4', 'name' => 'name4'],
+                        ['id' => '10', 'name' => 'name10'],
+                        ['name' => 'name5']
+                    ]
+                ],
+                'info' => [
+                    'get',
+                    'delete:10'
+                ],
+            ],
+        ];
     }
 }

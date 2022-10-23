@@ -682,9 +682,6 @@ class QueryActionResolverTest extends QueryTest
     }
 }
 
-/**
- * @method static TestModel fromSingle
- */
 class TestModel extends Model
 {
     public array $selectFields = [];

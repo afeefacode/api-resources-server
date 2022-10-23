@@ -15,13 +15,13 @@ use Afeefa\ApiResources\Resolver\MutationRelationHasManyResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationHasOneResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationLinkManyResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationLinkOneResolver;
-use Afeefa\ApiResources\Test\MutationRelationTest;
+use Afeefa\ApiResources\Test\MutationTest;
 use function Afeefa\ApiResources\Test\T;
 use Afeefa\ApiResources\Type\Type;
 
 use Afeefa\ApiResources\Type\TypeClassMap;
 
-class MutationModelResolverTest extends MutationRelationTest
+class MutationModelResolverTest extends MutationTest
 {
     protected Model $model;
     protected array $modelIdMap = [];
@@ -835,7 +835,7 @@ class MutationModelResolverTest extends MutationRelationTest
 
     private function save(array $data = [], array $params = []): array
     {
-        $result = parent::request($this->getApi(), $data, $params);
+        $result = $this->request($this->getApi(), $data, $params);
         $this->model->typeOfModel = $this->getTypeByName('TYPE'); // get and set not until resources are initialized in request()
 
         $this->model->modelIdMap = $this->modelIdMap;
