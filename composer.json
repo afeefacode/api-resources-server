@@ -1,6 +1,6 @@
 {
     "name": "afeefa/api-resources-server",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -14,12 +14,12 @@
     },
     "require-dev": {
         "robmorgan/phinx": "^0.12",
-        "fakerphp/faker": "^1.16",
+        "fakerphp/faker": "^v1.20",
         "phpunit/phpunit": "^9.5",
         "catfan/medoo": "^2.1",
         "afeefa/debug-dump-log": "^0",
-        "illuminate/database": "^8.66",
-        "staudenmeir/eloquent-eager-limit": "^1.5"
+        "illuminate/database": "^v9.9",
+        "staudenmeir/eloquent-eager-limit": "^v1.7"
     },
     "autoload": {
         "psr-4": {
