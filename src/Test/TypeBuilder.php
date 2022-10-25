@@ -2,11 +2,10 @@
 
 namespace Afeefa\ApiResources\Test;
 
-use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Type\Type;
 use Afeefa\ApiResources\Type\TypeClassMap;
 use Closure;
-use Webmozart\PathUtil\Path;
+use Symfony\Component\Filesystem\Path;
 
 class TypeBuilder extends Builder
 {
@@ -17,11 +16,11 @@ class TypeBuilder extends Builder
         ?Closure $fieldsCallback = null,
         ?Closure $updateFieldsCallback = null,
         ?Closure $createFieldsCallback = null
-    ): TypeBuilder {
+    ): static {
         // creating unique anonymous class is difficult
         // https://stackoverflow.com/questions/40833199/static-properties-in-php7-anonymous-classes
         // https://www.php.net/language.oop5.anonymous#121839
-        $code = file_get_contents(Path::join(__DIR__, 'class-templates', 'type.php'));
+        $code = file_get_contents($this->getClassTemplateName());
         $code = preg_replace("/<\?php/", '', $code);
 
         if ($typeName) {
@@ -31,7 +30,9 @@ class TypeBuilder extends Builder
             $code = preg_replace('/protected static string \$type.+/', '', $code);
         }
 
-        /** @var TestType */
+        $code = $this->handleClassCode($code);
+
+        /* @var TestType */
         $type = eval($code); // eval is not always evil
 
         $type::$fieldsCallback = $fieldsCallback;
@@ -51,32 +52,19 @@ class TypeBuilder extends Builder
         }
         return $type;
     }
+
+    protected function getClassTemplateName(): string
+    {
+        return Path::join(__DIR__, 'class-templates', 'type.php');
+    }
+
+    protected function handleClassCode(string $code): string
+    {
+        return $code;
+    }
 }
 
 class TestType extends Type
 {
-    public static ?Closure $fieldsCallback;
-    public static ?Closure $updateFieldsCallback;
-    public static ?Closure $createFieldsCallback;
-
-    protected function fields(FieldBag $fields): void
-    {
-        if (static::$fieldsCallback) {
-            (static::$fieldsCallback)($fields);
-        }
-    }
-
-    protected function updateFields(FieldBag $updateFields): void
-    {
-        if (static::$updateFieldsCallback) {
-            (static::$updateFieldsCallback)($updateFields);
-        }
-    }
-
-    protected function createFields(FieldBag $createFields, FieldBag $updateFields): void
-    {
-        if (static::$createFieldsCallback) {
-            (static::$createFieldsCallback)($createFields, $updateFields);
-        }
-    }
+    use TypeBuilderTrait;
 }

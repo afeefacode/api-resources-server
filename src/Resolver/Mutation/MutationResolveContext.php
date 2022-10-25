@@ -82,7 +82,7 @@ class MutationResolveContext implements ContainerAwareInterface
     protected function createRelationResolvers(): array
     {
         $type = $this->type;
-        $fieldsToSave = $this->fieldsToSave;
+        $fieldsToSave = $this->fieldsToSave ?: [];
         $operation = $this->getOperation();
 
         $relationResolvers = [];

@@ -68,7 +68,7 @@ class MutationActionModelResolver extends BaseMutationActionResolver
             }
 
             [$params, $fieldsToSave] = $result;
-            if (!is_array($params) || !is_array($fieldsToSave)) {
+            if (!is_array($params) || !($fieldsToSave === null || is_array($fieldsToSave))) {
                 throw new InvalidConfigurationException("BeforeResolve {$mustReturn} an array of [params, fieldsToSave].");
             }
 
@@ -116,13 +116,15 @@ class MutationActionModelResolver extends BaseMutationActionResolver
 
         // delete
 
-        if ($existingModel && $this->request->getFieldsToSave() === null) {
+        $fieldsToSave = $this->request->getFieldsToSave();
+
+        if ($existingModel && $fieldsToSave === null) {
             ($this->deleteCallback)($existingModel);
-        } else {
+        } elseif ($fieldsToSave !== null) { // do not add/update model if fields=null
             $model = $this->resolveModel(
                 $existingModel,
                 $typeName,
-                $this->request->getFieldsToSave(),
+                $fieldsToSave,
                 function ($saveFields) use ($existingModel, $typeName, $mustReturn) {
                     if ($existingModel) {
                         ($this->updateCallback)($existingModel, $saveFields);

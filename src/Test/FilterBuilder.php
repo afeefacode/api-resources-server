@@ -4,7 +4,7 @@ namespace Afeefa\ApiResources\Test;
 
 use Afeefa\ApiResources\Filter\Filter;
 use Closure;
-use Webmozart\PathUtil\Path;
+use Symfony\Component\Filesystem\Path;
 
 class FilterBuilder extends Builder
 {

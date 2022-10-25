@@ -607,7 +607,10 @@ class MutationActionModelResolverTest extends MutationTest
         return $data;
     }
 
-    public function test_before_resolve()
+    /**
+     * @dataProvider beforeResolveDataProvider
+     */
+    public function test_before_resolve($data, $expectedAddFields)
     {
         $api = $this->createApiWithUpdateTypeAndMutation(
             function (FieldBag $fields) {
@@ -623,7 +626,10 @@ class MutationActionModelResolverTest extends MutationTest
                                 $this->testWatcher->info('beforeResolve');
                                 $this->testWatcher->info2([$params, $fieldsToSave]);
 
-                                $fieldsToSave['name'] = 'other_name';
+                                if ($fieldsToSave) {
+                                    $fieldsToSave['name'] = 'other_name';
+                                }
+
                                 return [$params, $fieldsToSave];
                             })
                             ->get(fn () => null)
@@ -640,14 +646,27 @@ class MutationActionModelResolverTest extends MutationTest
         $this->request(
             $api,
             params: ['id' => '123'],
-            data: ['name' => 'my_name']
+            data: $data
         );
 
         $this->assertEquals(['beforeResolve'], $this->testWatcher->info);
+
+        if ($expectedAddFields === 'NOT_CALLED') { // fake element to be able to compare
+            $this->testWatcher->info2[] = 'NOT_CALLED';
+        }
+
         $this->assertEquals([
-            [['id' => '123'], ['name' => 'my_name']],
-            ['name' => 'other_name']
+            [['id' => '123'], $data],
+            $expectedAddFields,
         ], $this->testWatcher->info2);
+    }
+
+    public function beforeResolveDataProvider()
+    {
+        return [
+            [['name' => 'my_name'], ['name' => 'other_name']],
+            [null, 'NOT_CALLED'],
+        ];
     }
 
     public function test_transaction()
@@ -727,7 +746,7 @@ class MutationActionModelResolverTest extends MutationTest
     {
         return [
             'null' => [null],
-            'null' => ['a' => 1, 'b' => 2],
+            'single array' => ['a' => 1, 'b' => 2],
             'array' => [[]],
             'string' => ['string'],
             'object' => [new stdClass()],
@@ -876,5 +895,41 @@ class MutationActionModelResolverTest extends MutationTest
                 [['123', 'TYPE']]
             ]
         ];
+    }
+
+    public function test_does_not_add_if_null_given()
+    {
+        $api = $this->createApiWithUpdateTypeAndMutation(
+            function (FieldBag $fields) {
+                $fields
+                    ->attribute('name', StringAttribute::class);
+            },
+            fn () => T('TYPE'),
+            function (Action $action) {
+                $action
+                    ->resolve(function (MutationActionModelResolver $r) {
+                        $r
+                            ->get(function () {
+                                $this->testWatcher->info('get');
+                            })
+                            ->add(function () {
+                                $this->testWatcher->info('add');
+                            })
+                            ->update(function () {
+                                $this->testWatcher->info('update');
+                            })
+                            ->delete(function () {
+                                $this->testWatcher->info('delete');
+                            });
+                    });
+            }
+        );
+
+        $this->request(
+            $api,
+            data: null
+        );
+
+        $this->assertEquals([], $this->testWatcher->info);
     }
 }

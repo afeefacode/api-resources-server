@@ -16,7 +16,7 @@ trait MutationResolverTrait
         return $this;
     }
 
-    protected function resolveModel(?ModelInterface $existingModel, string $typeName, array $fieldsToSave, Closure $resolveCallback): ModelInterface
+    protected function resolveModel(?ModelInterface $existingModel, string $typeName, ?array $fieldsToSave, Closure $resolveCallback): ModelInterface
     {
         $ownerOperation = $existingModel ? Operation::UPDATE : Operation::CREATE;
 
@@ -80,7 +80,7 @@ trait MutationResolverTrait
         return $model;
     }
 
-    private function createResolveContext(string $typeName, string $operation, array $fieldsToSave): MutationResolveContext
+    private function createResolveContext(string $typeName, string $operation, ?array $fieldsToSave): MutationResolveContext
     {
         return $this->container->create(MutationResolveContext::class)
             ->type($this->getTypeByName($typeName))

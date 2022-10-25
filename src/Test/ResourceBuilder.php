@@ -5,7 +5,7 @@ namespace Afeefa\ApiResources\Test;
 use Afeefa\ApiResources\Action\ActionBag;
 use Afeefa\ApiResources\Resource\Resource;
 use Closure;
-use Webmozart\PathUtil\Path;
+use Symfony\Component\Filesystem\Path;
 
 class ResourceBuilder extends Builder
 {

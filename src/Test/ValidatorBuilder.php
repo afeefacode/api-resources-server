@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Validator\Rule\RuleBag;
 use Afeefa\ApiResources\Validator\Validator;
 use Closure;
 use Exception;
-use Webmozart\PathUtil\Path;
+use Symfony\Component\Filesystem\Path;
 
 class ValidatorBuilder extends Builder
 {

@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Eloquent;
 
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Type\Type;
@@ -13,6 +14,10 @@ class ModelType extends Type
     public function created(): void
     {
         parent::created();
+
+        if (!isset(static::$ModelClass)) {
+            throw new InvalidConfigurationException('Missing Eloquent model in class ' . static::class . '.');
+        }
 
         $this->addDefaultRelationResolvers($this->fields);
         $this->addDefaultMutationRelationResolvers($this->updateFields);

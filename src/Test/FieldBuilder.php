@@ -4,7 +4,7 @@ namespace Afeefa\ApiResources\Test;
 
 use Afeefa\ApiResources\Field\Field;
 use Closure;
-use Webmozart\PathUtil\Path;
+use Symfony\Component\Filesystem\Path;
 
 class FieldBuilder extends Builder
 {

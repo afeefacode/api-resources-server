@@ -209,10 +209,10 @@ class Field extends BagEntry
             $callback[0] = $this->container->create($callback[0]);
         }
 
-        if (is_callable($callback)) {
-            return Closure::fromCallable($callback);
-        } elseif ($callback instanceof Closure) {
+        if ($callback instanceof Closure) {
             return $callback;
+        } elseif (is_callable($callback)) {
+            return Closure::fromCallable($callback);
         }
 
         throw new NotACallbackException("Resolve callback for field {$this->name} is not callable.");

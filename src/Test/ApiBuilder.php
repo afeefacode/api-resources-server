@@ -7,7 +7,7 @@ use Afeefa\ApiResources\Resource\ResourceBag;
 use Afeefa\ApiResources\Type\Type;
 use Closure;
 
-use Webmozart\PathUtil\Path;
+use Symfony\Component\Filesystem\Path;
 
 class ApiBuilder extends Builder
 {
