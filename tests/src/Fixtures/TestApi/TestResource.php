@@ -1,6 +1,6 @@
 <?php
 
-namespace Afeefa\ApiResources\Tests\Fixtures\TestApi;
+namespace Afeefa\ApiResources\Test\Fixtures\TestApi;
 
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Action\ActionBag;

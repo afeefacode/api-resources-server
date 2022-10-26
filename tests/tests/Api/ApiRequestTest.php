@@ -9,9 +9,9 @@ use Afeefa\ApiResources\DI\Container;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\MutationActionSimpleResolver;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
+use Afeefa\ApiResources\Test\Fixtures\TestApi\TestApi;
+use Afeefa\ApiResources\Test\Fixtures\TestApi\TestResource;
 use function Afeefa\ApiResources\Test\T;
-use Afeefa\ApiResources\Tests\Fixtures\TestApi\TestApi;
-use Afeefa\ApiResources\Tests\Fixtures\TestApi\TestResource;
 use Afeefa\ApiResources\Type\Type;
 use Afeefa\ApiResources\Validator\ValidationFailedException;
 

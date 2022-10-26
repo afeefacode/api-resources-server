@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+
+  mysql:
+    container_name: api-resources-test-mysql
+    image: mariadb
+    volumes:
+      - api-resources-test-mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: api-resources-test
+    ports:
+      - '23306:3306'
+
+volumes:
+  api-resources-test-mysql:
+    driver: local

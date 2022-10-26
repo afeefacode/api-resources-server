@@ -1,6 +1,6 @@
 <?php
 
-namespace Afeefa\ApiResources\Tests\Fixtures\TestApi;
+namespace Afeefa\ApiResources\Test\Fixtures\TestApi;
 
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
