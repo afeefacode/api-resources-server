@@ -50,6 +50,7 @@ class StringValidator extends Validator
             });
 
         $rules->add('null')
+            ->default(true)
             ->message('{{ fieldLabel }} sollte eine Zeichenkette sein.')
             ->validate(function ($value, $null) {
                 if (!$null && is_null($value)) {
@@ -69,11 +70,11 @@ class StringValidator extends Validator
 
         $rules->add('min')
             ->message('{{ fieldLabel }} sollte mindestens {{ param }} Zeichen beinhalten.')
-            ->validate(function ($value, $filled, $min) {
+            ->validate(function ($value, $min) {
                 if ($min === null) {
                     return true;
                 }
-                if (!$filled && !$value) {
+                if (is_null($value) || $value === '') { // validate in null/filled
                     return true;
                 }
                 if (strlen($value) < $min) {
@@ -86,6 +87,9 @@ class StringValidator extends Validator
             ->message('{{ fieldLabel }} sollte maximal {{ param }} Zeichen beinhalten.')
             ->validate(function ($value, $max) {
                 if ($max === null) {
+                    return true;
+                }
+                if (is_null($value)) { // validate in null
                     return true;
                 }
                 if (strlen($value) > $max) {

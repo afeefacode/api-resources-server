@@ -38,6 +38,10 @@ class ModelResource extends Resource
     {
     }
 
+    protected function getParams(ActionParams $params): void
+    {
+    }
+
     protected function filters(FilterBag $filters): void
     {
         $filters->add('q', KeywordFilter::class);
@@ -60,6 +64,11 @@ class ModelResource extends Resource
     }
 
     protected function param(string $name, $value, Builder $query): void
+    {
+        $query->where($name, $value);
+    }
+
+    protected function getParam(string $name, $value, Builder $query): void
     {
         $query->where($name, $value);
     }
@@ -118,6 +127,9 @@ class ModelResource extends Resource
             ->param(function (string $name, $value, Builder $query) {
                 $this->param($name, $value, $query);
             })
+            ->getParam(function (string $name, $value, Builder $query) {
+                $this->getParam($name, $value, $query);
+            })
             ->beforeResolve(function (array $params, ?array $data) {
                 return $this->beforeResolve($params, $data);
             })
@@ -155,6 +167,7 @@ class ModelResource extends Resource
                 $action
                     ->params(function (ActionParams $params) {
                         $params->attribute('id', IdAttribute::class);
+                        $this->getParams($params);
                     })
 
                     ->resolve([$this->getEloquentResolver(), 'get']);

@@ -19,7 +19,7 @@ class IntValidator extends Validator
         return $this->param('null', $null);
     }
 
-    public function max(float $max): IntValidator
+    public function max(int $max): IntValidator
     {
         return $this->param('max', $max);
     }
@@ -31,16 +31,15 @@ class IntValidator extends Validator
 
     protected function rules(RuleBag $rules): void
     {
-        $rules->add('number')
+        $rules->add('int')
             ->default(true)
             ->message('{{ fieldLabel }} sollte eine Zahl sein.')
             ->validate(function ($value) {
-                if (is_null($value)) { // validate null in null-rule
+                // null may be okay, validate null in null-rule
+                if (is_null($value)) {
                     return true;
                 }
-                if (is_string($value)) {
-                    return false;
-                }
+                // only int numbers allowed
                 if (!is_int($value)) {
                     return false;
                 }
@@ -48,8 +47,10 @@ class IntValidator extends Validator
             });
 
         $rules->add('null')
+            ->default(true)
             ->message('{{ fieldLabel }} sollte eine Zahl sein.')
             ->validate(function ($value, $null) {
+                // null only allowed if set
                 if (!$null && is_null($value)) {
                     return false;
                 }
@@ -59,7 +60,8 @@ class IntValidator extends Validator
         $rules->add('filled')
             ->message('{{ fieldLabel }} sollte einen Wert enthalten.')
             ->validate(function ($value, $filled) {
-                if ($filled && !$value) {
+                // must not be empty (but 0 is okay)
+                if ($filled && !$value && $value !== 0) {
                     return false;
                 }
                 return true;
@@ -78,9 +80,13 @@ class IntValidator extends Validator
             });
 
         $rules->add('min')
+            ->default(1)
             ->message('{{ fieldLabel }} sollte mindestens {{ param }} sein.')
             ->validate(function ($value, $min) {
                 if ($min === null) {
+                    return true;
+                }
+                if (is_null($value)) {
                     return true;
                 }
                 if ($value < $min) {

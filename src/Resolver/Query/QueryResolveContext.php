@@ -6,6 +6,7 @@ use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Resolver\QueryAttributeResolver;
 use Afeefa\ApiResources\Resolver\QueryRelationResolver;
 use Afeefa\ApiResources\Type\Type;
@@ -160,6 +161,15 @@ class QueryResolveContext implements ContainerAwareInterface
 
             if ($type->hasRelation($fieldName)) {
                 $relation = $type->getRelation($fieldName);
+
+                if ($forCounts && $relation->isRestrictedTo(Relation::RESTRICT_TO_GET)) {
+                    continue;
+                }
+
+                if (!$forCounts && $relation->isRestrictedTo(Relation::RESTRICT_TO_COUNT)) {
+                    continue;
+                }
+
                 $resolveCallback = $relation->getResolve();
 
                 /** @var QueryRelationResolver */
@@ -252,7 +262,10 @@ class QueryResolveContext implements ContainerAwareInterface
             if (preg_match('/^count_(.+)/', $fieldName, $matches)) {
                 $countRelationName = $matches[1];
                 if ($type->hasRelation($countRelationName)) {
-                    $requestedFields[$fieldName] = true;
+                    $relation = $type->getRelation($countRelationName);
+                    if (!$relation->isRestrictedTo(Relation::RESTRICT_TO_GET)) {
+                        $requestedFields[$fieldName] = true;
+                    }
                 }
             }
 
@@ -267,7 +280,10 @@ class QueryResolveContext implements ContainerAwareInterface
                     $nested = [];
                 }
                 if (is_array($nested)) {
-                    $requestedFields[$fieldName] = $nested;
+                    $relation = $type->getRelation($fieldName);
+                    if (!$relation->isRestrictedTo(Relation::RESTRICT_TO_COUNT)) {
+                        $requestedFields[$fieldName] = $nested;
+                    }
                 }
             }
 

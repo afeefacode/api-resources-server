@@ -33,6 +33,8 @@ class MutationRelationResolver extends BaseFieldResolver
 
     protected ?Closure $unlinkCallback = null;
 
+    protected ?Closure $existsCallback = null;
+
     protected ?string $ownerOperation = null;
 
     protected ?string $relatedOperation; // null, add_related, delete_related
@@ -76,7 +78,7 @@ class MutationRelationResolver extends BaseFieldResolver
 
     public function getSaveOwnerToRelatedFields(?string $id, ?string $typeName): array
     {
-        return ($this->saveOwnerToRelatedCallback)($id, $typeName);
+        return ($this->saveOwnerToRelatedCallback)($id, $typeName) ?? [];
     }
 
     public function ownerOperation(string $ownerOperation): self
@@ -130,6 +132,12 @@ class MutationRelationResolver extends BaseFieldResolver
     public function unlink(Closure $callback): self
     {
         $this->unlinkCallback = $callback;
+        return $this;
+    }
+
+    public function exists(Closure $callback): self
+    {
+        $this->existsCallback = $callback;
         return $this;
     }
 

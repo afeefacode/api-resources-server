@@ -25,7 +25,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
     public function test_missing_callbacks($missingCallback)
     {
         $this->expectException(MissingCallbackException::class);
-        $n = $missingCallback === 'unlink' ? 'n' : '';
+        $n = in_array($missingCallback, ['unlink', 'exists']) ? 'n' : '';
         $this->expectExceptionMessage("Resolver for relation other needs to implement a{$n} {$missingCallback}() method.");
 
         $api = $this->createApiWithUpdateType(
@@ -35,6 +35,9 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                         $relation->resolve(function (MutationRelationLinkManyResolver $r) use ($missingCallback) {
                             if ($missingCallback !== 'get') {
                                 $r->get(fn () => null);
+                            }
+                            if ($missingCallback !== 'exists') {
+                                $r->exists(fn () => null);
                             }
                             if ($missingCallback !== 'link') {
                                 $r->link(fn () => null);
@@ -54,6 +57,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
     {
         return [
             ['get'],
+            ['exists'],
             ['link'],
             ['unlink']
         ];
@@ -68,6 +72,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                         $relation->resolve(function (MutationRelationLinkManyResolver $r) {
                             $r
                                 ->get(fn () => [])
+                                ->exists(fn () => null)
                                 ->link(fn () => null)
                                 ->unlink(fn () => null);
                         });
@@ -95,7 +100,11 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                                 ->get(function () {
                                     $this->testWatcher->info('get');
                                 })
-                                ->link(function (ModelInterface $owner, ?string $id, string $typeName) use ($r) {
+                                ->exists(function () {
+                                    $this->testWatcher->info('exists');
+                                    return true;
+                                })
+                                ->link(function (ModelInterface $owner, string $id, string $typeName) use ($r) {
                                     $this->testWatcher->info('link');
 
                                     $this->testWatcher->info2([
@@ -144,7 +153,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
 
             'new_valid_field_with_id' => [
                 [['id' => '4', 'name' => 'name1']],
-                ['link'],
+                ['exists', 'link'],
                 [['111333', 'TYPE', '4', 'TYPE', 'other']]
             ]
         ];
@@ -173,7 +182,11 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                                     }
                                     return [];
                                 })
-                                ->link(function (ModelInterface $owner, ?string $id, string $typeName) use ($r) {
+                                ->exists(function (string $id, string $typeName) {
+                                    $this->testWatcher->info('exists');
+                                    return true;
+                                })
+                                ->link(function (ModelInterface $owner, string $id, string $typeName) use ($r) {
                                     $this->testWatcher->info('link');
 
                                     $this->testWatcher->info2([
@@ -234,7 +247,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
             'new_valid_field_with_id' => [
                 [],
                 [['id' => '4', 'name' => 'name1']],
-                ['get', 'link'],
+                ['get', 'exists', 'link'],
                 [['111333', 'TYPE', '4', 'TYPE', 'other']]
             ],
 
@@ -262,7 +275,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
             'unlink_link' => [
                 [['id' => '10']],
                 [['id' => '4']],
-                ['get', 'unlink', 'link'],
+                ['get', 'unlink', 'exists', 'link'],
                 [['111333', 'TYPE', '10', 'TYPE', 'other'], ['111333', 'TYPE', '4', 'TYPE', 'other']]
             ],
 
@@ -276,7 +289,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
             'keep_unlink_link' => [
                 [['id' => '4'], ['id' => '5'], ['id' => '6'], ['id' => '7']],
                 [['id' => '4'], ['id' => '5'], ['id' => '8'], ['id' => '9']],
-                ['get', 'unlink', 'unlink', 'link', 'link'],
+                ['get', 'unlink', 'unlink', 'exists', 'link', 'exists', 'link'],
                 [
                     ['111333', 'TYPE', '6', 'TYPE', 'other'], ['111333', 'TYPE', '7', 'TYPE', 'other'],
                     ['111333', 'TYPE', '8', 'TYPE', 'other'], ['111333', 'TYPE', '9', 'TYPE', 'other']
@@ -304,6 +317,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                                         return $return;
                                     }
                                 })
+                                ->exists(fn () => null)
                                 ->link(fn () => null)
                                 ->unlink(fn () => null);
                         });
@@ -349,10 +363,14 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                                     $this->testWatcher->info('get');
                                     return Model::fromList('TYPE', $this->test_related_operation_add_existingData);
                                 })
-                                ->link(function (ModelInterface $owner, ?string $id, string $typeName) use ($r) {
+                                ->exists(function (string $id, string $typeName) {
+                                    $this->testWatcher->info('exists:' . $id);
+                                    return true;
+                                })
+                                ->link(function (ModelInterface $owner, string $id, string $typeName) {
                                     $this->testWatcher->info('link:' . $id);
                                 })
-                                ->unlink(function (ModelInterface $owner, ModelInterface $modelToUnlink) use ($r) {
+                                ->unlink(function (ModelInterface $owner, ModelInterface $modelToUnlink) {
                                     $this->testWatcher->info('unlink:' . $modelToUnlink->apiResourcesGetId());
                                 });
                         });
@@ -378,6 +396,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                     ]
                 ],
                 'info' => [
+                    'exists:4',
                     'link:4'
                 ],
             ],
@@ -391,6 +410,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                     ]
                 ],
                 'info' => [
+                    'exists:4',
                     'link:4'
                 ],
             ],
@@ -417,6 +437,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                 ],
                 'info' => [
                     'get',
+                    'exists:4',
                     'link:4'
                 ],
             ],
@@ -431,6 +452,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                 ],
                 'info' => [
                     'get',
+                    'exists:4',
                     'link:4'
                 ],
             ],
@@ -458,6 +480,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                 'info' => [
                     'get',
                     'unlink:9',
+                    'exists:4',
                     'link:4'
                 ],
             ],
@@ -486,7 +509,9 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                 'info' => [
                     'get',
                     'unlink:9',
+                    'exists:4',
                     'link:4',
+                    'exists:11',
                     'link:11'
                 ],
             ],
@@ -502,6 +527,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                 ],
                 'info' => [
                     'get',
+                    'exists:4',
                     'link:4'
                 ],
             ],
@@ -526,7 +552,9 @@ class MutationRelationLinkManyResolverTest extends MutationTest
                 ],
                 'info' => [
                     'get',
+                    'exists:4',
                     'link:4',
+                    'exists:11',
                     'link:11'
                 ],
             ],

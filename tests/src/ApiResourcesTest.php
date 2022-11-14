@@ -3,6 +3,8 @@
 namespace Afeefa\ApiResources\Test;
 
 use Afeefa\ApiResources\DI\Container;
+use Faker\Factory;
+use Faker\Generator;
 use PHPUnit\Framework\TestCase;
 
 class ApiResourcesTest extends TestCase
@@ -12,7 +14,9 @@ class ApiResourcesTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->container = new Container();
+        $this->container = new Container([
+            Generator::class => Factory::create('de_DE')
+        ]);
         static::$staticContainer = $this->container;
     }
 

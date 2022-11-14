@@ -57,6 +57,10 @@ class Rule extends BagEntry
             'message' => $this->message
         ];
 
+        if (!is_null($this->default)) {
+            $json['default'] = $this->default;
+        }
+
         return $json;
     }
 }

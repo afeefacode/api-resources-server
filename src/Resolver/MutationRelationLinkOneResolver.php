@@ -17,9 +17,9 @@ class MutationRelationLinkOneResolver extends MutationRelationResolver
 
         $mustReturn = "callback of resolver for relation {$relationName} must return";
 
-        if (!$this->saveRelatedToOwnerCallback) {
-            $needsToImplement = "Resolver for relation {$relationName} needs to implement";
+        $needsToImplement = "Resolver for relation {$relationName} needs to implement";
 
+        if (!$this->saveRelatedToOwnerCallback) {
             if (!$this->getCallback) {
                 throw new MissingCallbackException("{$needsToImplement} a get() method.");
             }
@@ -33,8 +33,19 @@ class MutationRelationLinkOneResolver extends MutationRelationResolver
             }
         }
 
+        if (!$this->existsCallback) {
+            throw new MissingCallbackException("{$needsToImplement} an exists() method.");
+        }
+
         $id = $this->fieldsToSave['id'] ?? null;
         $typeName = $relation->getRelatedType()->getAllTypeNames()[0];
+
+        if ($id) {
+            $modelToLinkExists = ($this->existsCallback)($id, $typeName);
+            if (!$modelToLinkExists) {
+                return;
+            }
+        }
 
         // A.b_id
 

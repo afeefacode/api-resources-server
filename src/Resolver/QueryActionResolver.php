@@ -55,8 +55,8 @@ class QueryActionResolver extends BaseActionResolver
 
         $modelOrModels = ($this->getCallback)(
             $this->getRequest(),
-            fn (string $typeName = null) => $this->getSelectFields($typeName),
-            fn (string $typeName = null) => $this->getRequestedFieldNames($typeName)
+            fn (?string $typeName = null) => $this->getSelectFields($typeName),
+            fn (?string $typeName = null) => $this->getRequestedFieldNames($typeName)
         );
 
         if ($modelOrModels instanceof ActionResult) {

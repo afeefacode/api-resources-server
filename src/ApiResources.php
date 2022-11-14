@@ -15,11 +15,12 @@ class ApiResources
         return $container->get($ApiClass);
     }
 
-    public function requestFromInput($ApiClass)
+    public function requestFromInput($ApiClass, ?array $input = null): array
     {
         $container = $this->getContainer();
+        /** @var Api */
         $api = $container->get($ApiClass);
-        return $api->requestFromInput();
+        return $api->requestFromInput($input);
     }
 
     public function toSchemaJson($ApiClass)

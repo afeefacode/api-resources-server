@@ -4,6 +4,7 @@ namespace Afeefa\ApiResources\Resolver\Mutation;
 
 use Afeefa\ApiResources\Api\Operation;
 use Afeefa\ApiResources\Model\ModelInterface;
+use Afeefa\ApiResources\Validator\ValidationFailedException;
 use Closure;
 
 trait MutationResolverTrait
@@ -21,6 +22,15 @@ trait MutationResolverTrait
         $ownerOperation = $existingModel ? Operation::UPDATE : Operation::CREATE;
 
         $resolveContext = $this->createResolveContext($typeName, $ownerOperation, $fieldsToSave);
+
+        // ensure all required fields are given
+
+        $requiredFieldNames = $resolveContext->getRequiredFieldNames();
+        foreach ($requiredFieldNames as $requiredFieldName) {
+            if (!isset($fieldsToSave[$requiredFieldName])) {
+                throw new ValidationFailedException("Field {$requiredFieldName} ist required but not given.");
+            }
+        }
 
         // resolve relations before this model (relation can only be hasOne or linkOne)
 

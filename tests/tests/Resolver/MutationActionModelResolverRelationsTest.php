@@ -21,7 +21,7 @@ use Afeefa\ApiResources\Type\Type;
 
 use Afeefa\ApiResources\Type\TypeClassMap;
 
-class MutationModelResolverTest extends MutationTest
+class MutationActionModelResolverRelationsTest extends MutationTest
 {
     protected Model $model;
     protected array $modelIdMap = [];
@@ -65,6 +65,7 @@ class MutationModelResolverTest extends MutationTest
         $expectedInfo = [
             'hasOneBeforeAddBeforeOwner_hasOneBefore1',
             'hasOneBeforeSaveRelatedToOwner_hasOneBefore1',
+            'linkOneBeforeExists_linkOneBefore1',
             'linkOneBeforeSave_linkOneBefore1',
             'modelAdd_model1',
             'hasOneSaveOwnerToRelated_model1',
@@ -72,8 +73,11 @@ class MutationModelResolverTest extends MutationTest
             'hasManySaveOwnerToRelated_model1',
             'hasManyAdd_hasMany1',
             'hasManyAdd_hasMany2',
+            'linkOneExists_linkOne1',
             'linkOneLink_linkOne1',
+            'linkManyExists_linkMany1',
             'linkManyLink_linkMany1',
+            'linkManyExists_linkMany2',
             'linkManyLink_linkMany2'
         ];
 
@@ -141,13 +145,16 @@ class MutationModelResolverTest extends MutationTest
             'hasOneSaveOwnerToRelated_model',
             'hasOneBeforeAddBeforeOwner_hasOne_hasOneBefore',
             'hasOneBeforeSaveRelatedToOwner_hasOne_hasOneBefore',
+            'linkOneBeforeExists_hasOne_linkOneBefore',
             'linkOneBeforeSave_hasOne_linkOneBefore',
             'hasOneAdd_hasOne',
             'hasOneSaveOwnerToRelated_hasOne',
             'hasOneAdd_hasOne_hasOne',
             'hasManySaveOwnerToRelated_hasOne',
             'hasManyAdd_hasOne_hasMany',
+            'linkOneExists_hasOne_linkOne',
             'linkOneLink_hasOne_linkOne',
+            'linkManyExists_hasOne_linkMany',
             'linkManyLink_hasOne_linkMany'
         ];
 
@@ -207,6 +214,7 @@ class MutationModelResolverTest extends MutationTest
         $expectedInfo = [
             'hasOneBeforeAddBeforeOwner_hasOneBefore_hasOneBefore',
             'hasOneBeforeSaveRelatedToOwner_hasOneBefore_hasOneBefore',
+            'linkOneBeforeExists_hasOneBefore_linkOneBefore',
             'linkOneBeforeSave_hasOneBefore_linkOneBefore',
 
             'hasOneBeforeAddBeforeOwner_hasOneBefore',
@@ -217,7 +225,9 @@ class MutationModelResolverTest extends MutationTest
             'hasManySaveOwnerToRelated_hasOneBefore',
             'hasManyAdd_hasOneBefore_hasMany',
 
+            'linkOneExists_hasOneBefore_linkOne',
             'linkOneLink_hasOneBefore_linkOne',
+            'linkManyExists_hasOneBefore_linkMany',
             'linkManyLink_hasOneBefore_linkMany',
 
             'hasOneBeforeSaveRelatedToOwner_hasOneBefore',
@@ -291,6 +301,7 @@ class MutationModelResolverTest extends MutationTest
 
             'hasOneBeforeAddBeforeOwner_hasMany_hasOneBefore',
             'hasOneBeforeSaveRelatedToOwner_hasMany_hasOneBefore',
+            'linkOneBeforeExists_hasMany_linkOneBefore',
             'linkOneBeforeSave_hasMany_linkOneBefore',
 
             'hasManyAdd_hasMany',
@@ -301,7 +312,9 @@ class MutationModelResolverTest extends MutationTest
             'hasManySaveOwnerToRelated_hasMany',
             'hasManyAdd_hasMany_hasMany',
 
+            'linkOneExists_hasMany_linkOne',
             'linkOneLink_hasMany_linkOne',
+            'linkManyExists_hasMany_linkMany',
             'linkManyLink_hasMany_linkMany'
         ];
 
@@ -375,6 +388,7 @@ class MutationModelResolverTest extends MutationTest
             'hasOneBeforeAdd_hasOneBefore1',
 
             'hasOneBeforeSaveRelatedToOwner_hasOneBefore1',
+            'linkOneBeforeExists_linkOneBefore1',
             'linkOneBeforeSave_linkOneBefore1',
 
             'modelUpdate_model1',
@@ -388,11 +402,14 @@ class MutationModelResolverTest extends MutationTest
             'hasManyAdd_hasMany1',
             'hasManyAdd_hasMany2',
 
+            'linkOneExists_linkOne1',
             'linkOneGet_model1',
             'linkOneLink_linkOne1',
 
             'linkManyGet_model1',
+            'linkManyExists_linkMany1',
             'linkManyLink_linkMany1',
+            'linkManyExists_linkMany2',
             'linkManyLink_linkMany2'
         ];
 
@@ -465,6 +482,7 @@ class MutationModelResolverTest extends MutationTest
 
             'hasOneBeforeAddBeforeOwner_hasOne_hasOneBefore',
             'hasOneBeforeSaveRelatedToOwner_hasOne_hasOneBefore',
+            'linkOneBeforeExists_hasOne_linkOneBefore',
             'linkOneBeforeSave_hasOne_linkOneBefore',
 
             'hasOneAdd_hasOne',
@@ -472,7 +490,9 @@ class MutationModelResolverTest extends MutationTest
             'hasOneAdd_hasOne_hasOne',
             'hasManySaveOwnerToRelated_hasOne',
             'hasManyAdd_hasOne_hasMany',
+            'linkOneExists_hasOne_linkOne',
             'linkOneLink_hasOne_linkOne',
+            'linkManyExists_hasOne_linkMany',
             'linkManyLink_hasOne_linkMany'
         ];
 
@@ -537,6 +557,7 @@ class MutationModelResolverTest extends MutationTest
 
             'hasOneBeforeAddBeforeOwner_hasOneBefore_hasOneBefore',
             'hasOneBeforeSaveRelatedToOwner_hasOneBefore_hasOneBefore',
+            'linkOneBeforeExists_hasOneBefore_linkOneBefore',
             'linkOneBeforeSave_hasOneBefore_linkOneBefore',
 
             'hasOneBeforeAdd_hasOneBefore',
@@ -547,7 +568,9 @@ class MutationModelResolverTest extends MutationTest
             'hasManySaveOwnerToRelated_hasOneBefore',
             'hasManyAdd_hasOneBefore_hasMany',
 
+            'linkOneExists_hasOneBefore_linkOne',
             'linkOneLink_hasOneBefore_linkOne',
+            'linkManyExists_hasOneBefore_linkMany',
             'linkManyLink_hasOneBefore_linkMany',
 
             'hasOneBeforeSaveRelatedToOwner_hasOneBefore',
@@ -625,6 +648,7 @@ class MutationModelResolverTest extends MutationTest
 
             'hasOneBeforeAddBeforeOwner_hasMany_hasOneBefore',
             'hasOneBeforeSaveRelatedToOwner_hasMany_hasOneBefore',
+            'linkOneBeforeExists_hasMany_linkOneBefore',
             'linkOneBeforeSave_hasMany_linkOneBefore',
 
             'hasManyAdd_hasMany',
@@ -635,7 +659,9 @@ class MutationModelResolverTest extends MutationTest
             'hasManySaveOwnerToRelated_hasMany',
             'hasManyAdd_hasMany_hasMany',
 
+            'linkOneExists_hasMany_linkOne',
             'linkOneLink_hasMany_linkOne',
+            'linkManyExists_hasMany_linkMany',
             'linkManyLink_hasMany_linkMany'
         ];
 
@@ -767,10 +793,15 @@ class MutationModelResolverTest extends MutationTest
                     })
                     ->relation('link_one_before', Type::link(T('TYPE')), function (Relation $relation) {
                         $relation->resolve(function (MutationRelationLinkOneResolver $r) {
-                            $r->saveRelatedToOwner(function (?string $id, ?string $typeName) {
-                                $this->testWatcher->info('linkOneBeforeSave_' . $id);
-                                return ['link_one_before_id' => $id];
-                            });
+                            $r
+                                ->saveRelatedToOwner(function (?string $id, ?string $typeName) {
+                                    $this->testWatcher->info('linkOneBeforeSave_' . $id);
+                                    return ['link_one_before_id' => $id];
+                                })
+                                ->exists(function (string $id, string $typeName) {
+                                    $this->testWatcher->info('linkOneBeforeExists_' . $id);
+                                    return true;
+                                });
                         });
                     })
                     ->relation('link_one', Type::link(T('TYPE')), function (Relation $relation) {
@@ -779,7 +810,11 @@ class MutationModelResolverTest extends MutationTest
                                 ->get(function (ModelInterface $owner) {
                                     $this->testWatcher->info('linkOneGet_' . $owner->id);
                                 })
-                                ->link(function (ModelInterface $owner, ?string $id, string $typeName) {
+                                ->exists(function (string $id, string $typeName) {
+                                    $this->testWatcher->info('linkOneExists_' . $id);
+                                    return true;
+                                })
+                                ->link(function (ModelInterface $owner, string $id, string $typeName) {
                                     $this->testWatcher->info('linkOneLink_' . $id);
                                     $owner->link_one = Model::fromSingle($typeName, ['title' => $id]);
                                 })
@@ -795,7 +830,11 @@ class MutationModelResolverTest extends MutationTest
                                     $this->testWatcher->info('linkManyGet_' . $owner->id);
                                     return [];
                                 })
-                                ->link(function (ModelInterface $owner, ?string $id, string $typeName) {
+                                ->exists(function (string $id, string $typeName) {
+                                    $this->testWatcher->info('linkManyExists_' . $id);
+                                    return true;
+                                })
+                                ->link(function (ModelInterface $owner, string $id, string $typeName) {
                                     $this->testWatcher->info('linkManyLink_' . $id);
                                     $owner->link_many[] = Model::fromSingle($typeName, ['title' => $id]);
                                 })

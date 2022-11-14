@@ -11,6 +11,7 @@ final class CreateTags extends AbstractMigration
         $this->table('tags', ['signed' => false])
             ->addColumn('name', 'string', ['limit' => 255])
             ->addIndex(['name'], ['unique' => true])
+
             ->create();
 
         $this
@@ -20,7 +21,6 @@ final class CreateTags extends AbstractMigration
 
             ->addColumn('user_id', 'integer', ['signed' => false])
             ->addColumn('user_type', 'string', ['limit' => 255])
-
             ->addIndex(['user_id', 'user_type'])
 
             ->create();

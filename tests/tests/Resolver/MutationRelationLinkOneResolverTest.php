@@ -25,7 +25,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
     public function test_missing_callbacks($missingCallback)
     {
         $this->expectException(MissingCallbackException::class);
-        $n = $missingCallback === 'unlink' ? 'n' : '';
+        $n = in_array($missingCallback, ['unlink', 'exists']) ? 'n' : '';
         $this->expectExceptionMessage("Resolver for relation other needs to implement a{$n} {$missingCallback}() method.");
 
         $api = $this->createApiWithUpdateType(
@@ -35,6 +35,9 @@ class MutationRelationLinkOneResolverTest extends MutationTest
                         $relation->resolve(function (MutationRelationLinkOneResolver $r) use ($missingCallback) {
                             if ($missingCallback !== 'get') {
                                 $r->get(fn () => null);
+                            }
+                            if ($missingCallback !== 'exists') {
+                                $r->exists(fn () => null);
                             }
                             if ($missingCallback !== 'link') {
                                 $r->link(fn () => null);
@@ -54,6 +57,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
     {
         return [
             ['get'],
+            ['exists'],
             ['link'],
             ['unlink']
         ];
@@ -68,6 +72,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
                         $relation->resolve(function (MutationRelationLinkOneResolver $r) {
                             $r
                                 ->get(fn () => [])
+                                ->exists(fn () => [])
                                 ->link(fn () => null)
                                 ->unlink(fn () => null);
                         });
@@ -87,7 +92,9 @@ class MutationRelationLinkOneResolverTest extends MutationTest
                 $fields
                     ->relation('other', Type::link(T('TYPE')), function (Relation $relation) {
                         $relation->resolve(function (MutationRelationLinkOneResolver $r) {
-                            $r->saveRelatedToOwner(fn () => []);
+                            $r
+                                ->saveRelatedToOwner(fn () => [])
+                                ->exists(fn () => null);
                         });
                     });
             }
@@ -128,7 +135,8 @@ class MutationRelationLinkOneResolverTest extends MutationTest
                                     }
                                     return null;
                                 })
-                                ->link(function (ModelInterface $owner, ?string $id, string $typeName) use ($r) {
+                                ->exists(fn () => true)
+                                ->link(function (ModelInterface $owner, string $id, string $typeName) use ($r) {
                                     $this->testWatcher->info('link');
 
                                     $this->testWatcher->info2([
@@ -279,7 +287,8 @@ class MutationRelationLinkOneResolverTest extends MutationTest
                                     $this->testWatcher->info('get'); // never called
                                     return null;
                                 })
-                                ->link(function (ModelInterface $owner, ?string $id, string $typeName) use ($r) {
+                                ->exists(fn () => true)
+                                ->link(function (ModelInterface $owner, string $id, string $typeName) use ($r) {
                                     $this->testWatcher->info('link');
 
                                     $this->testWatcher->info2([
@@ -350,20 +359,22 @@ class MutationRelationLinkOneResolverTest extends MutationTest
                 $fields
                     ->relation('other', Type::link(T('TYPE')), function (Relation $relation) {
                         $relation->resolve(function (MutationRelationLinkOneResolver $r) {
-                            $r->saveRelatedToOwner(function (?string $id, ?string $typeName) use ($r) {
-                                $this->testWatcher->info('save_to_owner');
+                            $r
+                                ->saveRelatedToOwner(function (?string $id, ?string $typeName) use ($r) {
+                                    $this->testWatcher->info('save_to_owner');
 
-                                $this->testWatcher->info2([
-                                    $id,
-                                    $typeName,
-                                    $r->getRelation()->getName()
-                                ]);
+                                    $this->testWatcher->info2([
+                                        $id,
+                                        $typeName,
+                                        $r->getRelation()->getName()
+                                    ]);
 
-                                return [
-                                    'related_id' => $id,
-                                    'related_type' => $typeName
-                                ];
-                            });
+                                    return [
+                                        'related_id' => $id,
+                                        'related_type' => $typeName
+                                    ];
+                                })
+                                ->exists(fn () => true);
                         });
                     });
             }
@@ -434,6 +445,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
                                         return $return;
                                     }
                                 })
+                                ->exists(fn () => null)
                                 ->link(fn () => null)
                                 ->unlink(fn () => null);
                         });

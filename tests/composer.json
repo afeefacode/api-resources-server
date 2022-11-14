@@ -2,13 +2,14 @@
     "bin": [
         "phpunit2"
     ],
-    "require-dev": {
+    "require": {
         "robmorgan/phinx": "^0.12",
         "fakerphp/faker": "^v1.20",
         "phpunit/phpunit": "^9.5",
         "catfan/medoo": "^2.1",
         "afeefa/debug-dump-log": "^0",
         "illuminate/database": "^v9.36",
+        "illuminate/events": "^9.37",
         "staudenmeir/eloquent-eager-limit": "^v1.7"
     },
     "autoload": {

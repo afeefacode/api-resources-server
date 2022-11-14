@@ -6,6 +6,7 @@ use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Type\Type;
 use Closure;
+use Faker\Generator;
 
 function T(string $type, bool $create = true): ?string
 {
@@ -59,4 +60,21 @@ function createApiWithSingleResource(?Closure $addActionCallback = null): Api
             $addResource('Test.Resource', $addActionCallback);
         })
         ->get();
+}
+
+function fake(): Generator
+{
+    $container = ApiResourcesTest::$staticContainer;
+    $faker = $container->get(Generator::class);
+    return $faker;
+}
+
+function toArray(mixed $value): mixed
+{
+    if (is_object($value) && method_exists($value, 'toArray')) {
+        return $value->toArray();
+    } elseif (is_array($value)) {
+        return array_map(__NAMESPACE__ . '\toArray', $value);
+    }
+    return $value;
 }

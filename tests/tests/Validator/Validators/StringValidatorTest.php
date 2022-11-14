@@ -10,106 +10,89 @@ class StringValidatorTest extends TestCase
 {
     public function test_default_string()
     {
-        /** @var StringValidator */
-        $validator = (new Container())
-            ->create(StringValidator::class);
+        $validator = $this->createStringValidator();
 
         foreach ([
+            null,
             '',
             'test',
             'and',
             'if',
             '1111'
         ] as $value) {
-            $this->assertTrue($validator->validate($value));
+            $this->assertTrue($validator->validateRule('string', $value));
         }
 
         foreach ([
             1111,
             [],
-            $this,
-            null
+            $this
         ] as $value) {
-            $this->assertFalse($validator->validate($value));
+            $this->assertFalse($validator->validateRule('string', $value));
         }
     }
 
     public function test_filled()
     {
-        /** @var StringValidator */
-        $validator = (new Container())
-            ->create(StringValidator::class)
+        $validator = $this->createStringValidator()
             ->filled();
 
         foreach ([
             'a',
             'and'
         ] as $value) {
-            $this->assertTrue($validator->validate($value));
+            $this->assertTrue($validator->validateRule('filled', $value));
         }
 
         foreach ([
             '',
             null
         ] as $value) {
-            $this->assertFalse($validator->validate($value));
+            $this->assertFalse($validator->validateRule('filled', $value));
         }
     }
 
     public function test_null()
     {
-        /** @var StringValidator */
-        $validator = (new Container())
-            ->create(StringValidator::class)
-            ->null();
+        $validator = $this->createStringValidator();
 
         foreach ([
             'a',
             null
         ] as $value) {
-            $this->assertTrue($validator->validate($value));
+            $this->assertTrue($validator->validateRule('null', $value));
+        }
+
+        $validator = $this->createStringValidator()
+            ->null(false);
+
+        foreach ([
+            null
+        ] as $value) {
+            $this->assertFalse($validator->validateRule('null', $value));
         }
     }
 
     public function test_min()
     {
-        /** @var StringValidator */
-        $validator = (new Container())
-            ->create(StringValidator::class)
+        $validator = $this->createStringValidator()
             ->min(3);
 
         foreach ([
-            '', // filled not required
-            'test',
+            '',
             'and',
-            '1111'
-        ] as $value) {
-            $this->assertTrue($validator->validate($value));
-        }
-
-        foreach ([
-            'a',
-            'if',
-            null // filled not required but null not allowed
-        ] as $value) {
-            $this->assertFalse($validator->validate($value));
-        }
-    }
-
-    public function test_min_null()
-    {
-        /** @var StringValidator */
-        $validator = (new Container())
-            ->create(StringValidator::class)
-            ->min(3)
-            ->null();
-
-        foreach ([
-            '', // filled not required
             'test',
-            'and',
             '1111',
-            null // null allowed and filled not required
+            null
+        ] as $value) {
+            $this->assertTrue($validator->validateRule('min', $value));
+        }
+
+        foreach ([
+            '',
+            'and',
+            'test',
+            '1111'
         ] as $value) {
             $this->assertTrue($validator->validate($value));
         }
@@ -118,21 +101,42 @@ class StringValidatorTest extends TestCase
             'a',
             'if'
         ] as $value) {
-            $this->assertFalse($validator->validate($value));
+            $this->assertFalse($validator->validateRule('min', $value));
+        }
+    }
+
+    public function test_min_null()
+    {
+        $validator = $this->createStringValidator()
+            ->min(3);
+
+        foreach ([
+            '', // filled not required
+            'and',
+            'test',
+            '1111',
+            null
+        ] as $value) {
+            $this->assertTrue($validator->validateRule('min', $value));
+        }
+
+        foreach ([
+            'a',
+            'if'
+        ] as $value) {
+            $this->assertFalse($validator->validateRule('min', $value));
         }
     }
 
     public function test_min_filled()
     {
-        /** @var StringValidator */
-        $validator = (new Container())
-            ->create(StringValidator::class)
+        $validator = $this->createStringValidator()
             ->min(3)
             ->filled();
 
         foreach ([
-            'test',
             'and',
+            'test',
             '1111'
         ] as $value) {
             $this->assertTrue($validator->validate($value));
@@ -141,7 +145,8 @@ class StringValidatorTest extends TestCase
         foreach ([
             '',
             'a',
-            'if'
+            'if',
+            null
         ] as $value) {
             $this->assertFalse($validator->validate($value));
         }
@@ -149,9 +154,7 @@ class StringValidatorTest extends TestCase
 
     public function test_max()
     {
-        /** @var StringValidator */
-        $validator = (new Container())
-            ->create(StringValidator::class)
+        $validator = $this->createStringValidator()
             ->max(5);
 
         foreach ([
@@ -159,22 +162,20 @@ class StringValidatorTest extends TestCase
             'test',
             'value'
         ] as $value) {
-            $this->assertTrue($validator->validate($value));
+            $this->assertTrue($validator->validateRule('max', $value));
         }
 
         foreach ([
             'assert',
             'assertion'
         ] as $value) {
-            $this->assertFalse($validator->validate($value));
+            $this->assertFalse($validator->validateRule('max', $value));
         }
     }
 
     public function test_regex()
     {
-        /** @var StringValidator */
-        $validator = (new Container())
-            ->create(StringValidator::class)
+        $validator = $this->createStringValidator()
             ->regex('/test/');
 
         foreach ([
@@ -183,14 +184,20 @@ class StringValidatorTest extends TestCase
             'test b',
             'a test b'
         ] as $value) {
-            $this->assertTrue($validator->validate($value));
+            $this->assertTrue($validator->validateRule('regex', $value));
         }
 
         foreach ([
             'assert',
             'assertion'
         ] as $value) {
-            $this->assertFalse($validator->validate($value));
+            $this->assertFalse($validator->validateRule('regex', $value));
         }
+    }
+
+    protected function createStringValidator(): StringValidator
+    {
+        return (new Container())
+            ->create(StringValidator::class);
     }
 }

@@ -23,6 +23,7 @@ class ModelResolver
     protected string $relationName;
 
     protected Closure $paramFunction;
+    protected Closure $getParamFunction;
     protected Closure $filterFunction;
     protected Closure $searchFunction;
     protected Closure $orderFunction;
@@ -48,6 +49,12 @@ class ModelResolver
     public function param(Closure $paramFunction): ModelResolver
     {
         $this->paramFunction = $paramFunction;
+        return $this;
+    }
+
+    public function getParam(Closure $paramFunction): ModelResolver
+    {
+        $this->getParamFunction = $paramFunction;
         return $this;
     }
 
@@ -242,8 +249,9 @@ class ModelResolver
     public function get(QueryActionResolver $r)
     {
         $r
-            ->get(function () use ($r) {
-                $request = $r->getRequest();
+            ->get(function (ApiRequest $request) use ($r) {
+                $action = $request->getAction();
+                $params = $request->getParams();
                 $selectFields = $r->getSelectFields();
 
                 $table = (new $this->ModelClass())->getTable();
@@ -263,8 +271,11 @@ class ModelResolver
                     $query->withCount($relationCounts);
                 }
 
-                if ($request->hasParam('id')) {
-                    $query->where('id', $request->getParam('id'));
+                // params
+                foreach ($params as $name => $value) {
+                    if ($action->hasParam($name)) {
+                        ($this->getParamFunction)($name, $value, $query);
+                    }
                 }
 
                 $model = $query->first();

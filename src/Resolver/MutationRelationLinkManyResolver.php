@@ -30,6 +30,10 @@ class MutationRelationLinkManyResolver extends MutationRelationResolver
             throw new MissingCallbackException("{$needsToImplement} an unlink() method.");
         }
 
+        if (!$this->existsCallback) {
+            throw new MissingCallbackException("{$needsToImplement} an exists() method.");
+        }
+
         $owner = $this->owners[0];
         $typeName = $relation->getRelatedType()->getAllTypeNames()[0];
         $data = $this->fieldsToSave;
@@ -71,7 +75,10 @@ class MutationRelationLinkManyResolver extends MutationRelationResolver
                     if (isset($single['id'])) {
                         $existingModel = $getExistingModelById($single['id']);
                         if (!$existingModel) {
-                            ($this->linkCallback)($owner, $single['id'], $typeName);
+                            $modelToLinkExists = ($this->existsCallback)($single['id'], $typeName);
+                            if ($modelToLinkExists) {
+                                ($this->linkCallback)($owner, $single['id'], $typeName);
+                            }
                         }
                     }
                 }
@@ -80,7 +87,10 @@ class MutationRelationLinkManyResolver extends MutationRelationResolver
             if ($this->relatedOperation !== Operation::DELETE_RELATED) { // ignore when DELETE_RELATED
                 foreach ($data as $single) {
                     if (isset($single['id'])) {
-                        ($this->linkCallback)($owner, $single['id'], $typeName);
+                        $modelToLinkExists = ($this->existsCallback)($single['id'], $typeName);
+                        if ($modelToLinkExists) {
+                            ($this->linkCallback)($owner, $single['id'], $typeName);
+                        }
                     }
                 }
             }

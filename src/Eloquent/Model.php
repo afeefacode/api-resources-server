@@ -4,7 +4,7 @@ namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Model\ModelInterface;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
-use Illuminate\Events\Dispatcher;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class Model extends EloquentModel implements ModelInterface
@@ -21,10 +21,9 @@ class Model extends EloquentModel implements ModelInterface
     {
         parent::boot();
 
-        if (!static::$dispatcher) {
-            $dispatcher = new Dispatcher();
-            static::setEventDispatcher($dispatcher);
-        }
+        Relation::morphMap([
+            static::$type => static::class
+        ]);
 
         static::created(function (Model $model) {
             $model->afterCreate();
@@ -84,6 +83,18 @@ class Model extends EloquentModel implements ModelInterface
         return $json;
     }
 
+    public function toArray(): array
+    {
+        $array = [];
+
+        foreach ($this->visibleFields as $visibleFieldName) {
+            $value = $this->_toArray($this->$visibleFieldName);
+            $array[$visibleFieldName] = $value;
+        }
+
+        return $array;
+    }
+
     protected function afterCreate()
     {
         // fill in in sub class
@@ -102,5 +113,15 @@ class Model extends EloquentModel implements ModelInterface
     protected function afterDelete()
     {
         // fill in in sub class
+    }
+
+    private function _toArray($value): mixed
+    {
+        if (is_object($value) && method_exists($value, 'toArray')) {
+            return $value->toArray();
+        } elseif (is_array($value)) {
+            return array_map([$this, '_toArray'], $value);
+        }
+        return $value;
     }
 }

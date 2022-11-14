@@ -38,12 +38,12 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
         $this->resourceType = $input['resource'] ?? '';
         if (!$this->resourceType) {
-            throw new ApiException('No resource field');
+            throw new ApiException('No resource field given.');
         }
 
         $this->actionName = $input['action'] ?? '';
         if (!$this->actionName) {
-            throw new ApiException('No action field');
+            throw new ApiException('No action field field given.');
         }
 
         // todo validate params
@@ -249,5 +249,10 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
             'fieldsToSave' => $this->fieldsToSave ?? []
         ];
         return $json;
+    }
+
+    public function toArray(): array
+    {
+        return $this->jsonSerialize();
     }
 }

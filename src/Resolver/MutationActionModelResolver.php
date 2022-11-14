@@ -114,13 +114,11 @@ class MutationActionModelResolver extends BaseMutationActionResolver
             }
         }
 
-        // delete
-
         $fieldsToSave = $this->request->getFieldsToSave();
 
-        if ($existingModel && $fieldsToSave === null) {
+        if ($existingModel && $fieldsToSave === null) { // delete
             ($this->deleteCallback)($existingModel);
-        } elseif ($fieldsToSave !== null) { // do not add/update model if fields=null
+        } elseif ($fieldsToSave !== null) { // do not add/update model if not existings && fields=null
             $model = $this->resolveModel(
                 $existingModel,
                 $typeName,

@@ -8,6 +8,7 @@ use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\Attribute;
+use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Type\Type;
@@ -77,6 +78,25 @@ class MutationResolveContext implements ContainerAwareInterface
     {
         $saveFields = $this->calculateSaveFields();
         return array_merge($saveFields, $additionalFields);
+    }
+
+    public function getRequiredFieldNames(): array
+    {
+        $type = $this->type;
+        $operation = $this->getOperation();
+        $method = $operation === Operation::UPDATE ? 'Update' : 'Create';
+
+        $fieldNames = [];
+
+        /** @var FieldBag */
+        $fieldBag = $type->{'get' . $method . 'Fields'}();
+        foreach ($fieldBag->getEntries() as $field) {
+            if ($field->isRequired()) {
+                $fieldNames[] = $field->getName();
+            }
+        }
+
+        return $fieldNames;
     }
 
     protected function createRelationResolvers(): array

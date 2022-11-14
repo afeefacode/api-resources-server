@@ -546,6 +546,36 @@ class QueryResolveContextTest extends ApiResourcesTest
         $this->assertEquals(['id', 'owner_other_id', 'owner_another_id'], $resolveContext->getSelectFields());
     }
 
+    public function test_restrict_to()
+    {
+        $type = $this->createType(function (FieldBag $fields) {
+            $fields
+                ->relation('get_count', T('TYPE'))
+                ->relation('only_get', T('TYPE'), function (Relation $relation) {
+                    $relation->restrictTo(Relation::RESTRICT_TO_GET);
+                })
+                ->relation('only_count', T('TYPE'), function (Relation $relation) {
+                    $relation->restrictTo(Relation::RESTRICT_TO_COUNT);
+                });
+        });
+
+        $resolveContext = $this->createResolveContext($type, [
+            'get_count' => true,
+            'count_get_count' => true,
+            'only_get' => true,
+            'count_only_get' => true,
+            'only_count' => true,
+            'count_only_count' => true,
+        ]);
+
+        $this->assertEquals([
+            'get_count' => [],
+            'count_get_count' => true,
+            'only_get' => [],
+            'count_only_count' => true
+        ], $resolveContext->getRequestedFields());
+    }
+
     private function createType(?Closure $fieldsCallback = null, ?string $typeName = null): Type
     {
         $typeName ??= 'TEST';
