@@ -71,6 +71,14 @@ class Relation extends Field
         return $this;
     }
 
+    /**
+     * More meaningful alias to internal function typeClassOrClassesOrMeta
+     */
+    public function setRelatedType($TypeClassOrClassesOrMeta): Relation
+    {
+        return $this->typeClassOrClassesOrMeta($TypeClassOrClassesOrMeta);
+    }
+
     public function getRelatedType(): RelatedType
     {
         return $this->relatedType;
