@@ -34,6 +34,8 @@ class AuthorType extends ModelType
 
             ->relation('featured_tag', TagType::class)
 
+            ->relation('first_tag', TagType::class)
+
             ->relation('profile', ProfileType::class);
     }
 
@@ -55,6 +57,8 @@ class AuthorType extends ModelType
 
             ->relation('featured_tag', Type::link(TagType::class))
 
+            ->relation('first_tag', Type::link(TagType::class))
+
             ->relation('profile', ProfileType::class);
     }
 
@@ -70,6 +74,8 @@ class AuthorType extends ModelType
             ->from($updateFields, 'links')
 
             ->from($updateFields, 'featured_tag')
+
+            ->from($updateFields, 'first_tag')
 
             ->from($updateFields, 'profile');
     }

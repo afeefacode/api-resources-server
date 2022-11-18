@@ -3,11 +3,13 @@
 namespace Afeefa\ApiResources\Test\Fixtures\Blog\Models;
 
 use Afeefa\ApiResources\Eloquent\Model as EloquentModel;
+use Ankurk91\Eloquent\MorphToOne;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Author extends EloquentModel
 {
     use HasFactory;
+    use MorphToOne;
 
     public static $type = 'Blog.Author';
 
@@ -33,6 +35,11 @@ class Author extends EloquentModel
     public function featured_tag()
     {
         return $this->belongsTo(Tag::class);
+    }
+
+    public function first_tag()
+    {
+        return $this->morphToOne(Tag::class, 'user', 'tag_users');
     }
 
     public function profile()
