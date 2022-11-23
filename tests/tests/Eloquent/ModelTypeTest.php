@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Tests\Eloquent;
 
+use Afeefa\ApiResources\Eloquent\Model;
 use Afeefa\ApiResources\Eloquent\ModelRelationResolver;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\FieldBag;

@@ -84,9 +84,13 @@ class ActionResponse implements ToSchemaJsonInterface, ContainerAwareInterface
         return $this->TypeClass ?? null;
     }
 
-    public function getTypeInstance(): Type
+    public function getTypeInstance(string $typeName): Type
     {
-        return $this->container->get($this->TypeClass);
+        $TypeClass = array_values(array_filter(
+            $this->getAllTypeClasses(),
+            fn ($TypeClass) => $TypeClass::type() === $typeName
+        ))[0];
+        return $this->container->get($TypeClass);
     }
 
     public function typeClasses(array $TypeClasses): ActionResponse

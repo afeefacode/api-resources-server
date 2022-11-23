@@ -46,4 +46,9 @@ class Author extends EloquentModel
     {
         return $this->belongsTo(Profile::class);
     }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'owner');
+    }
 }

@@ -28,9 +28,11 @@ class AuthorType extends ModelType
                     ->restrictTo(Relation::RESTRICT_TO_COUNT);
             })
 
-            ->relation('tags', Type::list(TagType::class))
+            ->relation('comments', Type::list(CommentType::class))
 
             ->relation('links', Type::list(LinkType::class))
+
+            ->relation('tags', Type::list(TagType::class))
 
             ->relation('featured_tag', TagType::class)
 
@@ -51,6 +53,8 @@ class AuthorType extends ModelType
                 });
             })
 
+            ->relation('comments', Type::list(CommentType::class))
+
             ->relation('tags', Type::list(Type::link(TagType::class)))
 
             ->relation('links', Type::list(LinkType::class))
@@ -68,6 +72,8 @@ class AuthorType extends ModelType
             ->from($updateFields, 'name')
 
             ->attribute('email', StringAttribute::class)
+
+            ->from($updateFields, 'comments')
 
             ->from($updateFields, 'tags')
 

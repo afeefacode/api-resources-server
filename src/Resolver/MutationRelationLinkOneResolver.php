@@ -38,7 +38,7 @@ class MutationRelationLinkOneResolver extends MutationRelationResolver
         }
 
         $id = $this->fieldsToSave['id'] ?? null;
-        $typeName = $relation->getRelatedType()->getAllTypeNames()[0];
+        $typeName = $this->fieldsToSave['type'] ?? $relation->getRelatedType()->getAllTypeNames()[0];
 
         if ($id) {
             $modelToLinkExists = ($this->existsCallback)($id, $typeName);

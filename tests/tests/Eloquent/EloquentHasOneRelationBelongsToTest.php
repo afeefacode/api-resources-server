@@ -8,9 +8,7 @@ use Afeefa\ApiResources\Test\Fixtures\Blog\Api\BlogApi;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Author;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Profile;
 
-use function Afeefa\ApiResources\Test\toArray;
-
-class EloquentHasOneRelationTest extends ApiResourcesEloquentTest
+class EloquentHasOneRelationBelongsToTest extends ApiResourcesEloquentTest
 {
     public function test_set()
     {

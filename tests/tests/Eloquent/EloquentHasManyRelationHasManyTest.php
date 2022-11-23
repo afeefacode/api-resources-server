@@ -8,7 +8,7 @@ use Afeefa\ApiResources\Test\Fixtures\Blog\Api\BlogApi;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Author;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Link;
 
-class EloquentHasManyRelationTest extends ApiResourcesEloquentTest
+class EloquentHasManyRelationHasManyTest extends ApiResourcesEloquentTest
 {
     public function test_set_one()
     {

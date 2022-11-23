@@ -9,9 +9,7 @@ use Afeefa\ApiResources\Test\Fixtures\Blog\Api\BlogApi;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Author;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Tag;
 
-use function Afeefa\ApiResources\Test\toArray;
-
-class EloquentLinkOneRelationTest extends ApiResourcesEloquentTest
+class EloquentLinkOneRelationBelongsToTest extends ApiResourcesEloquentTest
 {
     public function test_set()
     {
@@ -102,95 +100,6 @@ class EloquentLinkOneRelationTest extends ApiResourcesEloquentTest
         $this->assertFeaturedTag($author->id, []);
     }
 
-    public function test_set_with_pivot()
-    {
-        $author = Author::factory()->create();
-
-        Tag::factory()->create(['name' => 'tag1']);
-
-        $this->save(
-            id: $author->id,
-            data: [
-                'first_tag' => [
-                    'id' => '1'
-                ]
-            ]
-        );
-
-        $this->assertFirstTag($author->id, ['1', 'tag1']);
-    }
-
-    public function test_set_not_exists_with_pivot()
-    {
-        $author = Author::factory()->create();
-
-        $this->save(
-            id: $author->id,
-            data: [
-                'first_tag' => [
-                    'id' => 'does_not_exist'
-                ]
-            ]
-        );
-
-        $this->assertFirstTag($author->id, []);
-    }
-
-    public function test_set_empty_with_pivot()
-    {
-        $author = Author::factory()
-            ->has(Tag::factory(['name' => 'tag1']), 'first_tag')
-            ->create();
-
-        $this->assertFirstTag($author->id, ['1', 'tag1']);
-
-        $this->save(
-            id: $author->id,
-            data: [
-                'first_tag' => null
-            ]
-        );
-
-        $this->assertFirstTag($author->id, []);
-    }
-
-    public function test_create_set_with_pivot()
-    {
-        Tag::factory()->create(['name' => 'tag1']);
-
-        $author = $this->create([
-            'first_tag' => [
-                'id' => '1'
-            ]
-        ]);
-
-        $this->assertFirstTag($author->id, ['1', 'tag1']);
-    }
-
-    public function test_create_set_not_exists_with_pivot()
-    {
-        $author = $this->create([
-            'first_tag' => [
-                'id' => 'does_not_exist'
-            ]
-        ]);
-
-        $this->assertFirstTag($author->id, []);
-    }
-
-    public function test_create_set_empty_with_pivot()
-    {
-        $author = $this->create([
-            'first_tag' => null
-        ]);
-
-        $this->assertFirstTag($author->id, []);
-
-        $author = $this->create();
-
-        $this->assertFirstTag($author->id, []);
-    }
-
     protected function save(?string $id = null, array $data = []): array
     {
         return (new ApiResources())->requestFromInput(BlogApi::class, [
@@ -224,9 +133,6 @@ class EloquentLinkOneRelationTest extends ApiResourcesEloquentTest
             'fields' => [
                 'featured_tag' => [
                     'name' => true
-                ],
-                'first_tag' => [
-                    'name' => true
                 ]
             ]
         ]);
@@ -241,28 +147,10 @@ class EloquentLinkOneRelationTest extends ApiResourcesEloquentTest
         $data = $result['data'];
 
         if ($tag) {
-            $this->assertNull($data['first_tag']);
             $this->assertEquals($tag[0], $data['featured_tag']['id']);
             $this->assertEquals($tag[1], $data['featured_tag']['name']);
         } else {
             $this->assertNull($data['featured_tag']);
-        }
-    }
-
-    protected function assertFirstTag(?string $id, ?array $tag)
-    {
-        $result = $this->get($id);
-
-        // debug_dump(toArray($result));
-
-        $data = $result['data'];
-
-        if ($tag) {
-            $this->assertEquals($tag[0], $data['first_tag']['id']);
-            $this->assertEquals($tag[1], $data['first_tag']['name']);
-            $this->assertNull($data['featured_tag']);
-        } else {
-            $this->assertNull($data['first_tag']);
         }
     }
 }

@@ -7,6 +7,7 @@ use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Type\Type;
 use Closure;
 use Faker\Generator;
+use Illuminate\Support\Collection;
 
 function T(string $type, bool $create = true): ?string
 {
@@ -69,12 +70,18 @@ function fake(): Generator
     return $faker;
 }
 
-function toArray(mixed $value): mixed
+function toArray(mixed $value, bool $onlyVisible = true): mixed
 {
+    if ($value instanceof Collection) {
+        $value = $value->all();
+    }
+
     if (is_object($value) && method_exists($value, 'toArray')) {
-        return $value->toArray();
+        return $value->toArray($onlyVisible);
     } elseif (is_array($value)) {
-        return array_map(__NAMESPACE__ . '\toArray', $value);
+        return array_map(function ($element) use ($onlyVisible) {
+            return toArray($element, $onlyVisible);
+        }, $value);
     }
     return $value;
 }

@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Test\Eloquent;
 
+use Afeefa\ApiResources\Eloquent\Model;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
 use Illuminate\Database\Capsule\Manager as DB;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -23,6 +24,9 @@ class ApiResourcesEloquentTest extends ApiResourcesTest
     protected function setUp(): void
     {
         parent::setUp();
+
+        Model::clearBootedModels();
+        Relation::morphMap([], false); // reset morph map
 
         $this->truncateUsedTables();
     }

@@ -15,9 +15,11 @@ class ModelType extends Type
     {
         parent::created();
 
-        if (!isset(static::$ModelClass)) {
+        if (!isset(static::$ModelClass) || !class_exists(static::$ModelClass)) {
             throw new InvalidConfigurationException('Missing Eloquent model in class ' . static::class . '.');
         }
+
+        static::$ModelClass::registerMorphType();
 
         $this->addDefaultRelationResolvers($this->fields);
         $this->addDefaultMutationRelationResolvers($this->updateFields);

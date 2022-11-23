@@ -7,7 +7,12 @@ use Afeefa\ApiResources\DI\Container;
 
 class ApiResources
 {
-    protected static Container $container;
+    protected static ?Container $container = null;
+
+    public function __construct()
+    {
+        static::$container = null; // reset container
+    }
 
     public function getApi(string $ApiClass): Api
     {
@@ -32,7 +37,7 @@ class ApiResources
 
     protected function getContainer(): Container
     {
-        if (!isset(self::$container)) {
+        if (!self::$container) {
             self::$container = new Container();
         }
         return self::$container;

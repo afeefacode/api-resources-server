@@ -20,6 +20,7 @@
             "Afeefa\\ApiResources\\Tests\\": "tests"
         },
         "files": [
+            "src/global-functions.php",
             "src/functions.php"
         ]
     },

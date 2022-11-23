@@ -56,7 +56,7 @@ class QueryRelationResolver extends BaseFieldResolver
         $relationName = $this->relation->getName();
 
         $typeName = $this->validateRequestedType(
-            $this->getRelation()->getRelatedType(),
+            $this->relation->getRelatedType(),
             $typeName,
             "You need to pass a type name to getSelectFields() in the resolver of relation {$relationName} since the relation returns an union type",
             "The type name passed to getSelectFields() in the resolver of relation {$relationName} is not supported by the relation"

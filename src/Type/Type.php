@@ -76,7 +76,7 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
             }
         }
 
-        return $TypeClasses;
+        return array_unique($TypeClasses);
     }
 
     public function getAllValidatorClasses(): array
@@ -101,7 +101,7 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
             }
         }
 
-        return $ValidatorClasses;
+        return array_unique($ValidatorClasses);
     }
 
     public function getField(string $name): Field

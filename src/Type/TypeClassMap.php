@@ -23,6 +23,11 @@ class TypeClassMap implements ContainerAwareInterface
         return $this->map[$type] ?? null;
     }
 
+    public function reset(): void
+    {
+        $this->map = [];
+    }
+
     public function createUsedTypesForApi(Api $api): array
     {
         $types = [];

@@ -8,8 +8,15 @@ use Afeefa\ApiResources\Test\Fixtures\Blog\Api\BlogApi;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Author;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Tag;
 
-class EloquentLinkManyRelationTest extends ApiResourcesEloquentTest
+class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
 {
+    public function test_get()
+    {
+        $author = $this->createAuthorWithTags(2);
+
+        $this->assertTags($author->id, ['1' => 'tag1', '2' => 'tag2']);
+    }
+
     public function test_set_one()
     {
         $author = $this->createAuthorWithTags(2);

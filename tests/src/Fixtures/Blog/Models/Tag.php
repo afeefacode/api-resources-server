@@ -14,4 +14,19 @@ class Tag extends EloquentModel
     protected $table = 'tags';
 
     public $timestamps = false;
+
+    public function authors()
+    {
+        return $this->morphedByMany(Author::class, 'user', 'tag_users');
+    }
+
+    public function articles()
+    {
+        return $this->morphedByMany(Article::class, 'user', 'tag_users');
+    }
+
+    public function tag_users()
+    {
+        return $this->hasMany(TagUser::class);
+    }
 }

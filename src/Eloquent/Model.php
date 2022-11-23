@@ -21,9 +21,7 @@ class Model extends EloquentModel implements ModelInterface
     {
         parent::boot();
 
-        Relation::morphMap([
-            static::$type => static::class
-        ]);
+        static::registerMorphType();
 
         static::created(function (Model $model) {
             $model->afterCreate();
@@ -40,6 +38,13 @@ class Model extends EloquentModel implements ModelInterface
         static::deleted(function ($model) {
             $model->afterDelete();
         });
+    }
+
+    public static function registerMorphType()
+    {
+        Relation::morphMap([
+            static::$type => static::class
+        ]);
     }
 
     public function getTypeAttribute(): string
@@ -83,9 +88,18 @@ class Model extends EloquentModel implements ModelInterface
         return $json;
     }
 
-    public function toArray(): array
+    /**
+     * @param bool $onlyVisible Useful in tests
+     */
+    public function toArray(bool $onlyVisible = true): array
     {
         $array = [];
+
+        if (!$onlyVisible) {
+            foreach ($this as $name => $value) {
+                $this->visibleFields = ['type', 'id', ...array_keys($this->attributes), ...array_keys($this->relations)];
+            }
+        }
 
         foreach ($this->visibleFields as $visibleFieldName) {
             $value = $this->_toArray($this->$visibleFieldName);

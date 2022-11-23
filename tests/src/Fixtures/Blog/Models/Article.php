@@ -19,4 +19,14 @@ class Article extends EloquentModel
     {
         return $this->belongsTo(Author::class);
     }
+
+    public function tags()
+    {
+        return $this->morphToMany(Tag::class, 'user', 'tag_users');
+    }
+
+    public function comments()
+    {
+        return $this->morphMany(Comment::class, 'owner');
+    }
 }

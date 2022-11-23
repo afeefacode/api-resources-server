@@ -11,6 +11,8 @@ class MutationRelationResolver extends BaseFieldResolver
     use MutationResolverTrait;
     use RelationResolverTrait;
 
+    public const NOT_RESOLVED = 'not_found';
+
     protected ?array $fieldsToSave;
 
     protected MutationResolveContext $resolveContext;
@@ -39,7 +41,7 @@ class MutationRelationResolver extends BaseFieldResolver
 
     protected ?string $relatedOperation; // null, add_related, delete_related
 
-    protected ?string $resolvedId = null;
+    protected ?string $resolvedId = self::NOT_RESOLVED;
 
     protected ?string $resolvedType = null;
 
@@ -62,6 +64,9 @@ class MutationRelationResolver extends BaseFieldResolver
 
     public function getSaveRelatedToOwnerFields(): array
     {
+        if ($this->resolvedId === self::NOT_RESOLVED) { // nothing resolved, related does not exist
+            return [];
+        }
         return ($this->saveRelatedToOwnerCallback)($this->resolvedId, $this->resolvedType) ?? [];
     }
 

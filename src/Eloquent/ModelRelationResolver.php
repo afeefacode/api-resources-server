@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+
 use Illuminate\Database\Eloquent\Relations\Relation as EloquentRelation;
 
 class ModelRelationResolver
@@ -41,21 +42,49 @@ class ModelRelationResolver
                 $relationWrapper = $this->getEloquentRelationWrapper($r->getRelation());
                 $eloquentRelation = $relationWrapper->relation();
 
-                // select field on the relation prior matching the related to its owner
-                $selectFields = $r->getSelectFields();
-                if ($eloquentRelation instanceof HasOneOrMany) { // reference to the owner in the related table
-                    $selectFields[] = $eloquentRelation->getForeignKeyName();
-                    if ($eloquentRelation instanceof MorphOneOrMany) { // polymorphic type
-                        $selectFields[] = $eloquentRelation->getMorphType();
-                    }
+                $typeNames = $r->getRelation()->getRelatedType()->getAllTypeNames();
+
+                // if there are more than 1 allowed type, we must have a polymorphic morphTo relation
+                // and need to distinguish between the diffent possible related types
+                if (count($typeNames) > 1 && $eloquentRelation instanceof MorphTo) {
+                    $ownersByRelatedType = $this->sortOwnersByRelatedType($owners, $eloquentRelation->getMorphType());
+                } else {
+                    $ownersByRelatedType = [$typeNames[0] => $owners];
                 }
 
-                $relationCounts = $this->getRelationCountsOfRelation($r);
+                $relatedModels = [];
 
-                $params = $r->getParams();
+                foreach ($typeNames as $typeName) {
+                    if (!array_key_exists($typeName, $ownersByRelatedType)) { // type is allowed but no owner of that type found
+                        continue;
+                    }
+                    $ownersOfRelatedType = $ownersByRelatedType[$typeName];
 
-                $builder = new Builder($relationWrapper->owner);
-                $relatedModels = $builder->afeefaEagerLoadRelation($owners, $relationWrapper->name, $selectFields, $relationCounts, $params);
+                    // select field on the relation prior matching the related to its owner
+                    $selectFields = $r->getSelectFields($typeName);
+
+                    if ($eloquentRelation instanceof HasOneOrMany) { // reference to the owner in the related table
+                        $selectFields[] = $eloquentRelation->getForeignKeyName();
+                        if ($eloquentRelation instanceof MorphOneOrMany) { // polymorphic type
+                            $selectFields[] = $eloquentRelation->getMorphType();
+                        }
+                    }
+
+                    $relationCounts = $this->getRelationCountsOfRelation($r, $typeName);
+
+                    $builder = new Builder($relationWrapper->owner);
+
+                    $relatedModels = [
+                        ...$relatedModels,
+                        ...$builder->afeefaEagerLoadRelation(
+                            $ownersOfRelatedType,
+                            $relationWrapper->name,
+                            $selectFields,
+                            $relationCounts,
+                            $r->getParams()
+                        )
+                    ];
+                }
 
                 return $relatedModels;
             });
@@ -162,10 +191,14 @@ class ModelRelationResolver
 
         if ($eloquentRelation instanceof BelongsTo) { // reference to the related in the owner table
             $r
-                ->saveRelatedToOwner(function (?string $id) use ($r) {
+                ->saveRelatedToOwner(function (?string $id, ?string $typeName) use ($r) {
                     $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
                     if ($eloquentRelation instanceof BelongsTo) { // reference to the related in the owner table
-                        return [$eloquentRelation->getForeignKeyName() => $id];
+                        $fields = [$eloquentRelation->getForeignKeyName() => $id];
+                        if ($eloquentRelation instanceof MorphTo) { // reference to the related in the owner table
+                            $fields[$eloquentRelation->getMorphType()] = $typeName;
+                        }
+                        return $fields;
                     }
                 });
         }
@@ -176,8 +209,8 @@ class ModelRelationResolver
                 return $eloquentRelation->first();
             })
             ->exists(function (string $id, string $typeName) use ($r) {
-                $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
-                return !!$eloquentRelation->getRelated()::find($id);
+                $related = EloquentRelation::getMorphedModel($typeName);
+                return !!$related::find($id);
             })
             ->link(function (Model $owner, string $id, string $typeName) use ($r) {
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
@@ -212,10 +245,10 @@ class ModelRelationResolver
             });
     }
 
-    protected function getRelationCountsOfRelation(QueryRelationResolver $r): array
+    protected function getRelationCountsOfRelation(QueryRelationResolver $r, string $typeName): array
     {
-        $requestedFieldNames = $r->getRequestedFieldNames();
-        $relatedType = $r->getRelation()->getRelatedType()->getTypeInstance();
+        $requestedFieldNames = $r->getRequestedFieldNames($typeName);
+        $relatedType = $r->getRelation()->getRelatedType()->getTypeInstance($typeName);
         $relationCounts = [];
         foreach ($requestedFieldNames as $fieldName) {
             if (preg_match('/^count_(.+)/', $fieldName, $matches)) {
@@ -249,6 +282,19 @@ class ModelRelationResolver
         $eloquentRelation->owner = $owner;
 
         return $eloquentRelation;
+    }
+
+    /**
+     * @param ModelInterface[] $owners
+     */
+    protected function sortOwnersByRelatedType(array $owners, string $typeField): array
+    {
+        $ownersByRelatedType = [];
+        foreach ($owners as $owner) {
+            $type = $owner->$typeField;
+            $ownersByRelatedType[$type][] = $owner;
+        }
+        return $ownersByRelatedType;
     }
 }
 
