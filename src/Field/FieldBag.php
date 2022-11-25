@@ -7,7 +7,7 @@ use Afeefa\ApiResources\Bag\BagEntryInterface;
 use Closure;
 
 /**
- * @method Field get(string $name)
+ * @method Field get(string $name, Closure $callback)
  * @method Field[] getEntries()
  */
 class FieldBag extends Bag

@@ -291,7 +291,10 @@ class ModelRelationResolver
     {
         $ownersByRelatedType = [];
         foreach ($owners as $owner) {
-            $type = $owner->$typeField;
+            $typeInDb = $owner->$typeField;
+            // handle legacy type
+            $RelatedModel = EloquentRelation::getMorphedModel($typeInDb);
+            $type = $RelatedModel::$type;
             $ownersByRelatedType[$type][] = $owner;
         }
         return $ownersByRelatedType;

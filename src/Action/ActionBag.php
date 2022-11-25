@@ -7,7 +7,7 @@ use Afeefa\ApiResources\Bag\BagEntryInterface;
 use Closure;
 
 /**
- * @method Action get(string $name)
+ * @method Action get(string $name, Closure $callback)
  * @method Action[] getEntries()
  */
 class ActionBag extends Bag

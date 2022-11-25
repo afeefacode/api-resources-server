@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Bag\Bag;
 use Afeefa\ApiResources\Bag\BagEntryInterface;
 
 /**
- * @method Rule get(string $name)
+ * @method Rule get(string $name, Closure $callback)
  * @method Rule[] getEntries()
  */
 class RuleBag extends Bag

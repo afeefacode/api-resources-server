@@ -9,13 +9,11 @@ use function Afeefa\ApiResources\DI\classOrCallback;
 use function Afeefa\ApiResources\DI\getCallbackArgumentType;
 
 /**
- * @method Resource get(string $name)
+ * @method Resource get(string $name, Closure $callback)
  * @method Resource[] getEntries()
  */
 class ResourceBag extends Bag
 {
-    protected array $definitions = [];
-
     public function add($classOrCallback): ResourceBag
     {
         [$ResourceClass, $callback] = classOrCallback($classOrCallback);

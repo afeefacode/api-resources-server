@@ -6,7 +6,7 @@ use Afeefa\ApiResources\Field\Attribute;
 use Afeefa\ApiResources\Field\FieldBag;
 
 /**
- * @method Attribute get(string $name)
+ * @method Attribute get(string $name, Closure $callback)
  * @method Attribute[] getEntries()
  */
 class ActionParams extends FieldBag
