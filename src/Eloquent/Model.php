@@ -17,6 +17,13 @@ class Model extends EloquentModel implements ModelInterface
 
     protected $keyType = 'string';
 
+    public static function new(array $attributes = []): static
+    {
+        $model = new static();
+        $model->setRawAttributes($attributes);
+        return $model;
+    }
+
     public static function boot()
     {
         parent::boot();
