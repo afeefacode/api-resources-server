@@ -73,28 +73,6 @@ class NumberValidatorTest extends TestCase
         }
     }
 
-    public function test_null()
-    {
-        $validator = $this->createNumberValidator();
-
-        foreach ([
-            1,
-            1.2,
-            null
-        ] as $value) {
-            $this->assertTrue($validator->validateRule('null', $value));
-        }
-
-        $validator = $this->createNumberValidator()
-            ->null(false);
-
-        foreach ([
-            null
-        ] as $value) {
-            $this->assertFalse($validator->validateRule('null', $value));
-        }
-    }
-
     public function test_max()
     {
         $validator = $this->createNumberValidator()

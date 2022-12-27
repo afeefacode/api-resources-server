@@ -71,6 +71,9 @@ class SchemaValidatorTest extends ApiResourcesTest
         $expectedValidatorsSchema = [
             'Test.Validator' => [
                 'rules' => [
+                    'filled' => [
+                        'message' => '{{ fieldLabel }} sollte einen Wert enthalten.'
+                    ],
                     'min' => [
                         'message' => '{{ fieldLabel }} should be greater than {{ param }}.'
                     ],

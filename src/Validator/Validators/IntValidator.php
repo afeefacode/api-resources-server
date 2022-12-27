@@ -9,16 +9,6 @@ class IntValidator extends Validator
 {
     public static string $type = 'Afeefa.IntValidator';
 
-    public function filled(bool $filled = true): IntValidator
-    {
-        return $this->param('filled', $filled);
-    }
-
-    public function null(bool $null = true): IntValidator
-    {
-        return $this->param('null', $null);
-    }
-
     public function max(int $max): IntValidator
     {
         return $this->param('max', $max);
@@ -41,27 +31,6 @@ class IntValidator extends Validator
                 }
                 // only int numbers allowed
                 if (!is_int($value)) {
-                    return false;
-                }
-                return true;
-            });
-
-        $rules->add('null')
-            ->default(true)
-            ->message('{{ fieldLabel }} sollte eine Zahl sein.')
-            ->validate(function ($value, $null) {
-                // null only allowed if set
-                if (!$null && is_null($value)) {
-                    return false;
-                }
-                return true;
-            });
-
-        $rules->add('filled')
-            ->message('{{ fieldLabel }} sollte einen Wert enthalten.')
-            ->validate(function ($value, $filled) {
-                // must not be empty (but 0 is okay)
-                if ($filled && !$value && $value !== 0) {
                     return false;
                 }
                 return true;
@@ -94,5 +63,10 @@ class IntValidator extends Validator
                 }
                 return true;
             });
+    }
+
+    protected function valueIsFilled($value): bool
+    {
+        return !!$value || $value === 0;
     }
 }

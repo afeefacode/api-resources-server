@@ -43,7 +43,7 @@ class DateValidatorTest extends TestCase
         }
     }
 
-    public function test_null()
+    public function test_filled()
     {
         $validator = $this->createDateValidator();
 
@@ -51,16 +51,16 @@ class DateValidatorTest extends TestCase
             new DateTime(),
             null
         ] as $value) {
-            $this->assertTrue($validator->validateRule('null', $value));
+            $this->assertTrue($validator->validateRule('filled', $value));
         }
 
         $validator = $this->createDateValidator()
-            ->null(false);
+            ->filled();
 
         foreach ([
             null
         ] as $value) {
-            $this->assertFalse($validator->validateRule('null', $value));
+            $this->assertFalse($validator->validateRule('filled', $value));
         }
     }
 

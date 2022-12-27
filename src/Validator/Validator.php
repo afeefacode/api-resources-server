@@ -19,7 +19,22 @@ class Validator implements ToSchemaJsonInterface
     public function __construct()
     {
         $this->rules = new RuleBag();
+
+        $this->rules->add('filled')
+            ->message('{{ fieldLabel }} sollte einen Wert enthalten.')
+            ->validate(function ($value, $filled) {
+                if ($filled && !$this->valueIsFilled($value)) {
+                    return false;
+                }
+                return true;
+            });
+
         $this->rules($this->rules);
+    }
+
+    public function filled(bool $filled = true): static
+    {
+        return $this->param('filled', $filled);
     }
 
     public function clone(): Validator
@@ -85,6 +100,11 @@ class Validator implements ToSchemaJsonInterface
 
     protected function rules(RuleBag $rules): void
     {
+    }
+
+    protected function valueIsFilled($value): bool
+    {
+        return !!$value;
     }
 
     public function toSchemaJson(): array

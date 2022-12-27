@@ -9,16 +9,6 @@ class NumberValidator extends Validator
 {
     public static string $type = 'Afeefa.NumberValidator';
 
-    public function filled(bool $filled = true): NumberValidator
-    {
-        return $this->param('filled', $filled);
-    }
-
-    public function null(bool $null = true): NumberValidator
-    {
-        return $this->param('null', $null);
-    }
-
     public function max(float $max): NumberValidator
     {
         return $this->param('max', $max);
@@ -35,7 +25,8 @@ class NumberValidator extends Validator
             ->default(true)
             ->message('{{ fieldLabel }} sollte eine Zahl sein.')
             ->validate(function ($value) {
-                if (is_null($value)) { // validate null in null-rule
+                // null may be okay, validate null in filled-rule
+                if (is_null($value)) {
                     return true;
                 }
                 // a numeric string
@@ -44,27 +35,6 @@ class NumberValidator extends Validator
                 }
                 // not numeric, e.g. bool
                 if (!is_numeric($value)) {
-                    return false;
-                }
-                return true;
-            });
-
-        $rules->add('null')
-            ->default(true)
-            ->message('{{ fieldLabel }} sollte eine Zahl sein.')
-            ->validate(function ($value, $null) {
-                // null only allowed if set
-                if (!$null && is_null($value)) {
-                    return false;
-                }
-                return true;
-            });
-
-        $rules->add('filled')
-            ->message('{{ fieldLabel }} sollte einen Wert enthalten.')
-            ->validate(function ($value, $filled) {
-                // must not be empty (but 0 is okay)
-                if ($filled && !$value && $value !== 0) {
                     return false;
                 }
                 return true;
@@ -97,5 +67,10 @@ class NumberValidator extends Validator
                 }
                 return true;
             });
+    }
+
+    protected function valueIsFilled($value): bool
+    {
+        return !!$value || $value === 0;
     }
 }

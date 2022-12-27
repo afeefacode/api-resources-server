@@ -11,23 +11,13 @@ class DateValidator extends Validator
 {
     public static string $type = 'Afeefa.DateValidator';
 
-    public function filled(bool $filled = true): DateValidator
-    {
-        return $this->param('filled', $filled);
-    }
-
-    public function null(bool $null = true): DateValidator
-    {
-        return $this->param('null', $null);
-    }
-
     protected function rules(RuleBag $rules): void
     {
         $rules->add('date')
             ->default(true)
             ->message('{{ fieldLabel }} sollte ein Datum sein.')
             ->validate(function ($value) {
-                // null may be okay, validate null in null-rule
+                // null may be okay, validate null in filled-rule
                 if (is_null($value)) {
                     return true;
                 }
@@ -57,18 +47,6 @@ class DateValidator extends Validator
                 }
 
                 return false;
-            });
-
-        $rules->add('null')
-            ->default(true)
-            ->message('{{ fieldLabel }} sollte ein Datum sein.')
-            ->validate(function ($value, $null) {
-                // null only allowed if set
-                if (!$null && is_null($value)) {
-                    return false;
-                }
-
-                return true;
             });
     }
 }

@@ -76,28 +76,6 @@ class IntValidatorTest extends TestCase
         }
     }
 
-    public function test_null()
-    {
-        $validator = $this->createIntValidator();
-
-        foreach ([
-            0,
-            1,
-            null
-        ] as $value) {
-            $this->assertTrue($validator->validateRule('null', $value));
-        }
-
-        $validator = $this->createIntValidator()
-            ->null(false);
-
-        foreach ([
-            null
-        ] as $value) {
-            $this->assertFalse($validator->validateRule('null', $value));
-        }
-    }
-
     public function test_max()
     {
         $validator = $this->createIntValidator()

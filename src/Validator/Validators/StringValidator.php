@@ -9,11 +9,6 @@ class StringValidator extends Validator
 {
     public static string $type = 'Afeefa.StringValidator';
 
-    public function filled(bool $filled = true): StringValidator
-    {
-        return $this->param('filled', $filled);
-    }
-
     public function null(bool $null = true): StringValidator
     {
         return $this->param('null', $null);
@@ -54,15 +49,6 @@ class StringValidator extends Validator
             ->message('{{ fieldLabel }} sollte eine Zeichenkette sein.')
             ->validate(function ($value, $null) {
                 if (!$null && is_null($value)) {
-                    return false;
-                }
-                return true;
-            });
-
-        $rules->add('filled')
-            ->message('{{ fieldLabel }} sollte einen Wert enthalten.')
-            ->validate(function ($value, $filled) {
-                if ($filled && !$value) {
                     return false;
                 }
                 return true;
