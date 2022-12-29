@@ -19,7 +19,7 @@ class Rule extends BagEntry
         return $this;
     }
 
-    public function validate($validate): Rule
+    public function validate(Closure $validate): Rule
     {
         $this->validate = $validate;
         return $this;

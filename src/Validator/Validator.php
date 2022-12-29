@@ -5,6 +5,7 @@ namespace Afeefa\ApiResources\Validator;
 use Afeefa\ApiResources\Api\ToSchemaJsonInterface;
 use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
 use Afeefa\ApiResources\Validator\Rule\RuleBag;
+use Afeefa\ApiResources\Validator\Sanitizer\SanitizerBag;
 use ArrayObject;
 use ReflectionFunction;
 
@@ -15,9 +16,13 @@ class Validator implements ToSchemaJsonInterface
     public array $params = [];
 
     protected RuleBag $rules;
+    protected SanitizerBag $sanitizers;
 
     public function __construct()
     {
+        $this->sanitizers = new SanitizerBag();
+        $this->sanitizers($this->sanitizers);
+
         $this->rules = new RuleBag();
 
         $this->rules->add('filled')
@@ -43,6 +48,14 @@ class Validator implements ToSchemaJsonInterface
         $arrObject = new ArrayObject($this->params);
         $validator->params = $arrObject->getArrayCopy();
         return $validator;
+    }
+
+    public function sanitize($value)
+    {
+        foreach ($this->sanitizers->getEntries() as $sanitizerName => $sanitizer) {
+            $value = $this->sanitizeRule($sanitizerName, $value);
+        }
+        return $value;
     }
 
     public function validate($value): bool
@@ -77,6 +90,20 @@ class Validator implements ToSchemaJsonInterface
         return true;
     }
 
+    public function sanitizeRule(string $sanitizerName, $value)
+    {
+        $sanitizer = $this->sanitizers->get($sanitizerName);
+        $sanitize = $sanitizer->getSanitize();
+        $f = new ReflectionFunction($sanitize);
+        $fParams = array_slice($f->getParameters(), 1); // remove '$value' from arg list
+
+        $args = array_map(function ($param) use ($sanitizer) {
+            return $this->getParam($param->name, $sanitizer->getDefaultParam());
+        }, $fParams);
+
+        return $sanitize($value, ...$args);
+    }
+
     public function getParams(): array
     {
         return $this->params;
@@ -89,13 +116,27 @@ class Validator implements ToSchemaJsonInterface
 
     protected function param($name, $value): Validator
     {
-        $this->params[$name] = $value;
+        if (is_null($value)) {
+            unset($this->params[$name]);
+        } else {
+            if ($this->sanitizers->has($name) && $this->sanitizers->get($name)->getDefaultParam() === $value) {
+                unset($this->params[$name]);
+            } elseif ($this->rules->has($name) && $this->rules->get($name)->getDefaultParam() === $value) {
+                unset($this->params[$name]);
+            } else {
+                $this->params[$name] = $value;
+            }
+        }
         return $this;
     }
 
     protected function getParam(string $name, $default = null)
     {
         return $this->params[$name] ?? $default;
+    }
+
+    protected function sanitizers(SanitizerBag $sanitizers): void
+    {
     }
 
     protected function rules(RuleBag $rules): void
@@ -109,10 +150,18 @@ class Validator implements ToSchemaJsonInterface
 
     public function toSchemaJson(): array
     {
-        return [
+        $json = [
             'type' => $this::type(),
-            'params' => $this->params,
-            'rules' => $this->rules->toSchemaJson(),
+            'params' => $this->params
         ];
+
+        $sanizisersJson = $this->sanitizers->toSchemaJson();
+        if (!empty($sanizisersJson)) {
+            $json['sanitizers'] = $sanizisersJson;
+        }
+
+        $json['rules'] = $this->rules->toSchemaJson();
+
+        return $json;
     }
 }

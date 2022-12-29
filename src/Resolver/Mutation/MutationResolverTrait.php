@@ -27,9 +27,21 @@ trait MutationResolverTrait
 
         $requiredFieldNames = $resolveContext->getRequiredFieldNames();
         foreach ($requiredFieldNames as $requiredFieldName) {
-            if (!isset($fieldsToSave[$requiredFieldName])) {
-                throw new ValidationFailedException("Field {$requiredFieldName} ist required but not given.");
+            if (!$fieldsToSave || !array_key_exists($requiredFieldName, $fieldsToSave)) {
+                throw new ValidationFailedException("Field {$requiredFieldName} is required but not given.");
             }
+        }
+
+        // sanitize and validate all fields
+
+        if ($fieldsToSave) { // not null
+            $validators = $resolveContext->getFieldValidators();
+
+            foreach ($validators as $fieldName => $validator) {
+                $fieldsToSave[$fieldName] = $validator->sanitize($fieldsToSave[$fieldName]);
+            }
+
+            $resolveContext->fieldsToSave($fieldsToSave);
         }
 
         // resolve relations before this model (relation can only be hasOne or linkOne)

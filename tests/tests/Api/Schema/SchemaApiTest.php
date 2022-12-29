@@ -69,6 +69,17 @@ class SchemaApiTest extends ApiResourcesTest
             ],
             'validators' => [
                 'Afeefa.StringValidator' => [
+                    'sanitizers' => [
+                        'trim' => [
+                            'default' => true
+                        ],
+                        'collapseWhite' => [
+                            'default' => true
+                        ],
+                        'emptyNull' => [
+                            'default' => true
+                        ]
+                    ],
                     'rules' => [
                         'string' => [
                             'message' => '{{ fieldLabel }} sollte eine Zeichenkette sein.',

@@ -141,6 +141,11 @@ class Field extends BagEntry
         return null;
     }
 
+    public function hasValidator(): bool
+    {
+        return !!$this->validator;
+    }
+
     public function getValidator(): ?Validator
     {
         return $this->validator;
@@ -267,6 +272,7 @@ class Field extends BagEntry
 
         if ($this->validator) {
             $json['validator'] = $this->validator->toSchemaJson();
+            unset($json['validator']['sanitizers']);
             unset($json['validator']['rules']);
         }
 

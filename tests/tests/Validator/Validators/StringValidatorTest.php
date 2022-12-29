@@ -32,6 +32,23 @@ class StringValidatorTest extends TestCase
         }
     }
 
+    public function test_sanitize()
+    {
+        $validator = $this->createStringValidator();
+        $this->assertEquals('aaa', $validator->sanitize('aaa '));
+        $this->assertEquals('a a', $validator->sanitize('  a  a '));
+        $this->assertNull($validator->sanitize(''));
+
+        $validator = $this->createStringValidator()
+            ->trim(false)
+            ->emptyNull(false)
+            ->collapseWhite(false);
+
+        $this->assertEquals('aaa ', $validator->sanitize('aaa '));
+        $this->assertEquals('  a  a ', $validator->sanitize('  a  a '));
+        $this->assertEquals('', $validator->sanitize(''));
+    }
+
     public function test_filled()
     {
         $validator = $this->createStringValidator()

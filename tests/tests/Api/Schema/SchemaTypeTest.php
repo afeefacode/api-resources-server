@@ -98,7 +98,7 @@ class SchemaTypeTest extends ApiResourcesTest
         $this->assertEquals($expectedTypesSchema, $schema['types']);
 
         $this->assertEquals(['Afeefa.StringValidator'], array_keys($schema['validators']));
-        $this->assertEquals(['rules'], array_keys($schema['validators']['Afeefa.StringValidator']));
+        $this->assertEquals(['sanitizers', 'rules'], array_keys($schema['validators']['Afeefa.StringValidator']));
     }
 
     public function test_required()
