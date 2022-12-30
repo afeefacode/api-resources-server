@@ -69,27 +69,6 @@ class StringValidatorTest extends TestCase
         }
     }
 
-    public function test_null()
-    {
-        $validator = $this->createStringValidator();
-
-        foreach ([
-            'a',
-            null
-        ] as $value) {
-            $this->assertTrue($validator->validateRule('null', $value));
-        }
-
-        $validator = $this->createStringValidator()
-            ->null(false);
-
-        foreach ([
-            null
-        ] as $value) {
-            $this->assertFalse($validator->validateRule('null', $value));
-        }
-    }
-
     public function test_min()
     {
         $validator = $this->createStringValidator()

@@ -85,10 +85,6 @@ class SchemaApiTest extends ApiResourcesTest
                             'message' => '{{ fieldLabel }} sollte eine Zeichenkette sein.',
                             'default' => true
                         ],
-                        'null' => [
-                            'message' => '{{ fieldLabel }} sollte eine Zeichenkette sein.',
-                            'default' => true
-                        ],
                         'min' => [
                             'message' => '{{ fieldLabel }} sollte mindestens {{ param }} Zeichen beinhalten.'
                         ],

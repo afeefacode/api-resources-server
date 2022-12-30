@@ -25,11 +25,6 @@ class StringValidator extends Validator
         return $this->param('emptyNull', $emptyNull);
     }
 
-    public function null(bool $null = true): StringValidator
-    {
-        return $this->param('null', $null);
-    }
-
     public function min(int $min): StringValidator
     {
         return $this->param('min', $min);
@@ -81,20 +76,11 @@ class StringValidator extends Validator
             ->default(true)
             ->message('{{ fieldLabel }} sollte eine Zeichenkette sein.')
             ->validate(function ($value) {
-                if (is_null($value)) { // validate null in null-rule
+                // null is allowed, validate empty value in filled
+                if (is_null($value)) {
                     return true;
                 }
                 if (!is_string($value)) {
-                    return false;
-                }
-                return true;
-            });
-
-        $rules->add('null')
-            ->default(true)
-            ->message('{{ fieldLabel }} sollte eine Zeichenkette sein.')
-            ->validate(function ($value, $null) {
-                if (!$null && is_null($value)) {
                     return false;
                 }
                 return true;
@@ -106,10 +92,8 @@ class StringValidator extends Validator
                 if ($min === null) {
                     return true;
                 }
-                if (is_null($value) || $value === '') { // validate in null/filled
-                    return true;
-                }
-                if (strlen($value) < $min) {
+                // empty value validated in filled rule
+                if ($value && strlen($value) < $min) {
                     return false;
                 }
                 return true;
@@ -121,10 +105,8 @@ class StringValidator extends Validator
                 if ($max === null) {
                     return true;
                 }
-                if (is_null($value)) { // validate in null
-                    return true;
-                }
-                if (strlen($value) > $max) {
+                // empty value cannot exceed max
+                if ($value && strlen($value) > $max) {
                     return false;
                 }
                 return true;
