@@ -116,9 +116,30 @@ class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
         return isset($this->entries[$name]) || isset($this->definitions[$name]);
     }
 
-    protected function setInternal(string $name, BagEntryInterface $value): Bag
+    protected function setInternal(string $name, BagEntryInterface $value, ?string $after = null): Bag
     {
-        $this->entries[$name] = $value;
+        if ($after) {
+            $this->entries = $this->insertAfter($after, $this->entries, $name, $value);
+        } else {
+            $this->entries[$name] = $value;
+        }
         return $this;
+    }
+
+    protected function insertAfter($afterKey, array $array, $newKey, $newValue)
+    {
+        $new = [];
+        $added = false;
+        foreach ($array as $k => $value) {
+            $new[$k] = $value;
+            if ($k === $afterKey) {
+                $new[$newKey] = $newValue;
+                $added = true;
+            }
+        }
+        if (!$added) {
+            $new[$newKey] = $newValue;
+        }
+        return $new;
     }
 }

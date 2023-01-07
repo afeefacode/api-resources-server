@@ -13,9 +13,14 @@ class FilterBag extends Bag
 {
     public function add(string $name, $classOrCallback): FilterBag
     {
-        $this->container->create($classOrCallback, function (Filter $filter) use ($name) {
+        return $this->addAfter(null, $name, $classOrCallback);
+    }
+
+    public function addAfter(?string $after, string $name, $classOrCallback): FilterBag
+    {
+        $this->container->create($classOrCallback, function (Filter $filter) use ($name, $after) {
             $filter->name($name);
-            $this->setInternal($name, $filter);
+            $this->setInternal($name, $filter, $after);
         });
 
         return $this;

@@ -12,6 +12,7 @@ use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
 use Afeefa\ApiResources\Filter\Filters\PageFilter;
 use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
+use Afeefa\ApiResources\Filter\Filters\SelectFilter;
 use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Type\Type;
 use Illuminate\Database\Eloquent\Builder;
@@ -46,6 +47,8 @@ class ModelResource extends Resource
     {
         $filters->add('q', KeywordFilter::class);
 
+        $filters->add('qfield', SelectFilter::class);
+
         $filters->add('order', function (OrderFilter $filter) {
             $filter
                 ->fields([
@@ -78,7 +81,7 @@ class ModelResource extends Resource
         $query->where($name, $value);
     }
 
-    protected function search(string $keyword, Builder $query): void
+    protected function search(string $keyword, ?string $keywordField, Builder $query): void
     {
     }
 
@@ -115,8 +118,8 @@ class ModelResource extends Resource
         $type = $this->container->get($this->ModelTypeClass);
         return (new ModelResolver())
             ->type($type)
-            ->search(function (string $keyword, Builder $query) {
-                $this->search($keyword, $query);
+            ->search(function (string $keyword, ?string $keywordField, Builder $query) {
+                $this->search($keyword, $keywordField, $query);
             })
             ->order(function (string $field, string $direction, Builder $query) {
                 $this->order($field, $direction, $query);

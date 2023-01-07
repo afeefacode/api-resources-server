@@ -174,8 +174,10 @@ class ModelResolver
 
                 $keyword = $filters['q'] ?? null;
 
-                if ($keyword) {
-                    ($this->searchFunction)($keyword, $query);
+                if ($keyword || $keyword === '0') {
+                    $keywordField = $filters['qfield'] ?? null;
+
+                    ($this->searchFunction)($keyword, $keywordField, $query);
 
                     $countSearch = $query->count();
 
