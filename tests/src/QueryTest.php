@@ -22,8 +22,8 @@ class QueryTest extends ApiResourcesTest
     {
         return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback, $TypeClassOrClassesOrMeta, $actionCallback) {
             $addType('TYPE', $fieldsCallback);
-            $addResource('RES', function (Closure $addAction) use ($TypeClassOrClassesOrMeta, $actionCallback) {
-                $addAction('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
+            $addResource('RES', function (Closure $addAction, Closure $addQuery) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+                $addQuery('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
             });
         })->get();
     }
@@ -31,8 +31,8 @@ class QueryTest extends ApiResourcesTest
     protected function createApiWithAction($TypeClassOrClassesOrMeta, Closure $actionCallback): Api
     {
         return $this->apiBuilder()->api('API', function (Closure $addResource) use ($TypeClassOrClassesOrMeta, $actionCallback) {
-            $addResource('RES', function (Closure $addAction) use ($TypeClassOrClassesOrMeta, $actionCallback) {
-                $addAction('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
+            $addResource('RES', function (Closure $addAction, Closure $addQuery) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+                $addQuery('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
             });
         })->get();
     }

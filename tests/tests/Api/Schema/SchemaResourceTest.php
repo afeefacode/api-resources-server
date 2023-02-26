@@ -18,13 +18,13 @@ class SchemaResourceTest extends ApiResourcesTest
 {
     public function test_simple()
     {
-        $api = createApiWithSingleResource(function (Closure $addAction) {
-            $addAction('test_action', T('Test.Type'), function (Action $action) {
+        $api = createApiWithSingleResource(function (Closure $addAction, Closure $addQuery) {
+            $addQuery('test_action', T('Test.Type'), function (Action $action) {
                 $action
                     ->resolve(function () {
                     });
             });
-            $addAction('test_action2', T('Test.Type2'), function (Action $action) {
+            $addQuery('test_action2', T('Test.Type2'), function (Action $action) {
                 $action
                     ->resolve(function () {
                     });

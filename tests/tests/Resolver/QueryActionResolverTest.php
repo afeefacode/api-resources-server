@@ -150,7 +150,7 @@ class QueryActionResolverTest extends QueryTest
     public function test_returns_single_wrong_type()
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return a ModelInterface object of type [TYPE].');
+        $this->expectExceptionMessage('Get callback of action resolver for action ACT on resource RES must return a ModelInterface object of type [TYPE].');
 
         $api = $this->createApiWithAction(T('TYPE'), function (Action $action) {
             $action
@@ -192,7 +192,7 @@ class QueryActionResolverTest extends QueryTest
     public function test_returns_single_wrong_type_with_union()
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return a ModelInterface object of type [TYPE,TYPE2].');
+        $this->expectExceptionMessage('Get callback of action resolver for action ACT on resource RES must return a ModelInterface object of type [TYPE,TYPE2].');
 
         $api = $this->createApiWithAction([T('TYPE'), T('TYPE2')], function (Action $action) {
             $action
@@ -212,7 +212,7 @@ class QueryActionResolverTest extends QueryTest
     public function test_returns_single_wrong_model($wrongModel)
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return a ModelInterface object.');
+        $this->expectExceptionMessage('Get callback of action resolver for action ACT on resource RES must return a ModelInterface object.');
 
         $api = $this->createApiWithAction(T('TYPE'), function (Action $action) use ($wrongModel) {
             $action
@@ -319,7 +319,7 @@ class QueryActionResolverTest extends QueryTest
     public function test_returns_list_no_list($wrongList)
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return an array of ModelInterface objects.');
+        $this->expectExceptionMessage('Get callback of action resolver for action ACT on resource RES must return an array of ModelInterface objects.');
 
         $api = $this->createApiWithAction(Type::list(T('TYPE')), function (Action $action) use ($wrongList) {
             $action
@@ -349,7 +349,7 @@ class QueryActionResolverTest extends QueryTest
     public function test_returns_list_with_wrong_model($wrongModel)
     {
         $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage('Load callback of action resolver for action ACT on resource RES must return an array of ModelInterface objects.');
+        $this->expectExceptionMessage('Get callback of action resolver for action ACT on resource RES must return an array of ModelInterface objects.');
 
         $api = $this->createApiWithAction(Type::list(T('TYPE')), function (Action $action) use ($wrongModel) {
             $action

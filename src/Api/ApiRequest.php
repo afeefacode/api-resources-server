@@ -212,9 +212,16 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
             throw new InvalidConfigurationException("Resolve callback for action {$this->actionName} on resource {$this->resourceType} must receive an ActionResolver as argument.");
         }
 
-        return $actionResolver
+        $result = $actionResolver
             ->request($this)
             ->resolve();
+
+        if ($this->api->getDebug()) {
+            $result['__input'] = json_decode(file_get_contents('php://input'));
+            $result['__request'] = $this;
+        }
+
+        return $result;
     }
 
     public function toSchemaJson(): array

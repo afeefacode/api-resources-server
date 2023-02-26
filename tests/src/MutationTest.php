@@ -26,7 +26,7 @@ class MutationTest extends ApiResourcesTest
     {
         return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($fieldsCallback) {
             $addType('TYPE', $fieldsCallback, $fieldsCallback, $fieldsCallback);
-            $addResource('RES', function (Closure $addAction, Closure $addMutation) {
+            $addResource('RES', function (Closure $addAction, Closure $addQuery, Closure $addMutation) {
                 $addMutation('ACT', T('TYPE'), function (Action $action) {
                     $action
                         ->resolve(function (MutationActionModelResolver $r) {
@@ -51,8 +51,18 @@ class MutationTest extends ApiResourcesTest
     {
         return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($updateFieldsCallback, $TypeClassOrClassesOrMeta, $actionCallback) {
             $addType('TYPE', null, $updateFieldsCallback, $updateFieldsCallback);
-            $addResource('RES', function (Closure $addAction, Closure $addMutation) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+            $addResource('RES', function (Closure $addAction, Closure $addQuery, Closure $addMutation) use ($TypeClassOrClassesOrMeta, $actionCallback) {
                 $addMutation('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
+            });
+        })->get();
+    }
+
+    protected function createApiWithUpdateTypeAndAction(Closure $updateFieldsCallback, $TypeClassOrClassesOrMeta, Closure $actionCallback): Api
+    {
+        return $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use ($updateFieldsCallback, $TypeClassOrClassesOrMeta, $actionCallback) {
+            $addType('TYPE', null, $updateFieldsCallback, $updateFieldsCallback);
+            $addResource('RES', function (Closure $addAction, Closure $addQuery, Closure $addMutation) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+                $addAction('ACT', $actionCallback);
             });
         })->get();
     }
@@ -60,7 +70,7 @@ class MutationTest extends ApiResourcesTest
     protected function createApiWithMutation($TypeClassOrClassesOrMeta, Closure $actionCallback): Api
     {
         return $this->apiBuilder()->api('API', function (Closure $addResource) use ($TypeClassOrClassesOrMeta, $actionCallback) {
-            $addResource('RES', function (Closure $addAction, Closure $addMutation) use ($TypeClassOrClassesOrMeta, $actionCallback) {
+            $addResource('RES', function (Closure $addAction, Closure $addQuery, Closure $addMutation) use ($TypeClassOrClassesOrMeta, $actionCallback) {
                 $addMutation('ACT', $TypeClassOrClassesOrMeta, $actionCallback);
             });
         })->get();

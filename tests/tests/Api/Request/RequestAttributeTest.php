@@ -56,8 +56,8 @@ class RequestAttributeTest extends ApiResourcesTest
                     });
             });
 
-            $addResource('RES', function (Closure $addAction) {
-                $addAction('ACT', T('TYPE'), function (Action $action) {
+            $addResource('RES', function (Closure $addAction, Closure $addQuery) {
+                $addQuery('ACT', T('TYPE'), function (Action $action) {
                     $action
                         ->resolve(function (QueryActionResolver $r) {
                             $this->testWatcher->actionResolvers[] = $r;

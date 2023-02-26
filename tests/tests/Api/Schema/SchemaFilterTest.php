@@ -129,8 +129,8 @@ class SchemaFilterTest extends ApiResourcesTest
 
         $filter = (new FilterBuilder())->filter()->get();
 
-        $api = createApiWithSingleResource(function (Closure $addAction) use ($filter) {
-            $addAction('test_action', T('Test.Type'), function (Action $action) use ($filter) {
+        $api = createApiWithSingleResource(function (Closure $addAction, Closure $addQuery) use ($filter) {
+            $addQuery('test_action', T('Test.Type'), function (Action $action) use ($filter) {
                 $action
                     ->filters(function (FilterBag $filters) use ($filter) {
                         $filters->add('test_filter', $filter::class);
@@ -147,8 +147,8 @@ class SchemaFilterTest extends ApiResourcesTest
     {
         $filter = (new FilterBuilder())->filter('Test.Filter')->get();
 
-        return createApiWithSingleResource(function (Closure $addAction) use ($name, $filter, $filterCallback) {
-            $addAction('test_action', T('Test.Type'), function (Action $action) use ($name, $filter, $filterCallback) {
+        return createApiWithSingleResource(function (Closure $addAction, Closure $addQuery) use ($name, $filter, $filterCallback) {
+            $addQuery('test_action', T('Test.Type'), function (Action $action) use ($name, $filter, $filterCallback) {
                 $action
                     ->filters(function (FilterBag $filters) use ($name, $filter, $filterCallback) {
                         $filters->add($name, $filter::class);

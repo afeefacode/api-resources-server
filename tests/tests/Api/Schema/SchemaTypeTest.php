@@ -280,7 +280,7 @@ class SchemaTypeTest extends ApiResourcesTest
     {
         $this->typeBuilder()->type('Test.Type')->get();
 
-        $api = createApiWithSingleResource(function (Closure $addAction, Closure $addMutation) {
+        $api = createApiWithSingleResource(function (Closure $addAction, Closure $addQuery, Closure $addMutation) {
             $addMutation('type', T('Test.Type'), function (Action $action) {
                 $action->resolve(function () {
                 });
@@ -296,8 +296,8 @@ class SchemaTypeTest extends ApiResourcesTest
     {
         $this->typeBuilder()->type('Test.Type')->get();
 
-        $api = createApiWithSingleResource(function (Closure $addAction) {
-            $addAction('type', T('Test.Type'), function (Action $action) {
+        $api = createApiWithSingleResource(function (Closure $addAction, Closure $addQuery) {
+            $addQuery('type', T('Test.Type'), function (Action $action) {
                 $action
                     ->response(T('Test.Type'))
                     ->resolve(function () {
@@ -334,8 +334,8 @@ class SchemaTypeTest extends ApiResourcesTest
 
         $type = $this->typeBuilder()->type()->get();
 
-        $api = createApiWithSingleResource(function (Closure $addAction) use ($type) {
-            $addAction('type', null, function (Action $action) use ($type) {
+        $api = createApiWithSingleResource(function (Closure $addAction, Closure $addQuery) use ($type) {
+            $addQuery('type', null, function (Action $action) use ($type) {
                 $action
                     ->resolve(function () {
                     });

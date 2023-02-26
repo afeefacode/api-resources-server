@@ -12,6 +12,15 @@ use Closure;
  */
 class ActionBag extends Bag
 {
+    public function action(string $name, Closure $callback): ActionBag
+    {
+        $this->setDefinition($name, $callback, function (Action $action) use ($name) {
+            $action->name($name);
+        });
+
+        return $this;
+    }
+
     public function query(string $name, $TypeClassOrClassesOrMeta, Closure $callback): ActionBag
     {
         $this->setDefinition($name, $callback, function (Action $action) use ($name, $TypeClassOrClassesOrMeta) {
@@ -28,7 +37,6 @@ class ActionBag extends Bag
         $this->setDefinition($name, $callback, function (Action $action) use ($name, $TypeClassOrClassesOrMeta) {
             $action
                 ->name($name)
-                ->isMutation()
                 ->input($TypeClassOrClassesOrMeta);
         });
 

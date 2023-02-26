@@ -133,8 +133,8 @@ class SchemaApiTest extends ApiResourcesTest
         $this->typeBuilder()->type($typeName, $fieldsCallback)->get();
 
         if (!$addActionCallback) {
-            $addActionCallback = function (Closure $addAction) use ($typeName) {
-                $addAction('test_action', T($typeName), function (Action $action) use ($typeName) {
+            $addActionCallback = function (Closure $addAction, Closure $addQuery) use ($typeName) {
+                $addQuery('test_action', T($typeName), function (Action $action) use ($typeName) {
                     $action
                         ->resolve(function () {
                         });

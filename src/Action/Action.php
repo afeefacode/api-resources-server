@@ -14,8 +14,6 @@ class Action extends BagEntry
 {
     protected string $name;
 
-    protected bool $isMutation = false;
-
     protected ActionParams $params;
 
     protected FilterBag $filters;
@@ -38,12 +36,6 @@ class Action extends BagEntry
     public function getName(): string
     {
         return $this->name;
-    }
-
-    public function isMutation(bool $isMutation = true): Action
-    {
-        $this->isMutation = $isMutation;
-        return $this;
     }
 
     public function params(Closure $callback): Action
@@ -178,7 +170,7 @@ class Action extends BagEntry
             $json['params'] = $this->params->toSchemaJson();
         }
 
-        if ($this->isMutation && $this->hasInput()) {
+        if ($this->hasInput()) {
             $json['input'] = $this->input->toSchemaJson();
         }
 

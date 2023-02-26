@@ -5,8 +5,10 @@ namespace Afeefa\ApiResources\Test;
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Type\Type;
+use function Afeefa\ApiResources\Utils\toArray as UtilsToArray;
 use Closure;
 use Faker\Generator;
+
 use Illuminate\Support\Collection;
 
 function T(string $type, bool $create = true): ?string
@@ -42,8 +44,8 @@ function createApiWithSingleType(
     (new TypeBuilder($container))->type($typeName, $fieldsCallback, $updateFieldsCallback, $createFieldsCallback)->get();
 
     if (!$addActionCallback) {
-        $addActionCallback = function (Closure $addAction) use ($typeName) {
-            $addAction('test_action', T($typeName), function (Action $action) use ($typeName) {
+        $addActionCallback = function (Closure $addAction, Closure $addQuery) use ($typeName) {
+            $addQuery('test_action', T($typeName), function (Action $action) use ($typeName) {
                 $action->resolve(function () {
                 });
             });
@@ -76,12 +78,5 @@ function toArray(mixed $value, bool $onlyVisible = true): mixed
         $value = $value->all();
     }
 
-    if (is_object($value) && method_exists($value, 'toArray')) {
-        return $value->toArray($onlyVisible);
-    } elseif (is_array($value)) {
-        return array_map(function ($element) use ($onlyVisible) {
-            return toArray($element, $onlyVisible);
-        }, $value);
-    }
-    return $value;
+    return UtilsToArray($value, $onlyVisible);
 }

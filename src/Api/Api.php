@@ -17,7 +17,10 @@ class Api implements ContainerAwareInterface
     use ToSchemaJsonTrait;
     use HasStaticTypeTrait;
 
+    protected bool $debug = false;
+
     protected ResourceBag $resources;
+
     protected array $AdditionalValidatorClasses = [];
 
     public function created(): void
@@ -26,6 +29,17 @@ class Api implements ContainerAwareInterface
 
         $this->resources = $this->container->create(ResourceBag::class);
         $this->resources($this->resources);
+    }
+
+    public function debug($debug = true): static
+    {
+        $this->debug = $debug;
+        return $this;
+    }
+
+    public function getDebug(): bool
+    {
+        return $this->debug;
     }
 
     public function getResources(): ResourceBag
@@ -62,7 +76,7 @@ class Api implements ContainerAwareInterface
         return $request->dispatch();
     }
 
-    public function registerValidator(string $ValidatorClass): Api
+    public function registerValidator(string $ValidatorClass): static
     {
         $this->AdditionalValidatorClasses[] = $ValidatorClass;
         return $this;

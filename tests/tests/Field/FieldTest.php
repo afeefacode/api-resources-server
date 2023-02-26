@@ -112,15 +112,15 @@ class FieldTest extends ApiResourcesTest
     public function test_clone_options_request()
     {
         $this->apiBuilder()->api('API', function (Closure $addResource) {
-            $addResource('RES', function (Closure $addAction) {
-                $addAction('ACT', T('TYPE'), function (Action $action) {
+            $addResource('RES', function (Closure $addAction, Closure $addQuery) {
+                $addQuery('ACT', T('TYPE'), function (Action $action) {
                     $action
                         ->resolve(function () {
                         });
                 });
             });
-            $addResource('RES2', function (Closure $addAction) {
-                $addAction('ACT2', T('TYPE'), function (Action $action) {
+            $addResource('RES2', function (Closure $addAction, Closure $addQuery) {
+                $addQuery('ACT2', T('TYPE'), function (Action $action) {
                     $action
                         ->resolve(function () {
                         });

@@ -147,9 +147,7 @@ class MutationActionModelResolver extends BaseMutationActionResolver
         }
 
         return [
-            'data' => $model,
-            'input' => json_decode(file_get_contents('php://input'), true),
-            'request' => $this->request
+            'data' => $model
         ];
     }
 }

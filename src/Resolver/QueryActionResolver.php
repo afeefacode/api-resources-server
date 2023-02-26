@@ -45,7 +45,7 @@ class QueryActionResolver extends BaseActionResolver
 
         $actionName = $action->getName();
         $resourceType = $this->request->getResource()::type();
-        $mustReturn = "Load callback of action resolver for action {$actionName} on resource {$resourceType} must return";
+        $mustReturn = "Get callback of action resolver for action {$actionName} on resource {$resourceType} must return";
 
         // query db
 
@@ -100,9 +100,7 @@ class QueryActionResolver extends BaseActionResolver
 
         return [
             'data' => $data,
-            'meta' => $this->meta,
-            'input' => json_decode(file_get_contents('php://input'), true),
-            'request' => $this->request
+            'meta' => $this->meta
         ];
     }
 

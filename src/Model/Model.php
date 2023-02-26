@@ -8,6 +8,8 @@ class Model implements ModelInterface, JsonSerializable
 {
     protected array $visibleFields = [];
 
+    public string $id;
+
     public string $type;
 
     /**

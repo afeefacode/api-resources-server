@@ -51,7 +51,10 @@ class TestResource extends Resource
     protected function actions(ActionBag $actions): void
     {
         if (static::$addActionCallback) {
-            $addAction = function (string $name, $TypeClassOrClassesOrMeta, Closure $actionCallback) use ($actions): void {
+            $addAction = function (string $name, Closure $actionCallback) use ($actions): void {
+                $actions->action($name, $actionCallback);
+            };
+            $addQuery = function (string $name, $TypeClassOrClassesOrMeta, Closure $actionCallback) use ($actions): void {
                 if ($TypeClassOrClassesOrMeta instanceof Closure) {
                     $TypeClassOrClassesOrMeta = $TypeClassOrClassesOrMeta();
                 }
@@ -63,7 +66,7 @@ class TestResource extends Resource
                 }
                 $actions->mutation($name, $TypeClassOrClassesOrMeta, $actionCallback);
             };
-            (static::$addActionCallback)($addAction, $addMutation);
+            (static::$addActionCallback)($addAction, $addQuery, $addMutation);
         }
     }
 }
