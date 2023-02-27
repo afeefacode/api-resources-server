@@ -166,6 +166,8 @@ class Action extends BagEntry
             throw new InvalidConfigurationException("Action {$this->name} does not have a resolver.");
         }
 
+        $json = [];
+
         if (isset($this->params)) {
             $json['params'] = $this->params->toSchemaJson();
         }
