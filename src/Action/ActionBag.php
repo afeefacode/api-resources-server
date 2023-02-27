@@ -50,4 +50,14 @@ class ActionBag extends Bag
     {
         return $this;
     }
+
+    /**
+     * allow empty actions (without params etc) in schema
+     */
+    public function toSchemaJson(): array
+    {
+        return array_map(function (Action $action) {
+            return $action->toSchemaJson();
+        }, $this->getEntries());
+    }
 }

@@ -63,6 +63,11 @@ class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
         return $this->hasInternal($name);
     }
 
+    public function empty(): bool
+    {
+        return !count($this->entries);
+    }
+
     public function remove(string $name): Bag
     {
         $entry = $this->entries[$name] ?? null;

@@ -46,6 +46,11 @@ class Action extends BagEntry
         return $this;
     }
 
+    public function hasParams(): bool
+    {
+        return isset($this->params) && !$this->params->empty();
+    }
+
     public function hasParam(string $name): bool
     {
         return isset($this->params) && $this->params->has($name);
@@ -168,7 +173,7 @@ class Action extends BagEntry
 
         $json = [];
 
-        if (isset($this->params)) {
+        if ($this->hasParams()) {
             $json['params'] = $this->params->toSchemaJson();
         }
 
