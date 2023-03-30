@@ -15,6 +15,10 @@ class Article extends EloquentModel
 
     public $timestamps = false;
 
+    protected $dates = [
+        'date'
+    ];
+
     public function author()
     {
         return $this->belongsTo(Author::class);

@@ -3,6 +3,8 @@
 namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Model\ModelInterface;
+use Carbon\Carbon;
+use DateTimeZone;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
@@ -82,6 +84,24 @@ class Model extends EloquentModel implements ModelInterface
     public function apiResourcesSetVisibleFields(array $fields): void
     {
         $this->visibleFields = $fields;
+    }
+
+    /**
+     * Elqouent applies the database date format on the given date string
+     * and does not consider any included timezone information.
+     *
+     * a given utc 2023-03-30T04:00:00.000000Z turns this way into a 2023-03-30T04:00:00
+     * of the local time zone, e.g. Europe/Berlin
+     */
+    public function setAttribute($key, $value)
+    {
+        if ($this->isDateAttribute($key) && is_string($value)) {
+            $value = Carbon::parse($value);
+            $tz = date_default_timezone_get();
+            $value->setTimezone(new DateTimeZone($tz));
+        }
+
+        return parent::setAttribute($key, $value);
     }
 
     public function jsonSerialize(): mixed
