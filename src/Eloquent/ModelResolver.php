@@ -32,6 +32,8 @@ class ModelResolver
     protected Closure $afterAddFunction;
     protected Closure $beforeUpdateFunction;
     protected Closure $afterUpdateFunction;
+    protected Closure $beforeDeleteFunction;
+    protected Closure $afterDeleteFunction;
 
     public function type(ModelType $type): ModelResolver
     {
@@ -103,6 +105,18 @@ class ModelResolver
     public function afterUpdate(Closure $afterUpdateFunction): ModelResolver
     {
         $this->afterUpdateFunction = $afterUpdateFunction;
+        return $this;
+    }
+
+    public function beforeDelete(Closure $beforeDeleteFunction): ModelResolver
+    {
+        $this->beforeDeleteFunction = $beforeDeleteFunction;
+        return $this;
+    }
+
+    public function afterDelete(Closure $afterDeleteFunction): ModelResolver
+    {
+        $this->afterDeleteFunction = $afterDeleteFunction;
         return $this;
     }
 
@@ -347,7 +361,13 @@ class ModelResolver
             })
 
             ->delete(function (Model $model) {
+                $meta = new stdClass();
+
+                ($this->beforeDeleteFunction)($model, $meta);
+
                 $model->delete();
+
+                ($this->afterDeleteFunction)($model, $meta);
             })
 
             ->forward(function (ApiRequest $apiRequest, Model $model) {

@@ -113,6 +113,14 @@ class ModelResource extends Resource
     {
     }
 
+    protected function beforeDelete(Model $model, stdClass $meta): void
+    {
+    }
+
+    protected function afterDelete(Model $model, stdClass $meta): void
+    {
+    }
+
     protected function getEloquentResolver(): ModelResolver
     {
         $type = $this->container->get($this->ModelTypeClass);
@@ -147,6 +155,12 @@ class ModelResource extends Resource
             })
             ->afterUpdate(function (Model $model, array $saveFields, stdClass $meta) {
                 $this->afterUpdate($model, $saveFields, $meta);
+            })
+            ->beforeDelete(function (Model $model, stdClass $meta) {
+                $this->beforeDelete($model, $meta);
+            })
+            ->afterDelete(function (Model $model, stdClass $meta) {
+                $this->afterDelete($model, $meta);
             });
     }
 
