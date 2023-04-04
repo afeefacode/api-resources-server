@@ -159,7 +159,7 @@ class ModelResolver
                         }
 
                         if ($useFilter) {
-                            ($this->filterFunction)($name, $value, $query);
+                            ($this->filterFunction)($name, $value, $query, $filters);
                             $filterUsed = true;
                             $usedFilters[$name] = $value;
                         }
