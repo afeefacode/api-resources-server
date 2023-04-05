@@ -66,6 +66,10 @@ class ModelResource extends Resource
         $filters->add('page', PageFilter::class);
     }
 
+    protected function scope(Builder $query): void
+    {
+    }
+
     protected function param(string $name, $value, Builder $query): void
     {
         $query->where($name, $value);
@@ -126,20 +130,23 @@ class ModelResource extends Resource
         $type = $this->container->get($this->ModelTypeClass);
         return (new ModelResolver())
             ->type($type)
-            ->search(function (string $keyword, ?string $keywordField, Builder $query) {
-                $this->search($keyword, $keywordField, $query);
-            })
-            ->order(function (string $field, string $direction, Builder $query) {
-                $this->order($field, $direction, $query);
-            })
-            ->filter(function (string $name, $value, Builder $query, array $filters) {
-                $this->filter($name, $value, $query, $filters);
+            ->scope(function (Builder $query) {
+                $this->scope($query);
             })
             ->param(function (string $name, $value, Builder $query) {
                 $this->param($name, $value, $query);
             })
             ->getParam(function (string $name, $value, Builder $query) {
                 $this->getParam($name, $value, $query);
+            })
+            ->filter(function (string $name, $value, Builder $query, array $filters) {
+                $this->filter($name, $value, $query, $filters);
+            })
+            ->search(function (string $keyword, ?string $keywordField, Builder $query) {
+                $this->search($keyword, $keywordField, $query);
+            })
+            ->order(function (string $field, string $direction, Builder $query) {
+                $this->order($field, $direction, $query);
             })
             ->beforeResolve(function (array $params, ?array $data) {
                 return $this->beforeResolve($params, $data);

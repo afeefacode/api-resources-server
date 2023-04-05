@@ -22,6 +22,7 @@ class ModelResolver
     protected string $ModelClass;
     protected string $relationName;
 
+    protected Closure $scopeFunction;
     protected Closure $paramFunction;
     protected Closure $getParamFunction;
     protected Closure $filterFunction;
@@ -45,6 +46,12 @@ class ModelResolver
     public function relationName(string $relationName): ModelResolver
     {
         $this->relationName = $relationName;
+        return $this;
+    }
+
+    public function scope(Closure $scopeFunction): ModelResolver
+    {
+        $this->scopeFunction = $scopeFunction;
         return $this;
     }
 
@@ -136,6 +143,8 @@ class ModelResolver
                 $usedFilters = [];
 
                 $query = $this->ModelClass::query();
+
+                ($this->scopeFunction)($query);
 
                 // params
 
