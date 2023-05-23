@@ -12,6 +12,8 @@ class MutationActionModelResolver extends BaseMutationActionResolver
 {
     protected ?Closure $beforeResolveCallback = null;
 
+    protected ?Closure $afterResolveCallback = null;
+
     protected ?Closure $getCallback = null;
 
     protected ?Closure $addCallback = null;
@@ -23,6 +25,12 @@ class MutationActionModelResolver extends BaseMutationActionResolver
     public function beforeResolve(Closure $callback): self
     {
         $this->beforeResolveCallback = $callback;
+        return $this;
+    }
+
+    public function afterResolve(Closure $callback): self
+    {
+        $this->afterResolveCallback = $callback;
         return $this;
     }
 
@@ -118,6 +126,8 @@ class MutationActionModelResolver extends BaseMutationActionResolver
 
         if ($existingModel && $fieldsToSave === null) { // delete
             ($this->deleteCallback)($existingModel);
+
+            $this->_afterResolve(null);
         } elseif ($fieldsToSave !== null) { // do not add/update model if not existings && fields=null
             $model = $this->resolveModel(
                 $existingModel,
@@ -137,6 +147,8 @@ class MutationActionModelResolver extends BaseMutationActionResolver
                 }
             );
 
+            $this->_afterResolve($model);
+
             // forward if present
 
             if ($this->forwardCallback) {
@@ -144,10 +156,19 @@ class MutationActionModelResolver extends BaseMutationActionResolver
                 ($this->forwardCallback)($request, $model);
                 return $request->dispatch();
             }
+        } else { // not existing and null passed
+            $this->_afterResolve(null);
         }
 
         return [
             'data' => $model
         ];
+    }
+
+    private function _afterResolve(?ModelInterface $model): void
+    {
+        if ($this->afterResolveCallback) {
+            ($this->afterResolveCallback)($model);
+        }
     }
 }

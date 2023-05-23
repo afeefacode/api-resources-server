@@ -669,6 +669,62 @@ class MutationActionModelResolverTest extends MutationTest
         ];
     }
 
+    /**
+     * @dataProvider afterResolveDataProvider
+     */
+    public function test_after_resolve($data, $expectedAddFields)
+    {
+        $api = $this->createApiWithUpdateTypeAndMutation(
+            function (FieldBag $fields) {
+                $fields
+                    ->attribute('name', StringAttribute::class);
+            },
+            fn () => T('TYPE'),
+            function (Action $action) {
+                $action
+                    ->resolve(function (MutationActionModelResolver $r) {
+                        $r
+                            ->afterResolve(function (?Model $model) {
+                                $this->testWatcher->info('afterResolve');
+                                $this->testWatcher->info2($model->type ?? 'NULL');
+                            })
+                            ->get(fn () => null)
+                            ->add(function (string $typeName, array $saveFields) use ($r) {
+                                $this->testWatcher->info2($saveFields);
+                                return Model::fromSingle('TYPE');
+                            })
+                            ->update(fn () => null)
+                            ->delete(fn () => null);
+                    });
+            }
+        );
+
+        $this->request(
+            $api,
+            params: ['id' => '123'],
+            data: $data
+        );
+
+        $this->assertEquals(['afterResolve'], $this->testWatcher->info);
+
+        if ($expectedAddFields === 'NOT_CALLED') { // fake element to be able to compare
+            array_unshift($this->testWatcher->info2, 'NOT_CALLED');
+        }
+
+        $this->assertEquals([
+            $expectedAddFields,
+            $data ? 'TYPE' : 'NULL'
+        ], $this->testWatcher->info2);
+    }
+
+    public function afterResolveDataProvider()
+    {
+        return [
+            [['name' => 'my_name'], ['name' => 'my_name']],
+            [null, 'NOT_CALLED'],
+        ];
+    }
+
     public function test_transaction()
     {
         $api = $this->createApiWithMutation(

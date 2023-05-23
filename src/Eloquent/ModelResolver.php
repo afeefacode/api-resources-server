@@ -29,6 +29,7 @@ class ModelResolver
     protected Closure $searchFunction;
     protected Closure $orderFunction;
     protected Closure $beforeResolveFunction;
+    protected Closure $afterResolveFunction;
     protected Closure $beforeAddFunction;
     protected Closure $afterAddFunction;
     protected Closure $beforeUpdateFunction;
@@ -88,6 +89,12 @@ class ModelResolver
     public function beforeResolve(Closure $beforeResolveFunction): ModelResolver
     {
         $this->beforeResolveFunction = $beforeResolveFunction;
+        return $this;
+    }
+
+    public function afterResolve(Closure $afterResolveFunction): ModelResolver
+    {
+        $this->afterResolveFunction = $afterResolveFunction;
         return $this;
     }
 
@@ -326,6 +333,10 @@ class ModelResolver
 
             ->beforeResolve(function (array $params, ?array $data) {
                 return ($this->beforeResolveFunction)($params, $data);
+            })
+
+            ->afterResolve(function (Model $model) {
+                return ($this->afterResolveFunction)($model);
             })
 
             ->get(function (string $id) {
