@@ -335,7 +335,7 @@ class ModelResolver
                 return ($this->beforeResolveFunction)($params, $data);
             })
 
-            ->afterResolve(function (Model $model) {
+            ->afterResolve(function (?Model $model) {
                 return ($this->afterResolveFunction)($model);
             })
 

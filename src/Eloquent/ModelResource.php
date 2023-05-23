@@ -99,7 +99,7 @@ class ModelResource extends Resource
         return [$params, $data];
     }
 
-    protected function afterResolve(Model $model): void
+    protected function afterResolve(?Model $model): void
     {
     }
 
@@ -155,7 +155,7 @@ class ModelResource extends Resource
             ->beforeResolve(function (array $params, ?array $data) {
                 return $this->beforeResolve($params, $data);
             })
-            ->afterResolve(function (Model $model) {
+            ->afterResolve(function (?Model $model) {
                 return $this->afterResolve($model);
             })
             ->beforeAdd(function (Model $model, array $saveFields, stdClass $meta) {
