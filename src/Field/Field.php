@@ -63,6 +63,10 @@ class Field extends BagEntry
         return $this->owner;
     }
 
+    /**
+     * The default value is considered to be used in the creation of new instances.
+     * The role of the default value in read/update contexts is not particularly defined.
+     */
     public function default($default): static
     {
         $this->default = $default;
