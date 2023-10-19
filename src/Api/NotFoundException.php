@@ -6,4 +6,5 @@ use Afeefa\ApiResources\Exception\Exception;
 
 class NotFoundException extends Exception
 {
+    public $statusCode = 404;
 }
