@@ -247,7 +247,7 @@ class QueryResolveContext implements ContainerAwareInterface
             }
         }
 
-        return $selectFields;
+        return array_unique($selectFields);
     }
 
     protected function calculateRequestedFields(?array $fields = null): array
