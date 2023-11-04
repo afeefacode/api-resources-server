@@ -28,6 +28,11 @@ class Model extends EloquentModel implements ModelInterface
 
     public static function boot()
     {
+        if (!static::$dispatcher) {
+            $dispatcher = new \Illuminate\Events\Dispatcher();
+            static::setEventDispatcher($dispatcher);
+        }
+
         parent::boot();
 
         static::registerMorphType();
