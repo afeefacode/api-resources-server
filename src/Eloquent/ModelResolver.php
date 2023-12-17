@@ -151,6 +151,8 @@ class ModelResolver
 
                 $query = $this->ModelClass::query();
 
+                // scope
+
                 ($this->scopeFunction)($query);
 
                 // params

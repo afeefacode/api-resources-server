@@ -1,4 +1,4 @@
-#!/usr/bin/env php
+#!/usr/bin/env php8.1
 <?php
 
 $command = 'docker ps -q -f name=api-resources-test-mysql';

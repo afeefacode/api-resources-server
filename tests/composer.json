@@ -28,5 +28,10 @@
         "post-update-cmd": [
             "php post-install.php"
         ]
+    },
+    "config": {
+      "platform": {
+          "php": "8.1"
+      }
     }
 }
