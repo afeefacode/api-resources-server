@@ -37,6 +37,10 @@ class Model extends EloquentModel implements ModelInterface
 
         static::registerMorphType();
 
+        static::creating(function (Model $model) {
+            $model->beforeCreate();
+        });
+
         static::created(function (Model $model) {
             $model->afterCreate();
         });
@@ -139,6 +143,11 @@ class Model extends EloquentModel implements ModelInterface
         }
 
         return $array;
+    }
+
+    protected function beforeCreate()
+    {
+        // fill in in sub class
     }
 
     protected function afterCreate()

@@ -6,6 +6,8 @@ class SimpleModel extends Model
 {
     public function jsonSerialize(): mixed
     {
+        $this->visibleFields = [];
+
         foreach ($this as $name => $value) {
             if ($name === 'visibleFields') {
                 continue;
@@ -14,7 +16,6 @@ class SimpleModel extends Model
         }
 
         $json = parent::jsonSerialize();
-
         return $json;
     }
 }
