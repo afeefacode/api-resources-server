@@ -375,11 +375,10 @@ class ModelResolver
                 if (!empty($saveFields)) {
                     $model->fillable(array_keys($saveFields));
                     $model->fill($saveFields);
-
                     $model->save();
-
-                    ($this->afterUpdateFunction)($model, $saveFields, $meta);
                 }
+
+                ($this->afterUpdateFunction)($model, $saveFields, $meta);
             })
 
             ->delete(function (Model $model) {

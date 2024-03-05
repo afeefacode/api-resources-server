@@ -4,7 +4,7 @@ services:
 
   mysql:
     container_name: api-resources-test-mysql
-    image: mariadb
+    image: mariadb:10.11
     volumes:
       - api-resources-test-mysql:/var/lib/mysql
     environment:
