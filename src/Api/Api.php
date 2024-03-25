@@ -67,6 +67,15 @@ class Api implements ContainerAwareInterface
         return $request->dispatch();
     }
 
+    public function newRequest(Closure $callback)
+    {
+        /** @var ApiRequest */
+        $request = $this->container->create(ApiRequest::class);
+        $request->api($this);
+        $callback($request);
+        return $request->dispatch();
+    }
+
     public function requestFromInput(?array $input = null): array
     {
         /** @var ApiRequest */
