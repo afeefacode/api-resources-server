@@ -16,6 +16,7 @@ use Afeefa\ApiResources\Filter\Filters\SelectFilter;
 use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Type\Type;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use stdClass;
 
 class ModelResource extends Resource
@@ -163,6 +164,9 @@ class ModelResource extends Resource
             })
             ->afterAdd(function (Model $model, array $saveFields, stdClass $meta) {
                 $this->afterAdd($model, $saveFields, $meta);
+                foreach ($this->getTraitMethods('afterAdd') as $method) {
+                    $this->$method($model, $saveFields, $meta);
+                }
             })
             ->beforeUpdate(function (Model $model, array $saveFields, stdClass $meta) {
                 return $this->beforeUpdate($model, $saveFields, $meta);
@@ -214,5 +218,17 @@ class ModelResource extends Resource
 
                     ->resolve([$this->getEloquentResolver(), 'save']);
             });
+    }
+
+    private function getTraitMethods($name)
+    {
+        $traitMethods = [];
+        foreach (class_uses($this) as $trait) {
+            $methodName = $name . class_basename($trait);
+            if (method_exists($this, $methodName)) {
+                $traitMethods[] = $methodName;
+            }
+        }
+        return $traitMethods;
     }
 }
