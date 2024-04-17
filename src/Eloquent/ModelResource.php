@@ -16,7 +16,6 @@ use Afeefa\ApiResources\Filter\Filters\SelectFilter;
 use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Type\Type;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use stdClass;
 
 class ModelResource extends Resource
