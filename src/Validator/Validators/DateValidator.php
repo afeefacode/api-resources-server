@@ -11,6 +11,12 @@ class DateValidator extends Validator
 {
     public static string $type = 'Afeefa.DateValidator';
 
+    public function maxDay(DateTime $max): static
+    {
+        $max = $max->format('Y-m-d');
+        return $this->param('max_day', $max);
+    }
+
     protected function rules(RuleBag $rules): void
     {
         $rules->add('date')
@@ -47,6 +53,19 @@ class DateValidator extends Validator
                 }
 
                 return false;
+            });
+
+        $rules->add('max_day')
+            ->message('{{ fieldLabel }} sollte nicht später als {{ param }} sein.')
+            ->validate(function ($value, $max) {
+                if ($max === null) {
+                    return true;
+                }
+                // empty value cannot exceed max
+                if ($value && $value > $max) {
+                    return false;
+                }
+                return true;
             });
     }
 }
