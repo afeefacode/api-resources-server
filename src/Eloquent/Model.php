@@ -145,6 +145,14 @@ class Model extends EloquentModel implements ModelInterface
         return $array;
     }
 
+    public function deleteRelatedModels(Relation $relation)
+    {
+        $models = $relation->get();
+        foreach ($models as $model) {
+            $model->delete();
+        }
+    }
+
     protected function beforeCreate()
     {
         // fill in in sub class
