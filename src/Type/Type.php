@@ -76,6 +76,18 @@ class Type implements ToSchemaJsonInterface, ContainerAwareInterface
             }
         }
 
+        foreach ($this->updateFields->getEntries() as $field) {
+            if ($field instanceof Relation) {
+                $TypeClasses = [...$TypeClasses, ...$field->getRelatedType()->getAllTypeClasses()];
+            }
+        }
+
+        foreach ($this->createFields->getEntries() as $field) {
+            if ($field instanceof Relation) {
+                $TypeClasses = [...$TypeClasses, ...$field->getRelatedType()->getAllTypeClasses()];
+            }
+        }
+
         return array_unique($TypeClasses);
     }
 

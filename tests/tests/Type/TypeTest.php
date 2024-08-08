@@ -8,6 +8,8 @@ use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Test\ApiResourcesTest;
 
+use function Afeefa\ApiResources\Test\T;
+
 class TypeTest extends ApiResourcesTest
 {
     public function test_type()
@@ -53,5 +55,29 @@ class TypeTest extends ApiResourcesTest
         $type = $this->typeBuilder()->type()->get();
 
         $type::type();
+    }
+
+    public function test_get_all_related_type_classes()
+    {
+        $type = $this->typeBuilder()->type(
+            'Test.Type',
+            function (FieldBag $fields) {
+                $fields->relation('type1', T('Test.Type1'));
+            },
+            function (FieldBag $updateFields) {
+                $updateFields->relation('type2', T('Test.Type2'));
+            },
+            function (FieldBag $createFields) {
+                $createFields->relation('type3', T('Test.Type3'));
+            }
+        )->get();
+
+        $TypeClasses = [
+            T('Test.Type1'),
+            T('Test.Type2'),
+            T('Test.Type3')
+        ];
+
+        $this->assertEquals($TypeClasses, $type->getAllRelatedTypeClasses());
     }
 }
