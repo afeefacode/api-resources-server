@@ -9,6 +9,7 @@ use Afeefa\ApiResources\Field\Fields\DateAttribute;
 use Afeefa\ApiResources\Field\Fields\EnumAttribute;
 use Afeefa\ApiResources\Field\Fields\IntAttribute;
 use Afeefa\ApiResources\Field\Fields\NumberAttribute;
+use Afeefa\ApiResources\Field\Fields\SetAttribute;
 use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Type\Type;
 use Closure;
@@ -82,6 +83,11 @@ class FieldBag extends Bag
     public function enum(string $name, Closure $callback = null, $validate = null): FieldBag
     {
         return $this->_attribute($name, EnumAttribute::class, $callback, $validate);
+    }
+
+    public function enumset(string $name, Closure $callback = null, $validate = null): FieldBag
+    {
+        return $this->_attribute($name, SetAttribute::class, $callback, $validate);
     }
 
     public function int(string $name, Closure $callback = null, $validate = null): FieldBag
