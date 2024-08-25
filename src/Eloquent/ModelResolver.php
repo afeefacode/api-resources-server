@@ -258,6 +258,12 @@ class ModelResolver
                     }
 
                     foreach ($order as $field => $direction) {
+                        $direction = match (strtolower($direction ?: '')) {
+                            'desc' => 'DESC',
+                            'asc' => 'ASC',
+                            default => 'ASC'
+                        };
+
                         ($this->orderFunction)($field, $direction, $query);
 
                         $usedFilters['order'] = [
