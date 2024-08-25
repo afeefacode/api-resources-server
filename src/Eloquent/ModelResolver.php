@@ -258,10 +258,10 @@ class ModelResolver
                     }
 
                     foreach ($order as $field => $direction) {
+                        $direction = strtolower($direction ?: '');
                         $direction = match (strtolower($direction ?: '')) {
-                            'desc' => 'DESC',
-                            'asc' => 'ASC',
-                            default => 'ASC'
+                            'asc', 'desc' => $direction,
+                            default => 'asc'
                         };
 
                         ($this->orderFunction)($field, $direction, $query);
