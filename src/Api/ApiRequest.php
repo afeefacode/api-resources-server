@@ -8,10 +8,13 @@ use Afeefa\ApiResources\DI\ContainerAwareTrait;
 use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\ApiException;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Field\Fields\DateAttribute;
 use Afeefa\ApiResources\Resolver\Action\BaseActionResolver;
 use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Type\TypeClassMap;
 use Afeefa\ApiResources\Validator\ValidationFailedException;
+use Carbon\Carbon;
+use DateTimeZone;
 use JsonSerializable;
 
 class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, JsonSerializable
@@ -119,7 +122,15 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     public function getParam(string $name, $default = null)
     {
-        return $this->params[$name] ?? $default;
+        $param = $this->params[$name] ?? $default;
+
+        if ($this->getAction()->getParam($name)::class === DateAttribute::class) {
+            $param = Carbon::parse($param);
+            $tz = date_default_timezone_get();
+            $param->setTimezone(new DateTimeZone($tz));
+        }
+
+        return $param;
     }
 
     public function filter(string $name, string $value): ApiRequest
