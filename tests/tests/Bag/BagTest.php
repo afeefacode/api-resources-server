@@ -226,6 +226,8 @@ class BagTest extends TestCase
 
 class TestBagEntry extends BagEntry
 {
+    private $toJson;
+
     public function __construct($toJson = null)
     {
         $this->toJson = $toJson;

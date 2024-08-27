@@ -343,7 +343,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
         ];
     }
 
-    private $test_related_operation_existingData = [];
+    private $test_related_operation_add_existingData = [];
 
     /**
      * @dataProvider relatedOperationAddDataProvider

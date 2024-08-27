@@ -622,7 +622,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         $this->assertEquals($expectedSaveFields, $this->testWatcher->saveFields);
     }
 
-    private $test_related_operation_existingData = [];
+    private $test_related_operation_add_existingData = [];
 
     /**
      * @dataProvider relatedOperationAddDataProvider
