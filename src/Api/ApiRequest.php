@@ -124,10 +124,12 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     {
         $param = $this->params[$name] ?? $default;
 
-        if ($this->getAction()->getParam($name)::class === DateAttribute::class) {
-            $param = Carbon::parse($param);
-            $tz = date_default_timezone_get();
-            $param->setTimezone(new DateTimeZone($tz));
+        if ($this->getAction()->hasParam($name)) {
+            if ($this->getAction()->getParam($name)::class === DateAttribute::class) {
+                $param = Carbon::parse($param);
+                $tz = date_default_timezone_get();
+                $param->setTimezone(new DateTimeZone($tz));
+            }
         }
 
         return $param;
