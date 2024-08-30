@@ -8,8 +8,8 @@
         "phpunit/phpunit": "^9.5",
         "catfan/medoo": "^2.1",
         "afeefa/debug-dump-log": "^0",
-        "illuminate/database": "^v9.36",
-        "illuminate/events": "^9.37",
+        "illuminate/database": "^v10.48",
+        "illuminate/events": "^10.48",
         "ankurk91/laravel-eloquent-relationships": "^1.2",
         "staudenmeir/eloquent-eager-limit": "^v1.7"
     },

@@ -344,6 +344,10 @@ class ModelResolver
             })
 
             ->afterResolve(function (?Model $model) {
+                if ($model) {
+                    $model = $model->fresh();
+                }
+
                 return ($this->afterResolveFunction)($model);
             })
 
@@ -368,6 +372,8 @@ class ModelResolver
 
                 $model->save();
 
+                $model = $model->fresh();
+
                 ($this->afterAddFunction)($model, $saveFields, $meta);
 
                 return $model;
@@ -383,6 +389,8 @@ class ModelResolver
                     $model->fill($saveFields);
                     $model->save();
                 }
+
+                $model = $model->fresh();
 
                 ($this->afterUpdateFunction)($model, $saveFields, $meta);
             })
