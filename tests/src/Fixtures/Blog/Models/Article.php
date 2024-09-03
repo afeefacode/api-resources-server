@@ -15,8 +15,8 @@ class Article extends EloquentModel
 
     public $timestamps = false;
 
-    protected $casts = [
-        'date' => 'datetime'
+    protected $dates = [
+        'date'
     ];
 
     public function author()

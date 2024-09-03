@@ -4,7 +4,6 @@ namespace Afeefa\ApiResources\Model;
 
 use JsonSerializable;
 
-#[\AllowDynamicProperties]
 class Model implements ModelInterface, JsonSerializable
 {
     protected array $visibleFields = [];
