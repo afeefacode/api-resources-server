@@ -64,7 +64,6 @@ class ArticleType extends ModelType
 
             ->relation('author', Type::link(AuthorType::class), function (Relation $relation) {
                 $relation
-                    ->required()
                     ->validate(function (LinkOneValidator $v) {
                         $v->filled();
                     })

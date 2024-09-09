@@ -332,6 +332,8 @@ class ModelResolver
 
     public function save(MutationActionModelResolver $r)
     {
+        $meta = new stdClass();
+
         $r
             ->transaction(function (Closure $execute) {
                 return DB::transaction(function () use ($execute) {
@@ -339,16 +341,16 @@ class ModelResolver
                 });
             })
 
-            ->beforeResolve(function (array $params, ?array $data) {
-                return ($this->beforeResolveFunction)($params, $data);
+            ->beforeResolve(function (array $params, ?array $data) use ($meta) {
+                return ($this->beforeResolveFunction)($params, $data, $meta);
             })
 
-            ->afterResolve(function (?Model $model) {
+            ->afterResolve(function (?Model $model) use ($meta) {
                 if ($model) {
                     $model = $model->fresh();
                 }
 
-                return ($this->afterResolveFunction)($model);
+                return ($this->afterResolveFunction)($model, $meta);
             })
 
             ->get(function (string $id) {
@@ -358,10 +360,8 @@ class ModelResolver
                     ->first();
             })
 
-            ->add(function (string $typeName, array $saveFields) {
+            ->add(function (string $typeName, array $saveFields) use ($meta) {
                 $model = new $this->ModelClass();
-
-                $meta = new stdClass();
 
                 $saveFields = ($this->beforeAddFunction)($model, $saveFields, $meta);
 
@@ -379,9 +379,7 @@ class ModelResolver
                 return $model;
             })
 
-            ->update(function (Model $model, array $saveFields) {
-                $meta = new stdClass();
-
+            ->update(function (Model $model, array $saveFields) use ($meta) {
                 $saveFields = ($this->beforeUpdateFunction)($model, $saveFields, $meta);
 
                 if (!empty($saveFields)) {
@@ -395,9 +393,7 @@ class ModelResolver
                 ($this->afterUpdateFunction)($model, $saveFields, $meta);
             })
 
-            ->delete(function (Model $model) {
-                $meta = new stdClass();
-
+            ->delete(function (Model $model) use ($meta) {
                 ($this->beforeDeleteFunction)($model, $meta);
 
                 $model->delete();

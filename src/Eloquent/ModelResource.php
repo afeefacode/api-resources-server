@@ -94,12 +94,12 @@ class ModelResource extends Resource
         $query->orderBy($field, $direction);
     }
 
-    protected function beforeResolve(array $params, ?array $data): array
+    protected function beforeResolve(array $params, ?array $data, stdClass $meta): array
     {
         return [$params, $data];
     }
 
-    protected function afterResolve(?Model $model): void
+    protected function afterResolve(?Model $model, stdClass $meta): void
     {
     }
 
@@ -152,11 +152,11 @@ class ModelResource extends Resource
             ->order(function (string $field, string $direction, Builder $query) {
                 $this->order($field, $direction, $query);
             })
-            ->beforeResolve(function (array $params, ?array $data) {
-                return $this->beforeResolve($params, $data);
+            ->beforeResolve(function (array $params, ?array $data, stdClass $meta) {
+                return $this->beforeResolve($params, $data, $meta);
             })
-            ->afterResolve(function (?Model $model) {
-                return $this->afterResolve($model);
+            ->afterResolve(function (?Model $model, stdClass $meta) {
+                return $this->afterResolve($model, $meta);
             })
             ->beforeAdd(function (Model $model, array $saveFields, stdClass $meta) {
                 return $this->beforeAdd($model, $saveFields, $meta);

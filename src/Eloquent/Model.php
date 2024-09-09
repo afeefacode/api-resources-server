@@ -127,11 +127,15 @@ class Model extends EloquentModel implements ModelInterface
     /**
      * @param bool $onlyVisible Useful in tests
      */
-    public function toArray(bool $onlyVisible = true): array
+    public function toArray(bool | array $onlyVisible = true): array
     {
         $array = [];
 
-        if (!$onlyVisible) {
+        if (is_array($onlyVisible)) {
+            $this->visibleFields = ['type', 'id', ...$onlyVisible];
+        }
+
+        if ($onlyVisible === false) {
             foreach ($this as $name => $value) {
                 $this->visibleFields = ['type', 'id', ...array_keys($this->attributes), ...array_keys($this->relations)];
             }

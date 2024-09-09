@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Resolver\Mutation;
 
 use Afeefa\ApiResources\Action\ActionInput;
+use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Resolver\Action\BaseActionResolver;
 use Closure;
@@ -23,9 +24,15 @@ class BaseMutationActionResolver extends BaseActionResolver
         return $this;
     }
 
-    public function forward(Closure $callback): static
+    public function forward(Closure | string $callbackOrActionName): static
     {
-        $this->forwardCallback = $callback;
+        if (is_string($callbackOrActionName)) {
+            $callbackOrActionName = function (ApiRequest $apiRequest) use ($callbackOrActionName) {
+                $apiRequest->actionName($callbackOrActionName);
+            };
+        }
+
+        $this->forwardCallback = $callbackOrActionName;
         return $this;
     }
 
