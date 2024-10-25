@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Tests\Resolver;
 
 use Afeefa\ApiResources\Action\Action;
+use Afeefa\ApiResources\Api\NotFoundException;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Field\FieldBag;
@@ -624,7 +625,7 @@ class MutationActionModelResolverTest extends MutationTest
                         $r
                             ->beforeResolve(function ($params, $fieldsToSave) {
                                 $this->testWatcher->info('beforeResolve');
-                                $this->testWatcher->info2([$params, $fieldsToSave]);
+                                $this->testWatcher->info2($fieldsToSave);
 
                                 if ($fieldsToSave) {
                                     $fieldsToSave['name'] = 'other_name';
@@ -635,7 +636,7 @@ class MutationActionModelResolverTest extends MutationTest
                             ->get(fn () => null)
                             ->add(function (string $typeName, array $saveFields) use ($r) {
                                 $this->testWatcher->info2($saveFields);
-                                return Model::fromSingle('TYPE');
+                                return Model::fromSingle('TYPE', ['id' => '123']);
                             })
                             ->update(fn () => null)
                             ->delete(fn () => null);
@@ -645,7 +646,6 @@ class MutationActionModelResolverTest extends MutationTest
 
         $this->request(
             $api,
-            params: ['id' => '123'],
             data: $data
         );
 
@@ -656,7 +656,7 @@ class MutationActionModelResolverTest extends MutationTest
         }
 
         $this->assertEquals([
-            [['id' => '123'], $data],
+            $data,
             $expectedAddFields,
         ], $this->testWatcher->info2);
     }
@@ -701,7 +701,6 @@ class MutationActionModelResolverTest extends MutationTest
 
         $this->request(
             $api,
-            params: ['id' => '123'],
             data: $data
         );
 
@@ -851,16 +850,50 @@ class MutationActionModelResolverTest extends MutationTest
     }
 
     /**
+     * @dataProvider getDoesNotReturnModelProvider
+     */
+    public function test_update_get_does_not_return_model($return)
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessage('Get callback of mutation resolver for action ACT on resource RES must return a ModelInterface object or null.');
+
+        $api = $this->createApiWithMutation(
+            fn () => T('TYPE'),
+            function (Action $action) use ($return) {
+                $action
+                    ->resolve(function (MutationActionModelResolver $r) use ($return) {
+                        $r
+                            ->get(function () use ($return) {
+                                if ($return !== 'NOTHING') {
+                                    return $return;
+                                }
+                            })
+                            ->add(fn () => Model::fromSingle('TYPE'))
+                            ->update(fn () => null)
+                            ->delete(fn () => null);
+                    });
+            }
+        );
+
+        $this->request($api, params: ['id' => '10']);
+    }
+
+    public function getDoesNotReturnModelProvider()
+    {
+        return [
+            'array' => [['x']],
+            'string' => ['string'],
+            'object' => [new stdClass()]
+        ];
+    }
+
+    /**
      * @dataProvider getDoesNotReturnModelDataProvider
      */
-    public function test_get_does_not_return_model_or_null($return)
+    public function test_update_get_does_return_falsy($return)
     {
-        if (in_array($return, [null, 'NOTHING'], true)) {
-            $this->assertTrue(true);
-        } else {
-            $this->expectException(InvalidConfigurationException::class);
-            $this->expectExceptionMessage('Get callback of mutation resolver for action ACT on resource RES must return a ModelInterface object or null.');
-        }
+        $this->expectException(NotFoundException::class);
+        $this->expectExceptionMessage('Model not found.');
 
         $api = $this->createApiWithMutation(
             fn () => T('TYPE'),
@@ -888,8 +921,8 @@ class MutationActionModelResolverTest extends MutationTest
         return [
             'null' => [null],
             'array' => [[]],
-            'string' => ['string'],
-            'object' => [new stdClass()],
+            'false' => [false],
+            'zero' => [0],
             'nothing' => ['NOTHING']
         ];
     }

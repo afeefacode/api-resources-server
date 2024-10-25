@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Resolver;
 
+use Afeefa\ApiResources\Api\NotFoundException;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackException;
 use Afeefa\ApiResources\Model\ModelInterface;
@@ -117,7 +118,10 @@ class MutationActionModelResolver extends BaseMutationActionResolver
 
         if ($id) {
             $existingModel = ($this->getCallback)($id, $typeName);
-            if ($existingModel !== null && !$existingModel instanceof ModelInterface) {
+            if (!$existingModel) {
+                throw new NotFoundException('Model not found.');
+            }
+            if (!$existingModel instanceof ModelInterface) {
                 throw new InvalidConfigurationException("Get {$mustReturn} a ModelInterface object or null.");
             }
         }
