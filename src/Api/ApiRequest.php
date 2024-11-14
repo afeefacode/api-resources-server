@@ -156,7 +156,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     public function getFilter(string $name, $default = null)
     {
-        if (!$default) {
+        if ($default === null) {
             $default = $this->getAction()->getFilter($name)->getDefaultValue();
         }
         return $this->filters[$name] ?? $default;
