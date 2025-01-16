@@ -7,7 +7,6 @@ use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Author;
-use Afeefa\ApiResources\Type\Type;
 use Afeefa\ApiResources\Validator\Validators\StringValidator;
 
 class AuthorType extends ModelType
@@ -23,22 +22,22 @@ class AuthorType extends ModelType
 
             ->attribute('email', StringAttribute::class)
 
-            ->relation('articles', Type::list(ArticleType::class), function (Relation $relation) {
+            ->hasMany('articles', ArticleType::class, function (Relation $relation) {
                 $relation
                     ->restrictTo(Relation::RESTRICT_TO_COUNT);
             })
 
-            ->relation('comments', Type::list(CommentType::class))
+            ->hasMany('comments', CommentType::class)
 
-            ->relation('links', Type::list(LinkType::class))
+            ->hasMany('links', LinkType::class)
 
-            ->relation('tags', Type::list(TagType::class))
+            ->hasMany('tags', TagType::class)
 
-            ->relation('featured_tag', TagType::class)
+            ->hasOne('featured_tag', TagType::class)
 
-            ->relation('first_tag', TagType::class)
+            ->hasOne('first_tag', TagType::class)
 
-            ->relation('profile', ProfileType::class);
+            ->hasOne('profile', ProfileType::class);
     }
 
     protected function updateFields(FieldBag $updateFields): void
@@ -53,17 +52,17 @@ class AuthorType extends ModelType
                 });
             })
 
-            ->relation('comments', Type::list(CommentType::class))
+            ->hasMany('comments', CommentType::class)
 
-            ->relation('tags', Type::list(Type::link(TagType::class)))
+            ->linkMany('tags', TagType::class)
 
-            ->relation('links', Type::list(LinkType::class))
+            ->hasMany('links', LinkType::class)
 
-            ->relation('featured_tag', Type::link(TagType::class))
+            ->linkOne('featured_tag', TagType::class)
 
-            ->relation('first_tag', Type::link(TagType::class))
+            ->linkOne('first_tag', TagType::class)
 
-            ->relation('profile', ProfileType::class);
+            ->hasOne('profile', ProfileType::class);
     }
 
     protected function createFields(FieldBag $createFields, FieldBag $updateFields): void

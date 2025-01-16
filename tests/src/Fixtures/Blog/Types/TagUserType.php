@@ -15,6 +15,6 @@ class TagUserType extends ModelType
     protected function fields(FieldBag $fields): void
     {
         $fields
-            ->relation('user', [AuthorType::class, ArticleType::class]);
+            ->hasOne('user', [AuthorType::class, ArticleType::class]);
     }
 }

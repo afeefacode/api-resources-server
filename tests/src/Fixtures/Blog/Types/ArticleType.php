@@ -6,12 +6,10 @@ use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Eloquent\ModelType;
 use Afeefa\ApiResources\Field\Attribute;
 use Afeefa\ApiResources\Field\FieldBag;
-use Afeefa\ApiResources\Field\Fields\DateAttribute;
 use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Article;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Resources\AuthorResource;
-use Afeefa\ApiResources\Type\Type;
 use Afeefa\ApiResources\Validator\Validators\LinkOneValidator;
 use Afeefa\ApiResources\Validator\Validators\StringValidator;
 
@@ -23,23 +21,24 @@ class ArticleType extends ModelType
 
     protected function fields(FieldBag $fields): void
     {
-        $fields->attribute('title', StringAttribute::class)
+        $fields
+            ->string('title')
 
-            ->attribute('summary', StringAttribute::class)
+            ->string('summary')
 
-            ->attribute('content', StringAttribute::class)
+            ->string('content')
 
-            ->attribute('date', DateAttribute::class)
+            ->date('date')
 
-            ->relation('author', AuthorType::class)
+            ->hasOne('author', AuthorType::class)
 
-            ->relation('tags', Type::list(TagType::class));
+            ->hasMany('tags', TagType::class);
     }
 
     protected function updateFields(FieldBag $updateFields): void
     {
         $updateFields
-            ->attribute('title', function (StringAttribute $attribute) {
+            ->string('title', function (StringAttribute $attribute) {
                 $attribute
                     ->validate(function (StringValidator $v) {
                         $v
@@ -49,7 +48,7 @@ class ArticleType extends ModelType
                     });
             })
 
-            ->attribute('summary', function (StringAttribute $attribute) {
+            ->string('summary', function (StringAttribute $attribute) {
                 $attribute
                     ->validate(function (StringValidator $v) {
                         $v
@@ -58,11 +57,11 @@ class ArticleType extends ModelType
                     });
             })
 
-            ->attribute('content', StringAttribute::class)
+            ->string('content')
 
-            ->attribute('date', DateAttribute::class)
+            ->date('date')
 
-            ->relation('author', Type::link(AuthorType::class), function (Relation $relation) {
+            ->linkOne('author', AuthorType::class, function (Relation $relation) {
                 $relation
                     ->validate(function (LinkOneValidator $v) {
                         $v->filled();
@@ -76,7 +75,7 @@ class ArticleType extends ModelType
                     });
             })
 
-            ->relation('tags', Type::list(Type::link(TagType::class)));
+            ->linkMany('tags', TagType::class);
     }
 
     protected function createFields(FieldBag $createFields, FieldBag $updateFields): void

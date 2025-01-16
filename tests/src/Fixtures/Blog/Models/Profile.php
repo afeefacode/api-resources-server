@@ -14,4 +14,9 @@ class Profile extends EloquentModel
     protected $table = 'profiles';
 
     public $timestamps = false;
+
+    public function author()
+    {
+        return $this->hasOne(Author::class);
+    }
 }

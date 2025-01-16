@@ -8,6 +8,8 @@ use Afeefa\ApiResources\Resolver\MutationRelationHasOneResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationLinkManyResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationLinkOneResolver;
 use Afeefa\ApiResources\Resolver\QueryRelationResolver;
+use Ankurk91\Eloquent\Relations\MorphToOne;
+use Error;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -215,11 +217,19 @@ class ModelRelationResolver
             ->link(function (Model $owner, string $id, string $typeName) use ($r) {
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
                 $relatedModel = $eloquentRelation->getRelated()::find($id);
-                $eloquentRelation->attach($relatedModel);
+                $eloquentRelation->save($relatedModel); // MorphToOne + HasOne
             })
             ->unlink(function (Model $owner, Model $modelToUnlink) use ($r) {
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
-                $eloquentRelation->detach($modelToUnlink);
+
+                if ($eloquentRelation instanceof MorphToOne) {
+                    $eloquentRelation->detach($modelToUnlink);
+                } elseif ($eloquentRelation instanceof HasOne) {
+                    $modelToUnlink[$eloquentRelation->getForeignKeyName()] = null;
+                    $modelToUnlink->save();
+                } else {
+                    throw new Error('Not implemented.');
+                }
             });
     }
 

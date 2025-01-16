@@ -6,7 +6,6 @@ use Afeefa\ApiResources\Eloquent\ModelType;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\StringAttribute;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Comment;
-use Afeefa\ApiResources\Type\Type;
 
 class CommentType extends ModelType
 {
@@ -17,17 +16,17 @@ class CommentType extends ModelType
     protected function fields(FieldBag $fields): void
     {
         $fields
-            ->attribute('text', StringAttribute::class)
+            ->string('text')
 
-            ->relation('owner', [AuthorType::class, ArticleType::class]);
+            ->hasOne('owner', [AuthorType::class, ArticleType::class]);
     }
 
     protected function updateFields(FieldBag $updateFields): void
     {
         $updateFields
-            ->attribute('text', StringAttribute::class)
+            ->string('text')
 
-            ->relation('owner', Type::link([AuthorType::class, ArticleType::class]));
+            ->linkOne('owner', [AuthorType::class, ArticleType::class]);
     }
 
     protected function createFields(FieldBag $createFields, FieldBag $updateFields): void

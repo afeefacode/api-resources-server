@@ -15,12 +15,12 @@ class LinkType extends ModelType
 
     protected function fields(FieldBag $fields): void
     {
-        $fields->attribute('url', StringAttribute::class);
+        $fields->string('url');
     }
 
     protected function updateFields(FieldBag $updateFields): void
     {
-        $updateFields->attribute('url', StringAttribute::class);
+        $updateFields->string('url');
     }
 
     protected function createFields(FieldBag $createFields, FieldBag $updateFields): void

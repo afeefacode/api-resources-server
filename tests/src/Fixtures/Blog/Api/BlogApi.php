@@ -8,6 +8,7 @@ use Afeefa\ApiResources\Test\Fixtures\Blog\Resources\AppResource;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Resources\ArticleResource;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Resources\AuthorResource;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Resources\CommentResource;
+use Afeefa\ApiResources\Test\Fixtures\Blog\Resources\ProfileResource;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Resources\TagResource;
 
 class BlogApi extends Api
@@ -21,6 +22,7 @@ class BlogApi extends Api
             ->add(ArticleResource::class)
             ->add(TagResource::class)
             ->add(AuthorResource::class)
+            ->add(ProfileResource::class)
             ->add(CommentResource::class);
     }
 }
