@@ -8,6 +8,7 @@ use Afeefa\ApiResources\Resolver\MutationRelationHasOneResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationLinkManyResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationLinkOneResolver;
 use Afeefa\ApiResources\Resolver\QueryRelationResolver;
+use Ankurk91\Eloquent\Relations\BelongsToOne;
 use Ankurk91\Eloquent\Relations\MorphToOne;
 use Error;
 use Illuminate\Database\Eloquent\Model;
@@ -222,7 +223,7 @@ class ModelRelationResolver
             ->unlink(function (Model $owner, Model $modelToUnlink) use ($r) {
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
 
-                if ($eloquentRelation instanceof MorphToOne) {
+                if ($eloquentRelation instanceof MorphToOne || $eloquentRelation instanceof BelongsToOne) {
                     $eloquentRelation->detach($modelToUnlink);
                 } elseif ($eloquentRelation instanceof HasOne) {
                     $modelToUnlink[$eloquentRelation->getForeignKeyName()] = null;
