@@ -97,10 +97,14 @@ class ModelRelationResolver
     {
         $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
 
-        if ($eloquentRelation instanceof HasOne) { // reference to the owner in the related table
+        if ($eloquentRelation instanceof HasOneOrMany) { // reference to the owner in the related table
             $r
                 ->saveOwnerToRelated(function (string $id, string $typeName) use ($eloquentRelation) {
-                    return [$eloquentRelation->getForeignKeyName() => $id];
+                    $ownerFields = [$eloquentRelation->getForeignKeyName() => $id]; // owner_id
+                    if ($eloquentRelation instanceof MorphOneOrMany) {
+                        $ownerFields[$eloquentRelation->getMorphType()] = $typeName; // owner_type
+                    }
+                    return $ownerFields;
                 });
         }
 
