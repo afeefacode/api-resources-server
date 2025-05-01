@@ -13,8 +13,10 @@ use Ankurk91\Eloquent\Relations\MorphToOne;
 use Error;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\Relations\MorphOneOrMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
@@ -28,12 +30,17 @@ class ModelRelationResolver
             ->ownerIdFields(function () use ($r) {
                 // select field on the owner prior loading the relation
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
+
                 if ($eloquentRelation instanceof BelongsTo) { // reference to the related in the owner table
                     $fields = [$eloquentRelation->getForeignKeyName()];
                     if ($eloquentRelation instanceof MorphTo) { // reference to the related in the owner table
                         $fields[] = $eloquentRelation->getMorphType();
                     }
                     return $fields;
+                }
+
+                if ($eloquentRelation instanceof HasOneThrough || $eloquentRelation instanceof HasManyThrough) { // reference to the related in the owner table
+                    return [$eloquentRelation->getFirstKeyName(), $eloquentRelation->getLocalKeyName()];
                 }
             })
 
