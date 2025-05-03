@@ -313,8 +313,15 @@ class ModelRelationResolver
     {
         $ownersByRelatedType = [];
         foreach ($owners as $owner) {
-            $typeInDb = $owner->$typeField;
-            // handle legacy type
+            $typeInDb = $owner->$typeField; // SPRINT.Insitution or also Kollektiv\\Account
+
+            if (!$typeInDb) { // no related model for that relation, skip
+                continue;
+            }
+
+            // handle legacy type e.g. "Kollektiv\\Account" which may be stored in the database
+            // but is not supported as a valid type in the API, so we need to convert it into the
+            // type of the actual related model
             $RelatedModel = EloquentRelation::getMorphedModel($typeInDb);
             $type = $RelatedModel::$type;
             $ownersByRelatedType[$type][] = $owner;
