@@ -40,7 +40,7 @@ class ModelRelationResolver
                 }
 
                 if ($eloquentRelation instanceof HasOneThrough || $eloquentRelation instanceof HasManyThrough) { // reference to the related in the owner table
-                    return [$eloquentRelation->getFirstKeyName(), $eloquentRelation->getLocalKeyName()];
+                    return [$eloquentRelation->getLocalKeyName()];
                 }
             })
 
