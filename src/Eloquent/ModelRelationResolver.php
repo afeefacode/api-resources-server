@@ -313,7 +313,7 @@ class ModelRelationResolver
     {
         $ownersByRelatedType = [];
         foreach ($owners as $owner) {
-            $typeInDb = $owner->$typeField; // SPRINT.Insitution or also Kollektiv\\Account
+            $typeInDb = $owner->$typeField; // SPRINT.Institution or also Kollektiv\\Account
 
             if (!$typeInDb) { // no related model for that relation, skip
                 continue;
