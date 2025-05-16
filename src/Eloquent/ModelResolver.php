@@ -158,7 +158,7 @@ class ModelResolver
                 // params
 
                 foreach ($params as $name => $value) {
-                    if ($action->hasParam($name)) {
+                    if ($action->hasParam($name) && $name !== 'page_size') {
                         ($this->paramFunction)($name, $value, $query);
                     }
                 }
@@ -223,6 +223,11 @@ class ModelResolver
 
                 $page = $filters['page'] ?? 1;
                 $pageSize = $filters['page_size'] ?? null;
+
+                if ($action->hasParam('page_size') && ($params['page_size'] ?? null)) {
+                    $pageSize = $params['page_size'];
+                }
+
                 if (!$pageSizeFilter->hasPageSize($pageSize)) {
                     $pageSize = $pageSizeFilter->getDefaultValue();
                 }
