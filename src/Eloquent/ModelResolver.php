@@ -13,7 +13,7 @@ use Afeefa\ApiResources\Resolver\MutationActionModelResolver;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Closure;
 use Illuminate\Database\Capsule\Manager as DB;
-use Illuminate\Database\Query\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use stdClass;
 
 class ModelResolver
@@ -153,7 +153,7 @@ class ModelResolver
 
                 // scope
 
-                ($this->scopeFunction)($query);
+                ($this->scopeFunction)($query, $params);
 
                 // params
 

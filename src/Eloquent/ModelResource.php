@@ -66,7 +66,7 @@ class ModelResource extends Resource
         $filters->add('page', PageFilter::class);
     }
 
-    protected function scope(Builder $query): void
+    protected function scope(Builder $query, array $params): void
     {
     }
 
@@ -134,8 +134,8 @@ class ModelResource extends Resource
         $type = $this->container->get($this->ModelTypeClass);
         return (new ModelResolver())
             ->type($type)
-            ->scope(function (Builder $query) {
-                $this->scope($query);
+            ->scope(function (Builder $query, array $params) {
+                $this->scope($query, $params);
             })
             ->param(function (string $name, $value, Builder $query) {
                 $this->param($name, $value, $query);
