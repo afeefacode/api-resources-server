@@ -8,6 +8,7 @@ use Afeefa\ApiResources\Field\Fields\BooleanAttribute;
 use Afeefa\ApiResources\Field\Fields\DateAttribute;
 use Afeefa\ApiResources\Field\Fields\EnumAttribute;
 use Afeefa\ApiResources\Field\Fields\IntAttribute;
+use Afeefa\ApiResources\Field\Fields\JsonAttribute;
 use Afeefa\ApiResources\Field\Fields\NumberAttribute;
 use Afeefa\ApiResources\Field\Fields\SetAttribute;
 use Afeefa\ApiResources\Field\Fields\StringAttribute;
@@ -68,6 +69,11 @@ class FieldBag extends Bag
     public function string(string $name, Closure $callback = null, $validate = null): FieldBag
     {
         return $this->_attribute($name, StringAttribute::class, $callback, $validate);
+    }
+
+    public function json(string $name, Closure $callback = null, $validate = null): FieldBag
+    {
+        return $this->_attribute($name, JsonAttribute::class, $callback, $validate);
     }
 
     public function date(string $name, Closure $callback = null, $validate = null): FieldBag
