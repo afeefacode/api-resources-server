@@ -13,6 +13,8 @@ class TypeClassMap implements ContainerAwareInterface
 
     protected array $map = [];
 
+    protected array $overriddenTypes = [];
+
     public function add(string $TypeClass): void
     {
         $this->map[$TypeClass::type()] = $TypeClass;
@@ -26,6 +28,12 @@ class TypeClassMap implements ContainerAwareInterface
     public function reset(): void
     {
         $this->map = [];
+    }
+
+    public function overrideTypes(array $overriddenTypes): static
+    {
+        $this->overriddenTypes = $overriddenTypes;
+        return $this;
     }
 
     public function createUsedTypesForApi(Api $api): array
@@ -55,6 +63,9 @@ class TypeClassMap implements ContainerAwareInterface
     protected function createUsedTypes(array $types, array $TypeClasses): array
     {
         foreach ($TypeClasses as $TypeClass) {
+            $typeName = $TypeClass::type();
+            $TypeClass = $this->overriddenTypes[$typeName] ?? $TypeClass;
+
             if (!isset($types[$TypeClass])) {
                 $type = $this->container->get($TypeClass);
                 $types[$TypeClass] = $type;

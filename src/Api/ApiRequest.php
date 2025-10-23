@@ -199,6 +199,7 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
         // find and register all necessary types
         $this->container->get(TypeClassMap::class)
+            ->overrideTypes($this->api->getOverriddenTypes())
             ->createUsedTypesForAction($action);
 
         $resolveCallback = $action->getResolve();

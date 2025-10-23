@@ -23,12 +23,16 @@ class Api implements ContainerAwareInterface
 
     protected array $AdditionalValidatorClasses = [];
 
+    protected array $overriddenTypes = [];
+
     public function created(): void
     {
         $this->container->registerAlias($this, self::class);
 
         $this->resources = $this->container->create(ResourceBag::class);
         $this->resources($this->resources);
+
+        $this->overriddenTypes = $this->overrideTypes();
     }
 
     public function debug($debug = true): static
@@ -50,6 +54,11 @@ class Api implements ContainerAwareInterface
     public function getResource(string $resourceType): Resource
     {
         return $this->resources->get($resourceType);
+    }
+
+    public function getOverriddenTypes(): array
+    {
+        return $this->overriddenTypes;
     }
 
     public function getAction(string $resourceType, string $actionName): Action
@@ -95,6 +104,7 @@ class Api implements ContainerAwareInterface
     {
         $resources = $this->resources->toSchemaJson();
         $usedTypes = $this->container->get(TypeClassMap::class)
+            ->overrideTypes($this->overriddenTypes)
             ->createUsedTypesForApi($this);
         $usedValidators = $this->createAllUsedValidators($usedTypes);
 
@@ -126,6 +136,11 @@ class Api implements ContainerAwareInterface
 
     protected function resources(ResourceBag $resources): void
     {
+    }
+
+    protected function overrideTypes(): array
+    {
+        return [];
     }
 
     /**
