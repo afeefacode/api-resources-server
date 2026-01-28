@@ -7,6 +7,7 @@ use Afeefa\ApiResources\Action\ActionBag;
 use Afeefa\ApiResources\Action\ActionParams;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\Fields\IdAttribute;
+use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Filter\FilterBag;
 use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
@@ -129,6 +130,20 @@ class ModelResource extends Resource
     {
     }
 
+    protected function beforeAddRelation(array $data, string $relationName, string $typeName, array $saveFields, stdClass $meta): array
+    {
+        return $saveFields;
+    }
+
+    protected function beforeUpdateRelation(array $data, string $relationName, ModelInterface $existingModel, array $saveFields, stdClass $meta): array
+    {
+        return $saveFields;
+    }
+
+    protected function beforeDeleteRelation(array $data, string $relationName, ModelInterface $existingModel, stdClass $meta): void
+    {
+    }
+
     protected function getEloquentResolver(): ModelResolver
     {
         $type = $this->container->get($this->ModelTypeClass);
@@ -178,6 +193,15 @@ class ModelResource extends Resource
             })
             ->afterDelete(function (Model $model, stdClass $meta) {
                 $this->afterDelete($model, $meta);
+            })
+            ->beforeAddRelation(function (array $data, string $relationName, string $typeName, array $saveFields, stdClass $meta) {
+                return $this->beforeAddRelation($data, $relationName, $typeName, $saveFields, $meta);
+            })
+            ->beforeUpdateRelation(function (array $data, string $relationName, ModelInterface $existingModel, array $saveFields, stdClass $meta) {
+                return $this->beforeUpdateRelation($data, $relationName, $existingModel, $saveFields, $meta);
+            })
+            ->beforeDeleteRelation(function (array $data, string $relationName, ModelInterface $existingModel, stdClass $meta) {
+                $this->beforeDeleteRelation($data, $relationName, $existingModel, $meta);
             });
     }
 

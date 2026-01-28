@@ -18,6 +18,24 @@ class BaseMutationActionResolver extends BaseActionResolver
 
     protected ?Closure $forwardCallback = null;
 
+    public function beforeAddRelation(Closure $callback): static
+    {
+        $this->beforeAddRelationCallback = $callback;
+        return $this;
+    }
+
+    public function beforeUpdateRelation(Closure $callback): static
+    {
+        $this->beforeUpdateRelationCallback = $callback;
+        return $this;
+    }
+
+    public function beforeDeleteRelation(Closure $callback): static
+    {
+        $this->beforeDeleteRelationCallback = $callback;
+        return $this;
+    }
+
     public function transaction(Closure $callback): static
     {
         $this->transactionCallback = $callback;

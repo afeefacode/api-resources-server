@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Resolver\Mutation;
 
+use Afeefa\ApiResources\Model\ModelInterface;
 use Afeefa\ApiResources\Resolver\Field\BaseFieldResolver;
 use Afeefa\ApiResources\Resolver\Field\RelationResolverTrait;
 use Closure;
@@ -158,5 +159,36 @@ class MutationRelationResolver extends BaseFieldResolver
             $saveFields = array_merge($saveFields, $relation->getAdditionalSaveFieldsCallback()($saveFields));
         }
         return $saveFields;
+    }
+
+    public function propagateRelationHooks(?array $ownerFieldsToSave, ?Closure $beforeAdd, ?Closure $beforeUpdate, ?Closure $beforeDelete): void
+    {
+        $this->ownerFieldsToSave = $ownerFieldsToSave;
+        $this->beforeAddRelationCallback = $beforeAdd;
+        $this->beforeUpdateRelationCallback = $beforeUpdate;
+        $this->beforeDeleteRelationCallback = $beforeDelete;
+    }
+
+    protected function callBeforeAddRelation(string $relationName, string $typeName, array $saveFields): array
+    {
+        if ($this->beforeAddRelationCallback) {
+            $saveFields = ($this->beforeAddRelationCallback)($this->ownerFieldsToSave, $relationName, $typeName, $saveFields);
+        }
+        return $saveFields;
+    }
+
+    protected function callBeforeUpdateRelation(string $relationName, ModelInterface $existingModel, array $saveFields): array
+    {
+        if ($this->beforeUpdateRelationCallback) {
+            $saveFields = ($this->beforeUpdateRelationCallback)($this->ownerFieldsToSave, $relationName, $existingModel, $saveFields);
+        }
+        return $saveFields;
+    }
+
+    protected function callBeforeDeleteRelation(string $relationName, ModelInterface $existingModel): void
+    {
+        if ($this->beforeDeleteRelationCallback) {
+            ($this->beforeDeleteRelationCallback)($this->ownerFieldsToSave, $relationName, $existingModel);
+        }
     }
 }

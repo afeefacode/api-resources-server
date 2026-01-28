@@ -54,11 +54,12 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
             $related = null;
 
             if ($this->ownerOperation === Operation::UPDATE) { // update owner -> handle related
-                $related = $this->handleSaveRelated($owner, $typeName, $mustReturn, $this->fieldsToSave);
+                $related = $this->handleSaveRelated($owner, $typeName, $relationName, $mustReturn, $this->fieldsToSave);
             } else { // create owner -> create related
                 if (is_array($this->fieldsToSave)) { // add related only if data present
-                    $related = $this->resolveModel(null, $typeName, $this->fieldsToSave, function ($saveFields) use ($typeName, $mustReturn) {
+                    $related = $this->resolveModel(null, $typeName, $this->fieldsToSave, function ($saveFields) use ($relationName, $typeName, $mustReturn) {
                         $saveFields = $this->addAdditionalSaveFields($saveFields);
+                        $saveFields = $this->callBeforeAddRelation($relationName, $typeName, $saveFields);
                         $addedModel = ($this->addBeforeOwnerCallback)($typeName, $saveFields);
                         if (!$addedModel instanceof ModelInterface) {
                             throw new InvalidConfigurationException("AddBeforeOwner {$mustReturn} a ModelInterface object.");
@@ -75,10 +76,10 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
 
         // B.a_id or C.a_id,b_id
 
-        $this->handleSaveRelated($owner, $typeName, $mustReturn, $this->fieldsToSave);
+        $this->handleSaveRelated($owner, $typeName, $relationName, $mustReturn, $this->fieldsToSave);
     }
 
-    protected function handleSaveRelated(ModelInterface $owner, string $typeName, string $mustReturn, ?array $fieldsToSave): ?ModelInterface
+    protected function handleSaveRelated(ModelInterface $owner, string $typeName, string $relationName, string $mustReturn, ?array $fieldsToSave): ?ModelInterface
     {
         if ($this->ownerOperation === Operation::UPDATE) {
             /** @var ModelInterface */
@@ -100,12 +101,14 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
 
             if ($existingModel) {
                 if ($fieldsToSave === null) { // delete related
+                    $this->callBeforeDeleteRelation($relationName, $existingModel);
                     ($this->deleteCallback)($owner, $existingModel);
                     return null;
                 }
                 // update related
-                return $this->resolveModel($existingModel, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $existingModel) {
+                return $this->resolveModel($existingModel, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $relationName, $existingModel) {
                     $saveFields = $this->addAdditionalSaveFields($saveFields);
+                    $saveFields = $this->callBeforeUpdateRelation($relationName, $existingModel, $saveFields);
                     ($this->updateCallback)($owner, $existingModel, $saveFields);
                     return $existingModel;
                 });
@@ -113,8 +116,9 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
 
             if (is_array($fieldsToSave)) {
                 // add related
-                return $this->resolveModel(null, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
+                return $this->resolveModel(null, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $relationName, $typeName, $mustReturn) {
                     $saveFields = $this->addAdditionalSaveFields($saveFields);
+                    $saveFields = $this->callBeforeAddRelation($relationName, $typeName, $saveFields);
                     $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                     if (!$addedModel instanceof ModelInterface) {
                         throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");
@@ -125,8 +129,9 @@ class MutationRelationHasOneResolver extends MutationRelationResolver
         } else {
             if (is_array($fieldsToSave)) {
                 // add related
-                return $this->resolveModel(null, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $typeName, $mustReturn) {
+                return $this->resolveModel(null, $typeName, $fieldsToSave, function ($saveFields) use ($owner, $relationName, $typeName, $mustReturn) {
                     $saveFields = $this->addAdditionalSaveFields($saveFields);
+                    $saveFields = $this->callBeforeAddRelation($relationName, $typeName, $saveFields);
                     $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                     if (!$addedModel instanceof ModelInterface) {
                         throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");

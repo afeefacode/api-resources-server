@@ -76,10 +76,12 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
                     $id = $existingModel->apiResourcesGetId();
                     // delete if DEFAULT + not included any longer
                     if (!$this->relatedOperation && !$getSavedDataById($id)) {
+                        $this->callBeforeDeleteRelation($relationName, $existingModel);
                         ($this->deleteCallback)($owner, $existingModel);
                     }
                     // or DELETE_RELATED and included in data
                     if ($this->relatedOperation === Operation::DELETE_RELATED && $getSavedDataById($id)) {
+                        $this->callBeforeDeleteRelation($relationName, $existingModel);
                         ($this->deleteCallback)($owner, $existingModel);
                     }
                 }
@@ -89,14 +91,16 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
                 foreach ($data as $single) {
                     $existingModel = $getExistingModelById($single['id'] ?? null);
                     if ($existingModel) {
-                        $this->resolveModel($existingModel, $typeName, $single, function (array $saveFields) use ($owner, $existingModel) {
+                        $this->resolveModel($existingModel, $typeName, $single, function (array $saveFields) use ($owner, $relationName, $existingModel) {
                             $saveFields = $this->addAdditionalSaveFields($saveFields);
+                            $saveFields = $this->callBeforeUpdateRelation($relationName, $existingModel, $saveFields);
                             ($this->updateCallback)($owner, $existingModel, $saveFields);
                             return $existingModel;
                         });
                     } else {
-                        $this->resolveModel(null, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
+                        $this->resolveModel(null, $typeName, $single, function (array $saveFields) use ($owner, $relationName, $typeName, $mustReturn) {
                             $saveFields = $this->addAdditionalSaveFields($saveFields);
+                            $saveFields = $this->callBeforeAddRelation($relationName, $typeName, $saveFields);
                             $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                             if (!$addedModel instanceof ModelInterface) {
                                 throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");
@@ -109,8 +113,9 @@ class MutationRelationHasManyResolver extends MutationRelationResolver
         } else { // create, only add
             if ($this->relatedOperation !== Operation::DELETE_RELATED) { // ignore when DELETE_RELATED
                 foreach ($data as $single) {
-                    $this->resolveModel(null, $typeName, $single, function (array $saveFields) use ($owner, $typeName, $mustReturn) {
+                    $this->resolveModel(null, $typeName, $single, function (array $saveFields) use ($owner, $relationName, $typeName, $mustReturn) {
                         $saveFields = $this->addAdditionalSaveFields($saveFields);
+                        $saveFields = $this->callBeforeAddRelation($relationName, $typeName, $saveFields);
                         $addedModel = ($this->addCallback)($owner, $typeName, $saveFields);
                         if (!$addedModel instanceof ModelInterface) {
                             throw new InvalidConfigurationException("Add {$mustReturn} a ModelInterface object.");

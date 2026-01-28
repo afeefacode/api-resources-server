@@ -36,6 +36,9 @@ class ModelResolver
     protected Closure $afterUpdateFunction;
     protected Closure $beforeDeleteFunction;
     protected Closure $afterDeleteFunction;
+    protected Closure $beforeAddRelationFunction;
+    protected Closure $beforeUpdateRelationFunction;
+    protected Closure $beforeDeleteRelationFunction;
 
     public function type(ModelType $type): ModelResolver
     {
@@ -131,6 +134,24 @@ class ModelResolver
     public function afterDelete(Closure $afterDeleteFunction): ModelResolver
     {
         $this->afterDeleteFunction = $afterDeleteFunction;
+        return $this;
+    }
+
+    public function beforeAddRelation(Closure $beforeAddRelationFunction): ModelResolver
+    {
+        $this->beforeAddRelationFunction = $beforeAddRelationFunction;
+        return $this;
+    }
+
+    public function beforeUpdateRelation(Closure $beforeUpdateRelationFunction): ModelResolver
+    {
+        $this->beforeUpdateRelationFunction = $beforeUpdateRelationFunction;
+        return $this;
+    }
+
+    public function beforeDeleteRelation(Closure $beforeDeleteRelationFunction): ModelResolver
+    {
+        $this->beforeDeleteRelationFunction = $beforeDeleteRelationFunction;
         return $this;
     }
 
@@ -404,6 +425,18 @@ class ModelResolver
                 $model->delete();
 
                 ($this->afterDeleteFunction)($model, $meta);
+            })
+
+            ->beforeAddRelation(function (array $data, string $relationName, string $typeName, array $saveFields) use ($meta) {
+                return ($this->beforeAddRelationFunction)($data, $relationName, $typeName, $saveFields, $meta);
+            })
+
+            ->beforeUpdateRelation(function (array $data, string $relationName, $existingModel, array $saveFields) use ($meta) {
+                return ($this->beforeUpdateRelationFunction)($data, $relationName, $existingModel, $saveFields, $meta);
+            })
+
+            ->beforeDeleteRelation(function (array $data, string $relationName, $existingModel) use ($meta) {
+                ($this->beforeDeleteRelationFunction)($data, $relationName, $existingModel, $meta);
             })
 
             ->forward(function (ApiRequest $apiRequest, Model $model) {

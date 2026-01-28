@@ -11,6 +11,14 @@ trait MutationResolverTrait
 {
     protected array $ownerSaveFields = [];
 
+    protected ?Closure $beforeAddRelationCallback = null;
+
+    protected ?Closure $beforeUpdateRelationCallback = null;
+
+    protected ?Closure $beforeDeleteRelationCallback = null;
+
+    protected ?array $ownerFieldsToSave = null;
+
     public function ownerSaveFields(array $ownerSaveFields): static
     {
         $this->ownerSaveFields = $ownerSaveFields;
@@ -51,6 +59,8 @@ trait MutationResolverTrait
         $relationResolvers = $resolveContext->getRelationResolvers();
 
         foreach ($relationResolvers as $relationResolver) {
+            $this->setRelationHooksOnResolver($relationResolver, $fieldsToSave);
+
             if ($relationResolver->shouldSaveRelatedToOwner()) {
                 $relationResolver->ownerOperation($ownerOperation);
                 if ($existingModel) {
@@ -100,6 +110,16 @@ trait MutationResolverTrait
         }
 
         return $model;
+    }
+
+    private function setRelationHooksOnResolver(MutationRelationResolver $relationResolver, ?array $fieldsToSave): void
+    {
+        $relationResolver->propagateRelationHooks(
+            $fieldsToSave,
+            $this->beforeAddRelationCallback,
+            $this->beforeUpdateRelationCallback,
+            $this->beforeDeleteRelationCallback
+        );
     }
 
     private function createResolveContext(string $typeName, string $operation, ?array $fieldsToSave): MutationResolveContext
