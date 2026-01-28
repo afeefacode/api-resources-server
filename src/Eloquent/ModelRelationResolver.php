@@ -107,6 +107,11 @@ class ModelRelationResolver
         if ($eloquentRelation instanceof HasOneOrMany) { // reference to the owner in the related table
             $r
                 ->saveOwnerToRelated(function (string $id, string $typeName) use ($eloquentRelation) {
+                    $ownerKeyName = $eloquentRelation->getLocalKeyName(); // usually id
+                    if ($ownerKeyName !== 'id') {
+                        $OwnerClass = EloquentRelation::morphMap()[$typeName];
+                        $id = $OwnerClass::find($id)->$ownerKeyName;
+                    }
                     $ownerFields = [$eloquentRelation->getForeignKeyName() => $id]; // owner_id
                     if ($eloquentRelation instanceof MorphOneOrMany) {
                         $ownerFields[$eloquentRelation->getMorphType()] = $typeName; // owner_type
@@ -166,6 +171,11 @@ class ModelRelationResolver
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
 
                 if ($eloquentRelation instanceof HasOneOrMany) { // reference to the owner in the related table
+                    $ownerKeyName = $eloquentRelation->getLocalKeyName(); // usually id
+                    if ($ownerKeyName !== 'id') {
+                        $OwnerClass = EloquentRelation::morphMap()[$typeName];
+                        $id = $OwnerClass::find($id)->$ownerKeyName;
+                    }
                     $ownerFields = [$eloquentRelation->getForeignKeyName() => $id]; // owner_id
                     if ($eloquentRelation instanceof MorphOneOrMany) {
                         $ownerFields[$eloquentRelation->getMorphType()] = $typeName; // owner_type
