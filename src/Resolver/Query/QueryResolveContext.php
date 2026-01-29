@@ -104,7 +104,10 @@ class QueryResolveContext implements ContainerAwareInterface
         $type = $this->type;
 
         $attributeResolvers = [];
-        foreach ($this->fields as $fieldName => $value) {
+
+        $requestedFields = $this->getRequestedFields();
+
+        foreach ($requestedFields as $fieldName => $value) {
             if ($type->hasAttribute($fieldName)) {
                 $attribute = $type->getAttribute($fieldName);
                 if ($attribute->hasResolver()) {
