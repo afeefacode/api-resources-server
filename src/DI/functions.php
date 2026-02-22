@@ -67,3 +67,41 @@ function getCallbackArgumentType(Closure $callback): string
     $TypeClasses = getCallbackArgumentTypes($callback, 1, 1);
     return $TypeClasses[0];
 }
+
+/**
+ * Invokes a resolver callback (action, attribute, relation, or mutation relation resolver)
+ * with DI support.
+ *
+ * The callback's first argument defines the resolver type and is created as a fresh
+ * instance via $container->create(). Additional arguments are injected as singletons
+ * via $container->get(), allowing access to services like ContainerInterface or BackendApi.
+ *
+ * An optional $beforeInvoke callback receives the resolver instance before the main
+ * callback is invoked — useful when the resolver needs configuration first (e.g.
+ * MutationRelationResolver needs relation/fieldsToSave set before the callback runs).
+ *
+ * Returns the resolver instance (first argument), or null if the callback has no arguments.
+ */
+function invokeResolverCallback(Closure $callback, Container $container, ?Closure $beforeInvoke = null): ?object
+{
+    $TypeClasses = getCallbackArgumentTypes($callback);
+
+    if (count($TypeClasses) === 0) {
+        return null;
+    }
+
+    $arguments = [];
+    foreach ($TypeClasses as $i => $TypeClass) {
+        $arguments[] = $i === 0
+            ? $container->create($TypeClass)
+            : $container->get($TypeClass);
+    }
+
+    if ($beforeInvoke) {
+        $beforeInvoke($arguments[0]);
+    }
+
+    $callback(...$arguments);
+
+    return $arguments[0];
+}

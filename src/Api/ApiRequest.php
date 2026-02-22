@@ -5,8 +5,7 @@ namespace Afeefa\ApiResources\Api;
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
-use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackArgumentException;
-use function Afeefa\ApiResources\DI\getCallbackArgumentType;
+use function Afeefa\ApiResources\DI\invokeResolverCallback;
 use Afeefa\ApiResources\Exception\Exceptions\ApiException;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\Fields\DateAttribute;
@@ -205,13 +204,8 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
         $resolveCallback = $action->getResolve();
 
-        /** @var BaseActionResolver */
-        $actionResolver = null;
-        try {
-            $actionResolver = $this->container->create(getCallbackArgumentType($resolveCallback));
-            $resolveCallback($actionResolver);
-        } catch (MissingCallbackArgumentException) {
-        }
+        // invoke action resolver callback (e.g. QueryActionResolver, MutationActionResolver)
+        $actionResolver = invokeResolverCallback($resolveCallback, $this->container);
 
         if (!($actionResolver instanceof BaseActionResolver)) {
             throw new InvalidConfigurationException("Resolve callback for action {$this->actionName} on resource {$this->resourceType} must receive an ActionResolver as argument.");
