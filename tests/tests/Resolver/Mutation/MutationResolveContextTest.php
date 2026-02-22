@@ -166,9 +166,7 @@ class MutationResolveContextTest extends ApiResourcesTest
         ]));
     }
 
-    /**
-     * @dataProvider wrongValueSingleDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongValueSingleDataProvider')]
     public function test_wrong_value_single($value)
     {
         $this->expectException(ValidationFailedException::class);
@@ -187,7 +185,7 @@ class MutationResolveContextTest extends ApiResourcesTest
         $resolveContext->getRelationResolvers();
     }
 
-    public function wrongValueSingleDataProvider()
+    public static function wrongValueSingleDataProvider()
     {
         return [
             'string' => ['wrong'],
@@ -195,9 +193,7 @@ class MutationResolveContextTest extends ApiResourcesTest
         ];
     }
 
-    /**
-     * @dataProvider wrongValueManyDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongValueManyDataProvider')]
     public function test_wrong_value_many($value)
     {
         $this->expectException(ValidationFailedException::class);
@@ -216,7 +212,7 @@ class MutationResolveContextTest extends ApiResourcesTest
         $resolveContext->getRelationResolvers();
     }
 
-    public function wrongValueManyDataProvider()
+    public static function wrongValueManyDataProvider()
     {
         return [
             'string' => ['wrong'],

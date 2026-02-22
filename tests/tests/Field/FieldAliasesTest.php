@@ -36,9 +36,7 @@ class FieldAliasesTest extends ApiResourcesTest
         $this->resolveCalled = false;
     }
 
-    /**
-     * @dataProvider attributesDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('attributesDataprovider')]
     public function test_attributes($attributeType, $AttributeClass)
     {
         $type = $this->typeBuilder()->type('Test.Type', function (FieldBag $fields) use ($attributeType) {
@@ -56,9 +54,7 @@ class FieldAliasesTest extends ApiResourcesTest
         $this->assertEquals($AttributeClass::type(), $type->getField($attributeType)->type());
     }
 
-    /**
-     * @dataProvider attributesDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('attributesDataprovider')]
     public function test_attributes_with_callback($attributeType, $AttributeClass)
     {
         $type = $this->typeBuilder()->type('Test.Type', function (FieldBag $fields) use ($attributeType, $AttributeClass) {
@@ -74,9 +70,7 @@ class FieldAliasesTest extends ApiResourcesTest
         $this->assertTrue($this->callbackCalled);
     }
 
-    /**
-     * @dataProvider attributesDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('attributesDataprovider')]
     public function test_attributes_with_validate($attributeType, $AttributeClass)
     {
         $validate = $this->getValidate($attributeType);
@@ -95,7 +89,7 @@ class FieldAliasesTest extends ApiResourcesTest
         $this->assertTrue($this->validateCalled);
     }
 
-    public function attributesDataprovider()
+    public static function attributesDataprovider()
     {
         return [
             'string' => [
@@ -125,9 +119,7 @@ class FieldAliasesTest extends ApiResourcesTest
         ];
     }
 
-    /**
-     * @dataProvider relationsDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('relationsDataprovider')]
     public function test_relations($relationType, $isList, $isLink)
     {
         $type = $this->typeBuilder()->type('Test.Type', function (FieldBag $fields) use ($relationType) {
@@ -159,10 +151,8 @@ class FieldAliasesTest extends ApiResourcesTest
         $this->assertEquals(T('T1'), $relation->getRelatedType()->getTypeClass());
     }
 
-    /**
-     * @dataProvider relationsDataprovider
-     */
-    public function test_relations_with_validate($relationType)
+    #[\PHPUnit\Framework\Attributes\DataProvider('relationsDataprovider')]
+    public function test_relations_with_validate($relationType, $isList = null, $isLink = null)
     {
         $validate = $this->getValidate($relationType);
 
@@ -180,7 +170,7 @@ class FieldAliasesTest extends ApiResourcesTest
         $this->assertTrue($this->validateCalled);
     }
 
-    public function relationsDataprovider()
+    public static function relationsDataprovider()
     {
         return [
             'hasOne' => [

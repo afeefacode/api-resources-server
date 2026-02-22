@@ -1,6 +1,6 @@
 {
     "name": "afeefa/api-resources-server",
-    "version": "0.2.26",
+    "version": "0.3.0",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -12,16 +12,18 @@
     "require": {
         "php": ">=8.2",
         "psr/container": "^1.0 || ^2.0",
-        "symfony/filesystem": "^6.1"
+        "symfony/filesystem": "^6.1 || ^7.0"
     },
     "autoload": {
         "psr-4": {
             "Afeefa\\ApiResources\\": "src",
+            "Afeefa\\ApiResources\\V2\\": "src-v2",
             "Afeefa\\ApiResources\\Tests\\": "tests/tests"
         },
         "files": [
             "src/Utils/functions.php",
-            "src/DI/functions.php"
+            "src/DI/functions.php",
+            "src-v2/Operation.php"
         ]
     },
     "config": {

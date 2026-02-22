@@ -10,9 +10,7 @@ use Afeefa\ApiResources\Type\Type;
 
 class ActionResponseTest extends ApiResourcesTest
 {
-    /**
-     * @dataProvider typesDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('typesDataProvider')]
     public function test_relation_link($typeClassFunction, $typeNames, $isLink, $isList, $isUnion)
     {
         $TypeClasses = $typeClassFunction();
@@ -28,7 +26,7 @@ class ActionResponseTest extends ApiResourcesTest
         $this->assertEquals($isUnion, $response->isUnion());
     }
 
-    public function typesDataProvider()
+    public static function typesDataProvider()
     {
         return [
             'simple' => [

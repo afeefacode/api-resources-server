@@ -19,9 +19,7 @@ use stdClass;
 
 class MutationRelationHasManyResolverTest extends MutationTest
 {
-    /**
-     * @dataProvider missingCallbacksDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('missingCallbacksDataProvider')]
     public function test_missing_callbacks($missingCallback)
     {
         $this->expectException(MissingCallbackException::class);
@@ -53,7 +51,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         $this->request($api, data: ['others' => []]);
     }
 
-    public function missingCallbacksDataProvider()
+    public static function missingCallbacksDataProvider()
     {
         return [
             ['get'],
@@ -85,9 +83,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         $this->assertTrue(true);
     }
 
-    /**
-     * @dataProvider createOwnerDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('createOwnerDataProvider')]
     public function test_create_owner($data, $expectedInfo, $expectedInfo2, $expectedSaveFields)
     {
         $api = $this->createApiWithUpdateType(
@@ -132,7 +128,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         $this->assertEquals($expectedSaveFields, $this->testWatcher->saveFields);
     }
 
-    public function createOwnerDataProvider()
+    public static function createOwnerDataProvider()
     {
         // $data, $expectedInfo, $expectedInfo2, $expectedSaveFields
         return [
@@ -168,9 +164,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
 
     private $test_update_owner_existingData = [];
 
-    /**
-     * @dataProvider updateOwnerDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('updateOwnerDataProvider')]
     public function test_update_owner($existingData, $data, $expectedInfo, $expectedInfo2, $expectedSaveFields)
     {
         $this->test_update_owner_existingData = $existingData;
@@ -239,7 +233,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         $this->assertEquals($expectedSaveFields, $this->testWatcher->saveFields);
     }
 
-    public function updateOwnerDataProvider()
+    public static function updateOwnerDataProvider()
     {
         // $existingData, $data, $expectedInfo, $expectedInfo2, $expectedSaveFields
         return [
@@ -349,9 +343,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider getDoesNotReturnModelsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getDoesNotReturnModelsDataProvider')]
     public function test_get_does_not_return_array_of_models($return)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -381,7 +373,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         $this->assertTrue(true);
     }
 
-    public function getDoesNotReturnModelsDataProvider()
+    public static function getDoesNotReturnModelsDataProvider()
     {
         return [
             'null' => [null],
@@ -394,9 +386,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider addDoesNotReturnModelDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('addDoesNotReturnModelDataProvider')]
     public function test_add_does_not_return_model_or_null($updateOwner, $return)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -427,7 +417,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         $this->assertTrue(true);
     }
 
-    public function addDoesNotReturnModelDataProvider()
+    public static function addDoesNotReturnModelDataProvider()
     {
         return [
             'create_null' => [false, null],
@@ -443,9 +433,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider addRecursiveDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('addRecursiveDataProvider')]
     public function test_add_recursive($update)
     {
         $api = $this->createApiWithUpdateType(
@@ -518,7 +506,7 @@ class MutationRelationHasManyResolverTest extends MutationTest
         $this->assertEquals($expectedSaveFields, $this->testWatcher->saveFields);
     }
 
-    public function addRecursiveDataProvider()
+    public static function addRecursiveDataProvider()
     {
         return [
             'update_owner' => [true],
@@ -624,12 +612,10 @@ class MutationRelationHasManyResolverTest extends MutationTest
 
     private $test_related_operation_add_existingData = [];
 
-    /**
-     * @dataProvider relatedOperationAddDataProvider
-     */
-    public function test_related_operation($existingData, $params, $data, $expectedInfo)
+    #[\PHPUnit\Framework\Attributes\DataProvider('relatedOperationAddDataProvider')]
+    public function test_related_operation($existing, $params, $data, $info)
     {
-        $this->test_related_operation_add_existingData = $existingData;
+        $this->test_related_operation_add_existingData = $existing;
 
         $api = $this->createApiWithUpdateType(
             function (FieldBag $fields) {
@@ -658,10 +644,10 @@ class MutationRelationHasManyResolverTest extends MutationTest
         );
 
         $this->request($api, params: $params, data: $data);
-        $this->assertEquals($expectedInfo, $this->testWatcher->info);
+        $this->assertEquals($info, $this->testWatcher->info);
     }
 
-    public function relatedOperationAddDataProvider()
+    public static function relatedOperationAddDataProvider()
     {
         // $data, $expectedInfo, $expectedInfo2, $expectedSaveFields
         return [

@@ -4,11 +4,12 @@ namespace Afeefa\ApiResources\Resolver\Query;
 
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
-use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
+use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackArgumentException;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Resolver\QueryAttributeResolver;
 use Afeefa\ApiResources\Resolver\QueryRelationResolver;
+use function Afeefa\ApiResources\DI\getCallbackArgumentType;
 use Afeefa\ApiResources\Type\Type;
 
 class QueryResolveContext implements ContainerAwareInterface
@@ -112,27 +113,16 @@ class QueryResolveContext implements ContainerAwareInterface
                 $attribute = $type->getAttribute($fieldName);
                 if ($attribute->hasResolver()) {
                     $resolveCallback = $attribute->getResolve();
+
                     /** @var QueryAttributeResolver */
                     $attributeResolver = null;
+                    try {
+                        $attributeResolver = $this->container->create(getCallbackArgumentType($resolveCallback));
+                        $resolveCallback($attributeResolver);
+                    } catch (MissingCallbackArgumentException) {
+                    }
 
-                    $this->container->call(
-                        $resolveCallback,
-                        function (DependencyResolver $r) {
-                            if ($r->isOf(QueryAttributeResolver::class)) { // QueryAttributeResolver
-                                $r->create();
-                            }
-                        },
-                        function () use (&$attributeResolver) {
-                            $arguments = func_get_args();
-                            foreach ($arguments as $argument) {
-                                if ($argument instanceof QueryAttributeResolver) {
-                                    $attributeResolver = $argument;
-                                }
-                            }
-                        }
-                    );
-
-                    if (!$attributeResolver) {
+                    if (!($attributeResolver instanceof QueryAttributeResolver)) {
                         throw new InvalidConfigurationException("Resolve callback for attribute {$fieldName} on type {$type::type()} must receive a QueryAttributeResolver as argument.");
                     }
 
@@ -175,28 +165,16 @@ class QueryResolveContext implements ContainerAwareInterface
 
                 $resolveCallback = $relation->getResolve();
 
-                /** @var QueryRelationResolver */
-                $relationResolver = null;
-
                 if ($resolveCallback) {
-                    $this->container->call(
-                        $resolveCallback,
-                        function (DependencyResolver $r) {
-                            if ($r->isOf(QueryRelationResolver::class)) { // QueryRelationResolver
-                                $r->create();
-                            }
-                        },
-                        function () use (&$relationResolver) {
-                            $arguments = func_get_args();
-                            foreach ($arguments as $argument) {
-                                if ($argument instanceof QueryRelationResolver) {
-                                    $relationResolver = $argument;
-                                }
-                            }
-                        }
-                    );
+                    /** @var QueryRelationResolver */
+                    $relationResolver = null;
+                    try {
+                        $relationResolver = $this->container->create(getCallbackArgumentType($resolveCallback));
+                        $resolveCallback($relationResolver);
+                    } catch (MissingCallbackArgumentException) {
+                    }
 
-                    if (!$relationResolver) {
+                    if (!($relationResolver instanceof QueryRelationResolver)) {
                         throw new InvalidConfigurationException("Resolve callback for relation {$fieldName} on type {$type::type()} must receive a QueryRelationResolver as argument.");
                     }
 

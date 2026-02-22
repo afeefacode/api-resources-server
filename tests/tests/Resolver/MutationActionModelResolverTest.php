@@ -22,9 +22,7 @@ class MutationActionModelResolverTest extends MutationTest
 {
     private $should_update = false;
 
-    /**
-     * @dataProvider missingCallbacksDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('missingCallbacksDataProvider')]
     public function test_missing_callbacks($missingCallback)
     {
         $this->expectException(MissingCallbackException::class);
@@ -55,7 +53,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->request($api, data: ['other' => []]);
     }
 
-    public function missingCallbacksDataProvider()
+    public static function missingCallbacksDataProvider()
     {
         return [
             ['get'],
@@ -86,9 +84,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->assertTrue(true);
     }
 
-    /**
-     * @dataProvider mutationDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('mutationDataProvider')]
     public function test_mutation($update, $fields, $expectedInfo, $expectedFields)
     {
         if ($update) {
@@ -135,7 +131,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->assertEquals($expectedFields, $this->testWatcher->saveFields);
     }
 
-    public function mutationDataProvider()
+    public static function mutationDataProvider()
     {
         // [data fields, save fields]
         return [
@@ -155,9 +151,7 @@ class MutationActionModelResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider saveFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('saveFieldsDataProvider')]
     public function test_save_fields($fields, $expectedFields)
     {
         $api = $this->createApiWithUpdateTypeAndMutation(
@@ -190,7 +184,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->assertEquals([$expectedFields], $this->testWatcher->saveFields);
     }
 
-    public function saveFieldsDataProvider()
+    public static function saveFieldsDataProvider()
     {
         // [data fields, save fields]
         return [
@@ -236,9 +230,7 @@ class MutationActionModelResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider createSaveRelationsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('createSaveRelationsDataProvider')]
     public function test_create_save_fields_relations($fields, $expectedFields, $expectedInfo)
     {
         $api = $this->createApiWithUpdateTypeAndMutation(
@@ -336,7 +328,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->assertEquals($expectedInfo, $this->testWatcher->info);
     }
 
-    public function createSaveRelationsDataProvider()
+    public static function createSaveRelationsDataProvider()
     {
         // [requested fields, get relation, expected save fields, resolve order]
         $data = [
@@ -416,9 +408,7 @@ class MutationActionModelResolverTest extends MutationTest
         return $data;
     }
 
-    /**
-     * @dataProvider updateSaveRelationsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('updateSaveRelationsDataProvider')]
     public function test_update_save_fields_relations($fields, $expectedFields, $expectedInfo)
     {
         $api = $this->createApiWithUpdateTypeAndMutation(
@@ -528,7 +518,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->assertEquals($expectedFields, $this->testWatcher->saveFields);
     }
 
-    public function updateSaveRelationsDataProvider()
+    public static function updateSaveRelationsDataProvider()
     {
         // [requested fields, get relation, expected save fields, resolve order]
         $data = [
@@ -608,9 +598,7 @@ class MutationActionModelResolverTest extends MutationTest
         return $data;
     }
 
-    /**
-     * @dataProvider beforeResolveDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('beforeResolveDataProvider')]
     public function test_before_resolve($data, $expectedAddFields)
     {
         $api = $this->createApiWithUpdateTypeAndMutation(
@@ -661,7 +649,7 @@ class MutationActionModelResolverTest extends MutationTest
         ], $this->testWatcher->info2);
     }
 
-    public function beforeResolveDataProvider()
+    public static function beforeResolveDataProvider()
     {
         return [
             [['name' => 'my_name'], ['name' => 'other_name']],
@@ -669,9 +657,7 @@ class MutationActionModelResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider afterResolveDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('afterResolveDataProvider')]
     public function test_after_resolve($data, $expectedAddFields)
     {
         $api = $this->createApiWithUpdateTypeAndMutation(
@@ -716,7 +702,7 @@ class MutationActionModelResolverTest extends MutationTest
         ], $this->testWatcher->info2);
     }
 
-    public function afterResolveDataProvider()
+    public static function afterResolveDataProvider()
     {
         return [
             [['name' => 'my_name'], ['name' => 'my_name']],
@@ -772,9 +758,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->request($api);
     }
 
-    /**
-     * @dataProvider beforeResolveDoesNotReturnArrayDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('beforeResolveDoesNotReturnArrayDataProvider')]
     public function test_before_resolve_does_not_return_array($return)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -797,11 +781,11 @@ class MutationActionModelResolverTest extends MutationTest
         $this->request($api);
     }
 
-    public function beforeResolveDoesNotReturnArrayDataProvider()
+    public static function beforeResolveDoesNotReturnArrayDataProvider()
     {
         return [
             'null' => [null],
-            'single array' => ['a' => 1, 'b' => 2],
+            'single array' => [['a' => 1, 'b' => 2]],
             'array' => [[]],
             'string' => ['string'],
             'object' => [new stdClass()],
@@ -809,9 +793,7 @@ class MutationActionModelResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider addDoesNotReturnModelDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('addDoesNotReturnModelDataProvider')]
     public function test_add_does_not_return_model($return)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -838,7 +820,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->request($api);
     }
 
-    public function addDoesNotReturnModelDataProvider()
+    public static function addDoesNotReturnModelDataProvider()
     {
         return [
             'null' => [null],
@@ -849,9 +831,7 @@ class MutationActionModelResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider getDoesNotReturnModelProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getDoesNotReturnModelProvider')]
     public function test_update_get_does_not_return_model($return)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -878,7 +858,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->request($api, params: ['id' => '10']);
     }
 
-    public function getDoesNotReturnModelProvider()
+    public static function getDoesNotReturnModelProvider()
     {
         return [
             'array' => [['x']],
@@ -887,9 +867,7 @@ class MutationActionModelResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider getDoesNotReturnModelDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getDoesNotReturnModelDataProvider')]
     public function test_update_get_does_return_falsy($return)
     {
         $this->expectException(NotFoundException::class);
@@ -916,7 +894,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->request($api, params: ['id' => '10']);
     }
 
-    public function getDoesNotReturnModelDataProvider()
+    public static function getDoesNotReturnModelDataProvider()
     {
         return [
             'null' => [null],
@@ -927,9 +905,7 @@ class MutationActionModelResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider deleteDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('deleteDataProvider')]
     public function test_delete($fields, $expectedInfo, $expectedInfo2)
     {
         $api = $this->createApiWithUpdateTypeAndMutation(
@@ -974,7 +950,7 @@ class MutationActionModelResolverTest extends MutationTest
         $this->assertEquals($expectedInfo2, $this->testWatcher->info2);
     }
 
-    public function deleteDataProvider()
+    public static function deleteDataProvider()
     {
         // $fields, $expectedInfo, $expectedInfo2
         return [

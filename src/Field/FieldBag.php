@@ -25,7 +25,7 @@ class FieldBag extends Bag
 
     protected bool $isMutation = false;
 
-    public function owner($owner): FieldBag
+    public function owner($owner): static
     {
         $this->owner = $owner;
         return $this;
@@ -36,18 +36,18 @@ class FieldBag extends Bag
         return $this->owner;
     }
 
-    public function isMutation(bool $isMutation = true): FieldBag
+    public function isMutation(bool $isMutation = true): static
     {
         $this->isMutation = $isMutation;
         return $this;
     }
 
-    public function getAttribute(string $name, Closure $callback = null): Attribute
+    public function getAttribute(string $name, ?Closure $callback = null): Attribute
     {
         return $this->get($name, $callback);
     }
 
-    public function getRelation(string $name, Closure $callback = null): Relation
+    public function getRelation(string $name, ?Closure $callback = null): Relation
     {
         return $this->get($name, $callback);
     }
@@ -60,79 +60,79 @@ class FieldBag extends Bag
         return $this;
     }
 
-    public function attribute(string $name, $classOrCallback): FieldBag
+    public function attribute(string $name, $classOrCallback): static
     {
         $this->_attribute($name, $classOrCallback);
         return $this;
     }
 
-    public function string(string $name, Closure $callback = null, $validate = null): FieldBag
+    public function string(string $name, ?Closure $callback = null, $validate = null): static
     {
         return $this->_attribute($name, StringAttribute::class, $callback, $validate);
     }
 
-    public function json(string $name, Closure $callback = null, $validate = null): FieldBag
+    public function json(string $name, ?Closure $callback = null, $validate = null): static
     {
         return $this->_attribute($name, JsonAttribute::class, $callback, $validate);
     }
 
-    public function date(string $name, Closure $callback = null, $validate = null): FieldBag
+    public function date(string $name, ?Closure $callback = null, $validate = null): static
     {
         return $this->_attribute($name, DateAttribute::class, $callback, $validate);
     }
 
-    public function boolean(string $name, Closure $callback = null, $validate = null): FieldBag
+    public function boolean(string $name, ?Closure $callback = null, $validate = null): static
     {
         return $this->_attribute($name, BooleanAttribute::class, $callback, $validate);
     }
 
-    public function enum(string $name, Closure $callback = null, $validate = null): FieldBag
+    public function enum(string $name, ?Closure $callback = null, $validate = null): static
     {
         return $this->_attribute($name, EnumAttribute::class, $callback, $validate);
     }
 
-    public function enumset(string $name, Closure $callback = null, $validate = null): FieldBag
+    public function enumset(string $name, ?Closure $callback = null, $validate = null): static
     {
         return $this->_attribute($name, SetAttribute::class, $callback, $validate);
     }
 
-    public function int(string $name, Closure $callback = null, $validate = null): FieldBag
+    public function int(string $name, ?Closure $callback = null, $validate = null): static
     {
         return $this->_attribute($name, IntAttribute::class, $callback, $validate);
     }
 
-    public function number(string $name, Closure $callback = null, $validate = null): FieldBag
+    public function number(string $name, ?Closure $callback = null, $validate = null): static
     {
         return $this->_attribute($name, NumberAttribute::class, $callback, $validate);
     }
 
-    public function relation(string $name, $TypeClassOrClassesOrMeta, $classOrCallback = Relation::class): FieldBag
+    public function relation(string $name, $TypeClassOrClassesOrMeta, $classOrCallback = Relation::class): static
     {
         $this->_relation($name, $TypeClassOrClassesOrMeta, $classOrCallback);
         return $this;
     }
 
-    public function hasOne(string $name, $TypeClassOrClasses, $classOrCallback = Relation::class, $validate = null): FieldBag
+    public function hasOne(string $name, $TypeClassOrClasses, $classOrCallback = Relation::class, $validate = null): static
     {
         return $this->_relation($name, $TypeClassOrClasses, $classOrCallback, $validate);
     }
 
-    public function hasMany(string $name, $TypeClassOrClasses, $classOrCallback = Relation::class, $validate = null): FieldBag
+    public function hasMany(string $name, $TypeClassOrClasses, $classOrCallback = Relation::class, $validate = null): static
     {
         return $this->_relation($name, Type::list($TypeClassOrClasses), $classOrCallback, $validate);
     }
 
-    public function linkOne(string $name, $TypeClassOrClasses, $classOrCallback = Relation::class, $validate = null): FieldBag
+    public function linkOne(string $name, $TypeClassOrClasses, $classOrCallback = Relation::class, $validate = null): static
     {
         return $this->_relation($name, Type::link($TypeClassOrClasses), $classOrCallback, $validate);
     }
 
-    public function linkMany(string $name, $TypeClassOrClasses, $classOrCallback = Relation::class, $validate = null): FieldBag
+    public function linkMany(string $name, $TypeClassOrClasses, $classOrCallback = Relation::class, $validate = null): static
     {
         return $this->_relation($name, Type::list(Type::link($TypeClassOrClasses)), $classOrCallback, $validate);
     }
 
-    public function from(FieldBag $fromFields, string $name, Closure $callback = null): FieldBag
+    public function from(FieldBag $fromFields, string $name, ?Closure $callback = null): static
     {
         $field = $fromFields->get($name)->clone();
         $this->setInternal($name, $field);
@@ -147,7 +147,7 @@ class FieldBag extends Bag
         return $field->toSchemaJson();
     }
 
-    protected function _attribute(string $name, $classOrCallback, Closure $callback = null, $validate = null): FieldBag
+    protected function _attribute(string $name, $classOrCallback, ?Closure $callback = null, $validate = null): static
     {
         $attribute = $this->container->create($classOrCallback, function (Attribute $attribute) use ($name, $validate) {
             $attribute
@@ -168,7 +168,7 @@ class FieldBag extends Bag
         return $this;
     }
 
-    protected function _relation(string $name, $TypeClassOrClassesOrMeta, $classOrCallback = Relation::class, $validate = null): FieldBag
+    protected function _relation(string $name, $TypeClassOrClassesOrMeta, $classOrCallback = Relation::class, $validate = null): static
     {
         $this->container->create($classOrCallback, function (Relation $relation) use ($name, $TypeClassOrClassesOrMeta, $validate) {
             $relation

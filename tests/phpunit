@@ -1,31 +1,13 @@
-#!/usr/bin/env php8.2
-<?php
+#!/usr/bin/env bash
 
-$command = 'docker ps -q -f name=api-resources-test-mysql';
-$containerId = shell_exec($command);
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-if (!$containerId) {
-    echo 'Start mysql docker container' . PHP_EOL;
-    exec('docker-compose up -d');
-
-    $trials = 1;
-    while (true) {
-        $result = shell_exec('phinx migrate');
-
-        if (!preg_match('/(PDOExceptionInvalidArgument|Exception)/', $result)) {
-            break;
-        }
-
-        echo 'Versuch ' . $trials . ' to start mysql' . PHP_EOL;
-
-        if ($trials > 10) {
-            echo 'Can\'t start mysql server: ' . $result . PHP_EOL;
-            exit;
-        }
-
-        $trials++;
-        sleep(2);
-    }
-}
-
-include '_phpunit';
+docker run --rm \
+    -v "$PROJECT_DIR:/app" \
+    -w /app/tests \
+    --network tests_default \
+    -e DB_HOST=mysql \
+    -e DB_PORT=3306 \
+    reg.localbin.dev/neuedev/core/docker/php-dev:8.3 \
+    php vendor/phpunit/phpunit/phpunit "$@"

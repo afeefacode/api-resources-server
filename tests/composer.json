@@ -1,37 +1,34 @@
 {
-    "bin": [
-        "phpunit2"
-    ],
     "require": {
         "robmorgan/phinx": "^0.12",
         "fakerphp/faker": "^v1.20",
-        "phpunit/phpunit": "^9.5",
+        "phpunit/phpunit": "^12.0",
         "catfan/medoo": "^2.1",
         "afeefa/debug-dump-log": "^0",
-        "illuminate/database": "^v10.48",
-        "illuminate/events": "^10.48",
-        "ankurk91/laravel-eloquent-relationships": "^1.2",
-        "staudenmeir/eloquent-eager-limit": "^v1.7"
+        "illuminate/database": "^v11.0",
+        "illuminate/events": "^v11.0",
+        "ankurk91/laravel-eloquent-relationships": "^2.1"
     },
     "autoload": {
         "psr-4": {
             "Afeefa\\ApiResources\\": "../src",
+            "Afeefa\\ApiResources\\V2\\": "../src-v2",
             "Afeefa\\ApiResources\\Test\\": "src",
-            "Afeefa\\ApiResources\\Tests\\": "tests"
+            "Afeefa\\ApiResources\\TestV2\\": "src/V2",
+            "Afeefa\\ApiResources\\Tests\\": "tests",
+            "Afeefa\\ApiResources\\TestsV2\\": "tests/V2"
         },
         "files": [
+            "../src/Utils/functions.php",
+            "../src/DI/functions.php",
+            "../src-v2/Operation.php",
             "src/global-functions.php",
             "src/functions.php"
         ]
     },
-    "scripts": {
-        "post-update-cmd": [
-            "php post-install.php"
-        ]
-    },
     "config": {
       "platform": {
-          "php": "8.2"
+          "php": "8.3"
       }
     }
 }

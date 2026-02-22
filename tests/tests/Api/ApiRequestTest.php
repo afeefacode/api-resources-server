@@ -103,9 +103,7 @@ class ApiRequestTest extends ApiResourcesTest
         $this->assertFields($models);
     }
 
-    /**
-     * @dataProvider wrongValueSingleDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongValueSingleDataProvider')]
     public function test_mutation_wrong_value_single($value)
     {
         $this->expectException(ValidationFailedException::class);
@@ -128,7 +126,7 @@ class ApiRequestTest extends ApiResourcesTest
         );
     }
 
-    public function wrongValueSingleDataProvider()
+    public static function wrongValueSingleDataProvider()
     {
         return [
             'string' => ['wrong'],
@@ -136,9 +134,7 @@ class ApiRequestTest extends ApiResourcesTest
         ];
     }
 
-    /**
-     * @dataProvider wrongValueManyDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongValueManyDataProvider')]
     public function test_mutation_wrong_value_many($value)
     {
         $this->expectException(ValidationFailedException::class);
@@ -162,7 +158,7 @@ class ApiRequestTest extends ApiResourcesTest
         );
     }
 
-    public function wrongValueManyDataProvider()
+    public static function wrongValueManyDataProvider()
     {
         return [
             'string' => ['wrong'],

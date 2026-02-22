@@ -19,9 +19,7 @@ use stdClass;
 
 class MutationRelationLinkManyResolverTest extends MutationTest
 {
-    /**
-     * @dataProvider missingCallbacksDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('missingCallbacksDataProvider')]
     public function test_missing_callbacks($missingCallback)
     {
         $this->expectException(MissingCallbackException::class);
@@ -53,7 +51,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
         $this->request($api, data: ['other' => []]);
     }
 
-    public function missingCallbacksDataProvider()
+    public static function missingCallbacksDataProvider()
     {
         return [
             ['get'],
@@ -85,9 +83,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
         $this->assertTrue(true);
     }
 
-    /**
-     * @dataProvider createOwnerDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('createOwnerDataProvider')]
     public function test_create_owner($data, $expectedInfo, $expectedInfo2)
     {
         $api = $this->createApiWithUpdateType(
@@ -129,7 +125,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
         $this->assertEquals($expectedInfo2, $this->testWatcher->info2);
     }
 
-    public function createOwnerDataProvider()
+    public static function createOwnerDataProvider()
     {
         // $data, $expectedInfo, $expectedInfo2
         return [
@@ -161,9 +157,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
 
     private $test_update_owner_existingData = [];
 
-    /**
-     * @dataProvider updateOwnerDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('updateOwnerDataProvider')]
     public function test_update_owner($existingData, $data, $expectedInfo, $expectedInfo2)
     {
         $this->test_update_owner_existingData = $existingData;
@@ -219,7 +213,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
         $this->assertEquals($expectedInfo2, $this->testWatcher->info2);
     }
 
-    public function updateOwnerDataProvider()
+    public static function updateOwnerDataProvider()
     {
         // $existingData, $data, $expectedInfo, $expectedInfo2
         return [
@@ -298,9 +292,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider getDoesNotReturnModelsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getDoesNotReturnModelsDataProvider')]
     public function test_get_does_not_return_array_of_models($return)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -330,7 +322,7 @@ class MutationRelationLinkManyResolverTest extends MutationTest
         $this->assertTrue(true);
     }
 
-    public function getDoesNotReturnModelsDataProvider()
+    public static function getDoesNotReturnModelsDataProvider()
     {
         return [
             'null' => [null],
@@ -345,12 +337,10 @@ class MutationRelationLinkManyResolverTest extends MutationTest
 
     private $test_related_operation_add_existingData = [];
 
-    /**
-     * @dataProvider relatedOperationAddDataProvider
-     */
-    public function test_related_operation($existingData, $params, $data, $expectedInfo)
+    #[\PHPUnit\Framework\Attributes\DataProvider('relatedOperationAddDataProvider')]
+    public function test_related_operation($existing, $params, $data, $info)
     {
-        $this->test_related_operation_add_existingData = $existingData;
+        $this->test_related_operation_add_existingData = $existing;
 
         $api = $this->createApiWithUpdateType(
             function (FieldBag $fields) {
@@ -379,10 +369,10 @@ class MutationRelationLinkManyResolverTest extends MutationTest
         );
 
         $this->request($api, params: $params, data: $data);
-        $this->assertEquals($expectedInfo, $this->testWatcher->info);
+        $this->assertEquals($info, $this->testWatcher->info);
     }
 
-    public function relatedOperationAddDataProvider()
+    public static function relatedOperationAddDataProvider()
     {
         // $data, $expectedInfo, $expectedInfo2, $expectedSaveFields
         return [

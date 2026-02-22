@@ -6,7 +6,6 @@ use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Api\ToSchemaJsonTrait;
 use Afeefa\ApiResources\Bag\BagEntry;
-use Afeefa\ApiResources\DI\DependencyResolver;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Exception\Exceptions\NotACallbackException;
 use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
@@ -161,12 +160,7 @@ class Field extends BagEntry
             $this->validator = $validatorOrCallback;
         } else {
             if ($this->validator) { // cloned validator
-                $this->container->call(
-                    $validatorOrCallback,
-                    function (DependencyResolver $r) {
-                        $r->fix($this->validator);
-                    }
-                );
+                $validatorOrCallback($this->validator);
             } else {
                 $this->container->create(
                     $validatorOrCallback,

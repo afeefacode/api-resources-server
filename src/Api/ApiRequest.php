@@ -5,7 +5,8 @@ namespace Afeefa\ApiResources\Api;
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
-use Afeefa\ApiResources\DI\DependencyResolver;
+use Afeefa\ApiResources\Exception\Exceptions\MissingCallbackArgumentException;
+use function Afeefa\ApiResources\DI\getCallbackArgumentType;
 use Afeefa\ApiResources\Exception\Exceptions\ApiException;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\Fields\DateAttribute;
@@ -206,25 +207,13 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
         /** @var BaseActionResolver */
         $actionResolver = null;
+        try {
+            $actionResolver = $this->container->create(getCallbackArgumentType($resolveCallback));
+            $resolveCallback($actionResolver);
+        } catch (MissingCallbackArgumentException) {
+        }
 
-        $this->container->call(
-            $resolveCallback,
-            function (DependencyResolver $r) {
-                if ($r->isOf(BaseActionResolver::class)) {
-                    $r->create();
-                }
-            },
-            function () use (&$actionResolver) {
-                $arguments = func_get_args();
-                foreach ($arguments as $argument) {
-                    if ($argument instanceof BaseActionResolver) {
-                        $actionResolver = $argument;
-                    }
-                }
-            }
-        );
-
-        if (!$actionResolver) {
+        if (!($actionResolver instanceof BaseActionResolver)) {
             throw new InvalidConfigurationException("Resolve callback for action {$this->actionName} on resource {$this->resourceType} must receive an ActionResolver as argument.");
         }
 

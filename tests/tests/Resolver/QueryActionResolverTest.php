@@ -118,9 +118,7 @@ class QueryActionResolverTest extends QueryTest
         ], $model->jsonSerialize());
     }
 
-    /**
-     * @dataProvider nullDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('nullDataProvider')]
     public function test_returns_single_null($null)
     {
         $api = $this->createApiWithAction(T('TYPE'), function (Action $action) use ($null) {
@@ -139,7 +137,7 @@ class QueryActionResolverTest extends QueryTest
         $this->assertNull($result['data']);
     }
 
-    public function nullDataProvider()
+    public static function nullDataProvider()
     {
         return [
             'return null' => [true],
@@ -206,9 +204,7 @@ class QueryActionResolverTest extends QueryTest
         $this->request($api);
     }
 
-    /**
-     * @dataProvider wrongModelDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongModelDataProvider')]
     public function test_returns_single_wrong_model($wrongModel)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -226,7 +222,7 @@ class QueryActionResolverTest extends QueryTest
         $this->request($api);
     }
 
-    public function wrongModelDataProvider()
+    public static function wrongModelDataProvider()
     {
         return [
             'array' => [[]],
@@ -313,9 +309,7 @@ class QueryActionResolverTest extends QueryTest
         $this->assertCount(0, $models);
     }
 
-    /**
-     * @dataProvider wrongListReturnDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongListReturnDataProvider')]
     public function test_returns_list_no_list($wrongList)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -333,7 +327,7 @@ class QueryActionResolverTest extends QueryTest
         $this->request($api);
     }
 
-    public function wrongListReturnDataProvider()
+    public static function wrongListReturnDataProvider()
     {
         return [
             'null' => [null],
@@ -343,9 +337,7 @@ class QueryActionResolverTest extends QueryTest
         ];
     }
 
-    /**
-     * @dataProvider wrongListItemReturnDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongListItemReturnDataProvider')]
     public function test_returns_list_with_wrong_model($wrongModel)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -366,7 +358,7 @@ class QueryActionResolverTest extends QueryTest
         $this->request($api);
     }
 
-    public function wrongListItemReturnDataProvider()
+    public static function wrongListItemReturnDataProvider()
     {
         return [
             'null' => [null],
@@ -376,9 +368,7 @@ class QueryActionResolverTest extends QueryTest
         ];
     }
 
-    /**
-     * @dataProvider requestFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('requestFieldsDataProvider')]
     public function test_requested_fields($fields, $expectedFields)
     {
         $api = $this->createApiWithTypeAndAction(
@@ -403,9 +393,7 @@ class QueryActionResolverTest extends QueryTest
         $this->assertEquals([$expectedFields], $this->testWatcher->requestedFields);
     }
 
-    /**
-     * @dataProvider requestFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('requestFieldsDataProvider')]
     public function test_select_fields($fields, $expectedFields)
     {
         $api = $this->createApiWithTypeAndAction(
@@ -452,9 +440,7 @@ class QueryActionResolverTest extends QueryTest
         $this->request($api);
     }
 
-    /**
-     * @dataProvider wrongTypeNameToSelectFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongTypeNameToSelectFieldsDataProvider')]
     public function test_requested_fields_wrong_type($single)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -515,9 +501,7 @@ class QueryActionResolverTest extends QueryTest
         $this->request($api);
     }
 
-    /**
-     * @dataProvider wrongTypeNameToSelectFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongTypeNameToSelectFieldsDataProvider')]
     public function test_select_fields_wrong_type($single)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -538,9 +522,7 @@ class QueryActionResolverTest extends QueryTest
         $this->request($api);
     }
 
-    /**
-     * @dataProvider wrongTypeNameToSelectFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongTypeNameToSelectFieldsDataProvider')]
     public function test_select_fields_wrong_type2($single)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -561,7 +543,7 @@ class QueryActionResolverTest extends QueryTest
         $this->request($api);
     }
 
-    public function wrongTypeNameToSelectFieldsDataProvider()
+    public static function wrongTypeNameToSelectFieldsDataProvider()
     {
         return [
             'single' => [true],
@@ -569,9 +551,7 @@ class QueryActionResolverTest extends QueryTest
         ];
     }
 
-    /**
-     * @dataProvider requestFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('requestFieldsDataProvider')]
     public function test_visible_fields($fields, $expectedFields)
     {
         $api = $this->createApiWithTypeAndAction(
@@ -601,7 +581,7 @@ class QueryActionResolverTest extends QueryTest
         $this->assertEquals($expectedVisibleFields, $model->getVisibleFields());
     }
 
-    public function requestFieldsDataProvider()
+    public static function requestFieldsDataProvider()
     {
         // [request fields, calculated fields]
         return [

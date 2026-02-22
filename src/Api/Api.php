@@ -9,6 +9,7 @@ use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Resource\ResourceBag;
 use Afeefa\ApiResources\Type\TypeClassMap;
 use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
+use Afeefa\ApiResources\V2\TypeConfigurator;
 use Closure;
 
 class Api implements ContainerAwareInterface
@@ -25,6 +26,9 @@ class Api implements ContainerAwareInterface
 
     protected array $overriddenTypes = [];
 
+    /** @var TypeConfigurator[] */
+    protected array $typeConfigurators = [];
+
     public function created(): void
     {
         $this->container->registerAlias($this, self::class);
@@ -33,6 +37,7 @@ class Api implements ContainerAwareInterface
         $this->resources($this->resources);
 
         $this->overriddenTypes = $this->overrideTypes();
+        $this->configureTypes();
     }
 
     public function debug($debug = true): static
@@ -106,6 +111,13 @@ class Api implements ContainerAwareInterface
         $usedTypes = $this->container->get(TypeClassMap::class)
             ->overrideTypes($this->overriddenTypes)
             ->createUsedTypesForApi($this);
+
+        foreach ($this->typeConfigurators as $typeClass => $configurator) {
+            if (isset($usedTypes[$typeClass])) {
+                $configurator->apply($usedTypes[$typeClass]);
+            }
+        }
+
         $usedValidators = $this->createAllUsedValidators($usedTypes);
 
         // debug_dump(array_keys($usedTypes));
@@ -134,6 +146,14 @@ class Api implements ContainerAwareInterface
         ];
     }
 
+    public function configureType(string $typeClass): TypeConfigurator
+    {
+        if (!isset($this->typeConfigurators[$typeClass])) {
+            $this->typeConfigurators[$typeClass] = new TypeConfigurator();
+        }
+        return $this->typeConfigurators[$typeClass];
+    }
+
     protected function resources(ResourceBag $resources): void
     {
     }
@@ -141,6 +161,10 @@ class Api implements ContainerAwareInterface
     protected function overrideTypes(): array
     {
         return [];
+    }
+
+    protected function configureTypes(): void
+    {
     }
 
     /**

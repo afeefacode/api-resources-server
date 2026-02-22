@@ -24,7 +24,7 @@ class ActionResponse implements ToSchemaJsonInterface, ContainerAwareInterface
 
     protected array $TypeClasses;
 
-    public function initFromArgument($TypeClassOrClassesOrMeta, Closure $callback = null): ActionResponse
+    public function initFromArgument($TypeClassOrClassesOrMeta, ?Closure $callback = null): ActionResponse
     {
         $valueFor = $this->getNameForException();
         $argumentName = $this->getArgumentNameForException();

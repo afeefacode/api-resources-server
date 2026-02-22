@@ -3,13 +3,13 @@
 namespace Afeefa\ApiResources\Test\Fixtures\Blog\Models;
 
 use Afeefa\ApiResources\Eloquent\Model as EloquentModel;
-use Ankurk91\Eloquent\MorphToOne;
+use Ankurk91\Eloquent\HasMorphToOne;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Author extends EloquentModel
 {
     use HasFactory;
-    use MorphToOne;
+    use HasMorphToOne;
 
     public static $type = 'Blog.Author';
 

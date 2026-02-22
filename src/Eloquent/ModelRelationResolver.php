@@ -296,7 +296,7 @@ class ModelRelationResolver
         return $relationCounts;
     }
 
-    protected function getEloquentRelationWrapper(Relation $relation, Model $owner = null): EloquentRelationWrapper
+    protected function getEloquentRelationWrapper(Relation $relation, ?Model $owner = null): EloquentRelationWrapper
     {
         $eloquentRelation = new EloquentRelationWrapper();
 

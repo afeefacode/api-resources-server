@@ -10,11 +10,11 @@ return [
         'default_environment' => 'development',
         'development' => [
             'adapter' => 'mysql',
-            'host' => '127.0.0.1',
+            'host' => getenv('DB_HOST') ?: '127.0.0.1',
             'name' => 'api-resources-test',
             'user' => 'root',
             'pass' => 'root',
-            'port' => '23306',
+            'port' => (int)(getenv('DB_PORT') ?: '23306'),
             'charset' => 'utf8'
         ]
     ],

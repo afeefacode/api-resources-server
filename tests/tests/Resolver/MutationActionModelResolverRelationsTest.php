@@ -883,10 +883,8 @@ class MutationActionModelResolverRelationsTest extends MutationTest
 
     private function getTypeByName(string $typeName): Type
     {
-        return $this->container->call(function (TypeClassMap $typeClassMap) use ($typeName) {
-            $TypeClass = $typeClassMap->get($typeName) ?? Type::class;
-            return $this->container->get($TypeClass);
-        });
+        $TypeClass = $this->container->get(TypeClassMap::class)->get($typeName) ?? Type::class;
+        return $this->container->get($TypeClass);
     }
 }
 

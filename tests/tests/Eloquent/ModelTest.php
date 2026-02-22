@@ -20,9 +20,7 @@ class ModelTest extends ApiResourcesEloquentTest
         $this->assertEquals(25, Article::count());
     }
 
-    /**
-     * @dataProvider timezonesDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('timezonesDataProvider')]
     public function test_datetime_timezone(string $localTz, string $timeString, string $isoTimeString)
     {
         date_default_timezone_set($localTz);
@@ -44,7 +42,7 @@ class ModelTest extends ApiResourcesEloquentTest
         $this->assertEquals($isoTimeString, $article->date->toJSON());
     }
 
-    public function timezonesDataProvider()
+    public static function timezonesDataProvider()
     {
         $times = [
             0 => ['2023-03-30T04:00:00+02:00', '2023-03-30T02:00:00.000000Z'],

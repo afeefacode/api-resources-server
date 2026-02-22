@@ -153,9 +153,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->assertEquals($expectedFields, $model->jsonSerialize());
     }
 
-    /**
-     * @dataProvider countNoArrayOfIntegersDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('countNoArrayOfIntegersDataprovider')]
     public function test_single_count_map_no_array($returnValue)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -181,7 +179,7 @@ class QueryRelationResolverTest extends QueryTest
         ]);
     }
 
-    public function countNoArrayOfIntegersDataprovider()
+    public static function countNoArrayOfIntegersDataprovider()
     {
         return [
             'return null' => [[null]],
@@ -191,9 +189,7 @@ class QueryRelationResolverTest extends QueryTest
         ];
     }
 
-    /**
-     * @dataProvider countNoArrayOfIntegersDataprovider2
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('countNoArrayOfIntegersDataprovider2')]
     public function test_single_count_map_no_array2($returnValue)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -219,7 +215,7 @@ class QueryRelationResolverTest extends QueryTest
         ]);
     }
 
-    public function countNoArrayOfIntegersDataprovider2()
+    public static function countNoArrayOfIntegersDataprovider2()
     {
         return [
             'return null' => [null],
@@ -389,9 +385,7 @@ class QueryRelationResolverTest extends QueryTest
         }
     }
 
-    /**
-     * @dataProvider restrictToDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('restrictToDataProvider')]
     public function test_relation_restricted($restrictTo)
     {
         $api = $this->createApiWithTypeAndAction(
@@ -448,7 +442,7 @@ class QueryRelationResolverTest extends QueryTest
         }
     }
 
-    public function restrictToDataProvider()
+    public static function restrictToDataProvider()
     {
         return [
             'not restricted' => [null],
@@ -1097,9 +1091,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->requestSingle($api, ['others' => true]);
     }
 
-    /**
-     * @dataProvider loadNoArrayDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('loadNoArrayDataprovider')]
     public function test_load_returns_no_array($returnValue)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -1123,7 +1115,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->requestSingle($api, ['others' => true]);
     }
 
-    public function loadNoArrayDataprovider()
+    public static function loadNoArrayDataprovider()
     {
         return [
             'return null' => [null],
@@ -1133,9 +1125,7 @@ class QueryRelationResolverTest extends QueryTest
         ];
     }
 
-    /**
-     * @dataProvider loadNoArrayOfModelsDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('loadNoArrayOfModelsDataprovider')]
     public function test_single_load_returns_no_list_of_models($returnValue)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -1155,9 +1145,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->requestSingle($api, ['other' => true]);
     }
 
-    /**
-     * @dataProvider loadNoArrayOfModelsDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('loadNoArrayOfModelsDataprovider')]
     public function test_list_load_returns_no_list_of_models($returnValue)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -1177,9 +1165,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->requestSingle($api, ['others' => true]);
     }
 
-    /**
-     * @dataProvider mapNoModelDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('mapNoModelDataprovider')]
     public function test_single_map_returns_no_model($returnValue)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -1226,9 +1212,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->assertEquals($expectedFields, $model->jsonSerialize());
     }
 
-    /**
-     * @dataProvider loadNoArrayOfModelsDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('loadNoArrayOfModelsDataprovider')]
     public function test_list_map_returns_no_list_of_models($returnValue)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -1250,7 +1234,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->requestSingle($api, ['others' => true]);
     }
 
-    public function mapNoModelDataprovider()
+    public static function mapNoModelDataprovider()
     {
         return [
             'return string' => ['string'],
@@ -1261,7 +1245,7 @@ class QueryRelationResolverTest extends QueryTest
         ];
     }
 
-    public function loadNoArrayOfModelsDataprovider()
+    public static function loadNoArrayOfModelsDataprovider()
     {
         return [
             'return null' => [[null]],
@@ -1271,9 +1255,7 @@ class QueryRelationResolverTest extends QueryTest
         ];
     }
 
-    /**
-     * @dataProvider loadArrayOfModelsDataprovider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('loadArrayOfModelsDataprovider')]
     public function test_get_list_returns_list_of_models($returnValue)
     {
         $api = $this->createApiWithTypeAndAction(
@@ -1293,7 +1275,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->assertTrue(true);
     }
 
-    public function loadArrayOfModelsDataprovider()
+    public static function loadArrayOfModelsDataprovider()
     {
         return [
             'return empty' => [[]],
@@ -1301,9 +1283,7 @@ class QueryRelationResolverTest extends QueryTest
         ];
     }
 
-    /**
-     * @dataProvider requestFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('requestFieldsDataProvider')]
     public function test_requested_fields($fields, $expectedFields)
     {
         $api = $this->createApiWithTypeAndAction(
@@ -1351,7 +1331,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->assertEquals($expectedFields, $model->jsonSerialize());
     }
 
-    public function requestFieldsDataProvider()
+    public static function requestFieldsDataProvider()
     {
         // [request fields, calculated fields]
         return [
@@ -1411,9 +1391,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->request($api, ['other' => true]);
     }
 
-    /**
-     * @dataProvider wrongTypeNameToSelectFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongTypeNameToSelectFieldsDataProvider')]
     public function test_requested_fields_wrong_type($single)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -1477,9 +1455,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->request($api, ['other' => true]);
     }
 
-    /**
-     * @dataProvider wrongTypeNameToSelectFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongTypeNameToSelectFieldsDataProvider')]
     public function test_select_fields_wrong_type($single)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -1501,9 +1477,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->request($api, ['other' => true]);
     }
 
-    /**
-     * @dataProvider wrongTypeNameToSelectFieldsDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('wrongTypeNameToSelectFieldsDataProvider')]
     public function test_select_fields_wrong_type2($single)
     {
         $this->expectException(InvalidConfigurationException::class);
@@ -1525,7 +1499,7 @@ class QueryRelationResolverTest extends QueryTest
         $this->request($api, ['other' => true]);
     }
 
-    public function wrongTypeNameToSelectFieldsDataProvider()
+    public static function wrongTypeNameToSelectFieldsDataProvider()
     {
         return [
             'single' => [true],

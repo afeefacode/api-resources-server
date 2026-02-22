@@ -61,9 +61,7 @@ class MutationValidatorTest extends MutationTest
         $this->assertEquals($expectedInfo, $this->testWatcher->info);
     }
 
-    /**
-     * @dataProvider missingRequiredFieldsProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('missingRequiredFieldsProvider')]
     public function test_required($data)
     {
         $this->expectException(ValidationFailedException::class);
@@ -90,7 +88,7 @@ class MutationValidatorTest extends MutationTest
         $this->assertEquals($expectedInfo, $this->testWatcher->info);
     }
 
-    public function missingRequiredFieldsProvider()
+    public static function missingRequiredFieldsProvider()
     {
         return [
             [
@@ -126,9 +124,7 @@ class MutationValidatorTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider sanitizeDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('sanitizeDataProvider')]
     public function test_sanitize($validate, $values, $expectedInfo)
     {
         $this->save(
@@ -155,7 +151,7 @@ class MutationValidatorTest extends MutationTest
         $this->assertSame($expectedInfo, $this->testWatcher->info);
     }
 
-    public function sanitizeDataProvider()
+    public static function sanitizeDataProvider()
     {
         return [
             [

@@ -11,16 +11,6 @@ use Closure;
 use ReflectionFunction;
 use ReflectionNamedType;
 
-function factory(Closure $factory)
-{
-    return new FactoryDefinition($factory);
-}
-
-function create()
-{
-    return new CreateDefinition();
-}
-
 function classOrCallback($classOrCallback): array
 {
     if ($classOrCallback instanceof Closure) {

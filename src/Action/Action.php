@@ -61,7 +61,7 @@ class Action extends BagEntry
         return $this->params->get($name);
     }
 
-    public function input($TypeClassOrClassesOrMeta, Closure $callback = null): Action
+    public function input($TypeClassOrClassesOrMeta, ?Closure $callback = null): Action
     {
         $this->input = $this->container->create(ActionInput::class)
             ->initFromArgument($TypeClassOrClassesOrMeta, $callback);
@@ -104,7 +104,7 @@ class Action extends BagEntry
         return $this->filters;
     }
 
-    public function response($TypeClassOrClassesOrMeta, Closure $callback = null): Action
+    public function response($TypeClassOrClassesOrMeta, ?Closure $callback = null): Action
     {
         $this->response = $this->container->create(ActionResponse::class)
             ->initFromArgument($TypeClassOrClassesOrMeta, $callback);

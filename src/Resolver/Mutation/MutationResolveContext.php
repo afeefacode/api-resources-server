@@ -5,7 +5,7 @@ namespace Afeefa\ApiResources\Resolver\Mutation;
 use Afeefa\ApiResources\Api\Operation;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
-use Afeefa\ApiResources\DI\DependencyResolver;
+use function Afeefa\ApiResources\DI\getCallbackArgumentType;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\Attribute;
 use Afeefa\ApiResources\Field\FieldBag;
@@ -160,26 +160,16 @@ class MutationResolveContext implements ContainerAwareInterface
 
                 if ($resolveCallback) {
                     /** @var MutationRelationResolver */
-                    $mutationRelationResolver = null;
+                    $mutationRelationResolver = $this->container->create(getCallbackArgumentType($resolveCallback));
+                    $mutationRelationResolver
+                        ->relation($relation)
+                        ->fieldsToSave($value);
+                    if ($this->owner) {
+                        $mutationRelationResolver->addOwner($this->owner);
+                    }
+                    $resolveCallback($mutationRelationResolver);
 
-                    $this->container->call(
-                        $resolveCallback,
-                        function (DependencyResolver $r) use (&$mutationRelationResolver, $relation, $value) {
-                            if ($r->isOf(MutationRelationResolver::class)) {
-                                $r->create(function (MutationRelationResolver $resolver) use (&$mutationRelationResolver, $relation, $value) {
-                                    $resolver
-                                        ->relation($relation)
-                                        ->fieldsToSave($value);
-                                    if ($this->owner) {
-                                        $resolver->addOwner($this->owner);
-                                    }
-                                    $mutationRelationResolver = $resolver;
-                                });
-                            }
-                        }
-                    );
-
-                    if (!$mutationRelationResolver) {
+                    if (!($mutationRelationResolver instanceof MutationRelationResolver)) {
                         throw new InvalidConfigurationException("Resolve callback for save relation {$fieldName} on type {$type::type()} must receive a MutationRelationResolver as argument.");
                     }
 

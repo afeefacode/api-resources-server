@@ -7,7 +7,6 @@ use Afeefa\ApiResources\Api\ToSchemaJsonTrait;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
-use Afeefa\ApiResources\DI\DependencyResolver;
 use Closure;
 
 class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
@@ -22,7 +21,7 @@ class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
 
     private array $definitions = [];
 
-    public function get(string $name, Closure $callback = null): BagEntryInterface
+    public function get(string $name, ?Closure $callback = null): BagEntryInterface
     {
         $entry = $this->entries[$name] ?? null;
 
@@ -47,7 +46,7 @@ class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
         return $entry;
     }
 
-    public function setDefinition(string $name, $classOrCallback, Closure $createCallback = null): Bag
+    public function setDefinition(string $name, $classOrCallback, ?Closure $createCallback = null): Bag
     {
         $this->definitions[$name] = [$classOrCallback, $createCallback];
         return $this;
@@ -103,14 +102,7 @@ class Bag implements ToSchemaJsonInterface, ContainerAwareInterface
     {
         return array_filter(array_map(function (BagEntryInterface $entry) {
             if (method_exists($this, 'getEntrySchemaJson')) {
-                return $this->container->call(
-                    [$this, 'getEntrySchemaJson'],
-                    function (DependencyResolver $r) use ($entry) {
-                        if ($r->isOf(BagEntryInterface::class)) {
-                            $r->fix($entry);
-                        }
-                    }
-                );
+                return $this->getEntrySchemaJson($entry);
             }
             return $entry->toSchemaJson();
         }, $this->getEntries()));

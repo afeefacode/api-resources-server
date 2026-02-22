@@ -7,12 +7,8 @@ use Carbon\Carbon;
 use DateTimeZone;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
-
 class Model extends EloquentModel implements ModelInterface
 {
-    use HasEagerLimit;
-
     public static $type = 'Model';
 
     protected $visibleFields = [];

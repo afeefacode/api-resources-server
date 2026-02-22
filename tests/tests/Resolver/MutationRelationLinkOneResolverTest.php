@@ -19,9 +19,7 @@ use stdClass;
 
 class MutationRelationLinkOneResolverTest extends MutationTest
 {
-    /**
-     * @dataProvider missingCallbacksDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('missingCallbacksDataProvider')]
     public function test_missing_callbacks($missingCallback)
     {
         $this->expectException(MissingCallbackException::class);
@@ -53,7 +51,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
         $this->request($api, data: ['other' => []]);
     }
 
-    public function missingCallbacksDataProvider()
+    public static function missingCallbacksDataProvider()
     {
         return [
             ['get'],
@@ -107,9 +105,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
 
     private $link_existingData = [];
 
-    /**
-     * @dataProvider updateOwnerDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('updateOwnerDataProvider')]
     public function test_update_owner($existingData, $data, $expectedInfo, $expectedInfo2)
     {
         $this->link_existingData = $existingData;
@@ -169,7 +165,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
         $this->assertEquals($expectedInfo2, $this->testWatcher->info2);
     }
 
-    public function updateOwnerDataProvider()
+    public static function updateOwnerDataProvider()
     {
         // $existingData, $data, $expectedInfo, $expectedInfo2
         return [
@@ -271,9 +267,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider createOwnerDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('createOwnerDataProvider')]
     public function test_create_owner($data, $expectedInfo, $expectedInfo2)
     {
         $api = $this->createApiWithUpdateType(
@@ -313,7 +307,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
         $this->assertEquals($expectedInfo2, $this->testWatcher->info2);
     }
 
-    public function createOwnerDataProvider()
+    public static function createOwnerDataProvider()
     {
         // $data, $expectedInfo, $expectedInfo2
         return [
@@ -349,9 +343,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider saveToOwnerDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('saveToOwnerDataProvider')]
     public function test_save_to_owner($data, $expectedInfo, $expectedInfo2)
     {
         $api = $this->createApiWithUpdateType(
@@ -386,7 +378,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
         $this->assertEquals($expectedInfo2, $this->testWatcher->info2);
     }
 
-    public function saveToOwnerDataProvider()
+    public static function saveToOwnerDataProvider()
     {
         // $data, $expectedInfo, $expectedInfo2
         return [
@@ -422,9 +414,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
         ];
     }
 
-    /**
-     * @dataProvider getDoesNotReturnModelDataProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('getDoesNotReturnModelDataProvider')]
     public function test_get_does_not_return_model_or_null($return)
     {
         if (in_array($return, [null, 'NOTHING'], true)) {
@@ -458,7 +448,7 @@ class MutationRelationLinkOneResolverTest extends MutationTest
         $this->assertTrue(true);
     }
 
-    public function getDoesNotReturnModelDataProvider()
+    public static function getDoesNotReturnModelDataProvider()
     {
         return [
             'null' => [null],
