@@ -5,8 +5,8 @@
         "phpunit/phpunit": "^12.0",
         "catfan/medoo": "^2.1",
         "afeefa/debug-dump-log": "^0",
-        "illuminate/database": "^v11.0",
-        "illuminate/events": "^v11.0",
+        "illuminate/database": "^v12.0",
+        "illuminate/events": "^v12.0",
         "ankurk91/laravel-eloquent-relationships": "^2.1"
     },
     "autoload": {
