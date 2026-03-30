@@ -186,6 +186,14 @@ class MutationResolveContext implements ContainerAwareInterface
             }
         }
 
+        // ensure #delete resolvers run before #add resolvers,
+        // regardless of the key order in the request payload
+        uksort($relationResolvers, function ($a, $b) {
+            $aIsDelete = str_ends_with($a, '#delete');
+            $bIsDelete = str_ends_with($b, '#delete');
+            return $bIsDelete <=> $aIsDelete;
+        });
+
         return $relationResolvers;
     }
 
