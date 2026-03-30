@@ -30,7 +30,9 @@ class MutationResolveContext implements ContainerAwareInterface
     /**
      * @var MutationRelationResolver[]
      */
-    protected ?array $relationResolvers = null;
+    protected array $relationResolvers = [];
+
+    protected bool $relationResolversInitialized = false;
 
     public function type(Type $type): MutationResolveContext
     {
@@ -69,10 +71,22 @@ class MutationResolveContext implements ContainerAwareInterface
      */
     public function getRelationResolvers(): array
     {
-        if (!$this->relationResolvers) {
-            $this->relationResolvers = $this->createRelationResolvers();
+        if (!$this->relationResolversInitialized) {
+            $this->relationResolvers = array_merge(
+                $this->relationResolvers,
+                $this->createRelationResolvers()
+            );
+            $this->relationResolversInitialized = true;
         }
         return $this->relationResolvers;
+    }
+
+    public function getRelationResolver(string $name): ?MutationRelationResolver
+    {
+        if (!array_key_exists($name, $this->relationResolvers)) {
+            $this->relationResolvers[$name] = $this->createRelationResolver($name);
+        }
+        return $this->relationResolvers[$name];
     }
 
     public function getSaveFields(array $additionalFields = []): array
@@ -156,33 +170,14 @@ class MutationResolveContext implements ContainerAwareInterface
                     }
                 }
 
-                $resolveCallback = $relation->getResolve();
+                $resolver = $this->createRelationResolver($fieldName, $value);
 
-                if ($resolveCallback) {
-                    // invoke mutation relation resolver callback (MutationRelationResolver)
-                    $owner = $this->owner;
-                    $mutationRelationResolver = invokeResolverCallback(
-                        $resolveCallback,
-                        $this->container,
-                        function (MutationRelationResolver $resolver) use ($relation, $value, $owner) {
-                            $resolver
-                                ->relation($relation)
-                                ->fieldsToSave($value);
-                            if ($owner) {
-                                $resolver->addOwner($owner);
-                            }
-                        }
-                    );
-
-                    if (!($mutationRelationResolver instanceof MutationRelationResolver)) {
-                        throw new InvalidConfigurationException("Resolve callback for save relation {$fieldName} on type {$type::type()} must receive a MutationRelationResolver as argument.");
-                    }
-
-                    $mutationRelationResolver->relatedOperation($relatedOperation);
-                    $relationResolvers[$fieldNameWithOperation] = $mutationRelationResolver;
-                } else {
+                if (!$resolver) {
                     throw new InvalidConfigurationException("Relation {$fieldName} on type {$type::type()} does not have a relation resolver.");
                 }
+
+                $resolver->relatedOperation($relatedOperation);
+                $relationResolvers[$fieldNameWithOperation] = $resolver;
             }
         }
 
@@ -230,6 +225,43 @@ class MutationResolveContext implements ContainerAwareInterface
     {
         $method = $operation === Operation::UPDATE ? 'Update' : 'Create';
         return $type->{'get' . $method . 'Attribute'}($name);
+    }
+
+    protected function createRelationResolver(string $name, mixed $fieldsToSave = null): ?MutationRelationResolver
+    {
+        $type = $this->type;
+        $operation = $this->getOperation();
+
+        if (!$this->hasSaveRelation($type, $operation, $name)) {
+            return null;
+        }
+
+        $relation = $this->getSaveRelation($type, $operation, $name);
+        $resolveCallback = $relation->getResolve();
+
+        if (!$resolveCallback) {
+            return null;
+        }
+
+        $owner = $this->owner;
+        $resolver = invokeResolverCallback(
+            $resolveCallback,
+            $this->container,
+            function (MutationRelationResolver $resolver) use ($relation, $fieldsToSave, $owner) {
+                $resolver
+                    ->relation($relation)
+                    ->fieldsToSave($fieldsToSave);
+                if ($owner) {
+                    $resolver->addOwner($owner);
+                }
+            }
+        );
+
+        if (!($resolver instanceof MutationRelationResolver)) {
+            throw new InvalidConfigurationException("Resolve callback for save relation {$name} on type {$type::type()} must receive a MutationRelationResolver as argument.");
+        }
+
+        return $resolver;
     }
 
     protected function hasSaveRelation(Type $type, string $operation, string $name): bool

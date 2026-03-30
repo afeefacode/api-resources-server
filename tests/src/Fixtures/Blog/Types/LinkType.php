@@ -5,6 +5,7 @@ namespace Afeefa\ApiResources\Test\Fixtures\Blog\Types;
 use Afeefa\ApiResources\Eloquent\ModelType;
 use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Fields\StringAttribute;
+use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Link;
 
 class LinkType extends ModelType
@@ -25,8 +26,13 @@ class LinkType extends ModelType
 
     protected function createFields(FieldBag $createFields, FieldBag $updateFields): void
     {
-        $createFields->from($updateFields, 'url', function (StringAttribute $attribute) {
-            $attribute->required();
-        });
+        $createFields
+            ->from($updateFields, 'url', function (StringAttribute $attribute) {
+                $attribute->required();
+            })
+
+            ->hasOne('author', AuthorType::class, function (Relation $relation) {
+                $relation->required();
+            });
     }
 }

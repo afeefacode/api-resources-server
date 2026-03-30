@@ -36,6 +36,16 @@ trait MutationResolverTrait
         $requiredFieldNames = $resolveContext->getRequiredFieldNames();
         foreach ($requiredFieldNames as $requiredFieldName) {
             if (!$fieldsToSave || !array_key_exists($requiredFieldName, $fieldsToSave)) {
+                // check if the owner provides the FK for this relation (nested hasMany/hasOne)
+                if ($this->ownerSaveFields) {
+                    $resolver = $resolveContext->getRelationResolver($requiredFieldName);
+                    if ($resolver && $resolver->shouldSaveRelatedToOwner()) {
+                        $fkFields = $resolver->getSaveRelatedToOwnerFields(null);
+                        if (!array_diff_key($fkFields, $this->ownerSaveFields)) {
+                            continue;
+                        }
+                    }
+                }
                 throw new ValidationFailedException("Field {$requiredFieldName} is required but not given.");
             }
         }
