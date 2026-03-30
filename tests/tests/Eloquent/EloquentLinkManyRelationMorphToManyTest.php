@@ -324,6 +324,42 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
         $this->assertTags($author->id, ['1' => 'tag1']);
     }
 
+    public function test_delete_runs_before_add()
+    {
+        $author = $this->createAuthorWithTags(2);
+
+        // same id in both #delete and #add: delete runs first, then re-link
+        // result must be the same regardless of payload key order
+        $this->save(
+            id: $author->id,
+            data: [
+                'tags#add' => [
+                    ['id' => '1']
+                ],
+                'tags#delete' => [
+                    ['id' => '1']
+                ]
+            ]
+        );
+
+        $this->assertTags($author->id, ['2' => 'tag2', '1' => 'tag1']);
+
+        // reverse key order, same result
+        $this->save(
+            id: $author->id,
+            data: [
+                'tags#delete' => [
+                    ['id' => '2']
+                ],
+                'tags#add' => [
+                    ['id' => '2']
+                ]
+            ]
+        );
+
+        $this->assertTags($author->id, ['1' => 'tag1', '2' => 'tag2']);
+    }
+
     public function test_add_delete()
     {
         $author = $this->createAuthorWithTags(3);

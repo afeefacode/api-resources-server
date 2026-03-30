@@ -318,6 +318,42 @@ class EloquentHasManyRelationHasManyTest extends ApiResourcesEloquentTest
         $this->assertLinks($author->id, ['1' => 'link1', '4' => 'link4', '5' => 'link5']);
     }
 
+    public function test_delete_runs_before_add()
+    {
+        $author = $this->createAuthorWithLinks(2);
+
+        // delete and add: result must be the same regardless of key order
+        // key order: #add before #delete
+        $this->save(
+            id: $author->id,
+            data: [
+                'links#add' => [
+                    ['url' => 'link3']
+                ],
+                'links#delete' => [
+                    ['id' => '2']
+                ]
+            ]
+        );
+
+        $this->assertLinks($author->id, ['1' => 'link1', '3' => 'link3']);
+
+        // key order: #delete before #add — same result
+        $this->save(
+            id: $author->id,
+            data: [
+                'links#delete' => [
+                    ['id' => '1']
+                ],
+                'links#add' => [
+                    ['url' => 'link4']
+                ]
+            ]
+        );
+
+        $this->assertLinks($author->id, ['3' => 'link3', '4' => 'link4']);
+    }
+
     public function test_add_delete()
     {
         $author = $this->createAuthorWithLinks(2);
