@@ -2,6 +2,10 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+IMAGE_NAME="api-resources-test-php"
+
+docker compose -f "$SCRIPT_DIR/docker-compose.yml" up -d --wait
+docker build -q -t "$IMAGE_NAME" "$SCRIPT_DIR" > /dev/null
 
 docker run --rm \
     -v "$PROJECT_DIR:/app" \
@@ -9,5 +13,5 @@ docker run --rm \
     --network tests_default \
     -e DB_HOST=mysql \
     -e DB_PORT=3306 \
-    reg.localbin.dev/neuedev/core/docker/php-dev:8.3 \
+    "$IMAGE_NAME" \
     php vendor/phpunit/phpunit/phpunit "$@"

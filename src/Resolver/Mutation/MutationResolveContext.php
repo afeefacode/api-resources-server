@@ -179,7 +179,7 @@ class MutationResolveContext implements ContainerAwareInterface
                     }
 
                     $mutationRelationResolver->relatedOperation($relatedOperation);
-                    $relationResolvers[$fieldName] = $mutationRelationResolver;
+                    $relationResolvers[$fieldNameWithOperation] = $mutationRelationResolver;
                 } else {
                     throw new InvalidConfigurationException("Relation {$fieldName} on type {$type::type()} does not have a relation resolver.");
                 }

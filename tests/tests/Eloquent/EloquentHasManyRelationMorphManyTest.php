@@ -322,6 +322,7 @@ class EloquentHasManyRelationMorphManyTest extends ApiResourcesEloquentTest
     {
         $author = $this->createAuthorWithComments(2);
 
+        // both #add and #delete execute regardless of order
         $this->save(
             id: $author->id,
             data: [
@@ -334,7 +335,7 @@ class EloquentHasManyRelationMorphManyTest extends ApiResourcesEloquentTest
             ]
         );
 
-        $this->assertComments($author->id, ['1' => 'comment1', '2' => 'comment2', '3' => 'comment3']);
+        $this->assertComments($author->id, ['1' => 'comment1', '3' => 'comment3']);
 
         $this->save(
             id: $author->id,
@@ -343,12 +344,12 @@ class EloquentHasManyRelationMorphManyTest extends ApiResourcesEloquentTest
                     ['text' => 'comment4']
                 ],
                 'comments#delete' => [
-                    ['id' => '2']
+                    ['id' => '1']
                 ]
             ]
         );
 
-        $this->assertComments($author->id, ['1' => 'comment1', '3' => 'comment3']);
+        $this->assertComments($author->id, ['3' => 'comment3', '4' => 'comment4']);
     }
 
     public function test_create_set_one()
@@ -543,6 +544,8 @@ class EloquentHasManyRelationMorphManyTest extends ApiResourcesEloquentTest
     {
         Comment::factory()->for(Author::factory(), 'owner')->create(['text' => 'comment1']);
 
+        // both #add and #delete execute regardless of order
+        // #delete is a no-op during CREATE (no existing relations)
         $author = $this->create([
             'comments#add' => [
                 ['text' => 'comment2']
@@ -552,7 +555,7 @@ class EloquentHasManyRelationMorphManyTest extends ApiResourcesEloquentTest
             ]
         ]);
 
-        $this->assertComments($author->id, []);
+        $this->assertComments($author->id, ['2' => 'comment2']);
 
         $this->assertEquals('comment1', Comment::find('1')->text);
 
@@ -561,11 +564,11 @@ class EloquentHasManyRelationMorphManyTest extends ApiResourcesEloquentTest
                 ['id' => '1']
             ],
             'comments#add' => [
-                ['text' => 'comment2']
+                ['text' => 'comment3']
             ]
         ]);
 
-        $this->assertComments($author->id, ['2' => 'comment2']);
+        $this->assertComments($author->id, ['3' => 'comment3']);
 
         $this->assertEquals('comment1', Comment::find('1')->text);
     }

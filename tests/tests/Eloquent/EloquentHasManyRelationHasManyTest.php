@@ -322,6 +322,7 @@ class EloquentHasManyRelationHasManyTest extends ApiResourcesEloquentTest
     {
         $author = $this->createAuthorWithLinks(2);
 
+        // both #add and #delete execute regardless of order
         $this->save(
             id: $author->id,
             data: [
@@ -334,7 +335,7 @@ class EloquentHasManyRelationHasManyTest extends ApiResourcesEloquentTest
             ]
         );
 
-        $this->assertLinks($author->id, ['1' => 'link1', '2' => 'link2', '3' => 'link3']);
+        $this->assertLinks($author->id, ['1' => 'link1', '3' => 'link3']);
 
         $this->save(
             id: $author->id,
@@ -343,12 +344,12 @@ class EloquentHasManyRelationHasManyTest extends ApiResourcesEloquentTest
                     ['url' => 'link4']
                 ],
                 'links#delete' => [
-                    ['id' => '2']
+                    ['id' => '1']
                 ]
             ]
         );
 
-        $this->assertLinks($author->id, ['1' => 'link1', '3' => 'link3']);
+        $this->assertLinks($author->id, ['3' => 'link3', '4' => 'link4']);
     }
 
     public function test_create_set_one()
@@ -543,6 +544,8 @@ class EloquentHasManyRelationHasManyTest extends ApiResourcesEloquentTest
     {
         Link::factory()->forAuthor()->create(['url' => 'link1']);
 
+        // both #add and #delete execute regardless of order
+        // #delete is a no-op during CREATE (no existing relations)
         $author = $this->create([
             'links#add' => [
                 ['url' => 'link2']
@@ -552,7 +555,7 @@ class EloquentHasManyRelationHasManyTest extends ApiResourcesEloquentTest
             ]
         ]);
 
-        $this->assertLinks($author->id, []);
+        $this->assertLinks($author->id, ['2' => 'link2']);
 
         $this->assertEquals('link1', Link::find('1')->url);
 
@@ -561,11 +564,11 @@ class EloquentHasManyRelationHasManyTest extends ApiResourcesEloquentTest
                 ['id' => '1']
             ],
             'links#add' => [
-                ['url' => 'link2']
+                ['url' => 'link3']
             ]
         ]);
 
-        $this->assertLinks($author->id, ['2' => 'link2']);
+        $this->assertLinks($author->id, ['3' => 'link3']);
 
         $this->assertEquals('link1', Link::find('1')->url);
     }

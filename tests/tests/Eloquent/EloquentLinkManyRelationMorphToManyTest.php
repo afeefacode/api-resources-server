@@ -294,6 +294,73 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
         $this->assertTags($author->id, []);
     }
 
+    public function test_create_add_delete()
+    {
+        Tag::factory()->create(['name' => 'tag1']);
+        Tag::factory()->create(['name' => 'tag2']);
+
+        // both #add and #delete execute regardless of order
+        // #delete is a no-op during CREATE (no existing relations)
+        $author = $this->create([
+            'tags#add' => [
+                ['id' => '1']
+            ],
+            'tags#delete' => [
+                ['id' => '2']
+            ]
+        ]);
+
+        $this->assertTags($author->id, ['1' => 'tag1']);
+
+        $author = $this->create([
+            'tags#delete' => [
+                ['id' => '2']
+            ],
+            'tags#add' => [
+                ['id' => '1']
+            ]
+        ]);
+
+        $this->assertTags($author->id, ['1' => 'tag1']);
+    }
+
+    public function test_add_delete()
+    {
+        $author = $this->createAuthorWithTags(3);
+
+        Tag::factory()->create(['name' => 'tag4']);
+
+        // both #add and #delete execute regardless of order
+        $this->save(
+            id: $author->id,
+            data: [
+                'tags#delete' => [
+                    ['id' => '2']
+                ],
+                'tags#add' => [
+                    ['id' => '4']
+                ]
+            ]
+        );
+
+        $this->assertTags($author->id, ['1' => 'tag1', '3' => 'tag3', '4' => 'tag4']);
+
+        $this->save(
+            id: $author->id,
+            data: [
+                'tags#add' => [
+                    ['id' => '2']
+                ],
+                'tags#delete' => [
+                    ['id' => '3']
+                ]
+            ]
+        );
+
+        // tag2 was re-linked last, so it appears after tag4 in pivot order
+        $this->assertTags($author->id, ['1' => 'tag1', '4' => 'tag4', '2' => 'tag2']);
+    }
+
     protected function createAuthorWithTags($numTags): Author
     {
         $author = Author::factory()
