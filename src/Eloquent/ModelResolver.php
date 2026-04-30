@@ -23,6 +23,7 @@ class ModelResolver
     protected string $relationName;
 
     protected Closure $scopeFunction;
+    protected Closure $authorizeFunction;
     protected Closure $paramFunction;
     protected Closure $getParamFunction;
     protected Closure $filterFunction;
@@ -56,6 +57,12 @@ class ModelResolver
     public function scope(Closure $scopeFunction): ModelResolver
     {
         $this->scopeFunction = $scopeFunction;
+        return $this;
+    }
+
+    public function authorize(Closure $authorizeFunction): ModelResolver
+    {
+        $this->authorizeFunction = $authorizeFunction;
         return $this;
     }
 
@@ -171,6 +178,10 @@ class ModelResolver
                 $usedFilters = [];
 
                 $query = $this->ModelClass::query();
+
+                // authorize
+
+                ($this->authorizeFunction)($query);
 
                 // scope
 
@@ -330,6 +341,10 @@ class ModelResolver
                 /** @var EloquentBuilder */
                 $query = $this->ModelClass::query();
 
+                // authorize
+
+                ($this->authorizeFunction)($query);
+
                 // select $selectFields before counts, since withCount()
                 // will add a '*' column by default, which we don't want.
                 $query->select($selectFields);
@@ -381,6 +396,7 @@ class ModelResolver
 
             ->get(function (string $id) {
                 $query = $this->ModelClass::query();
+                ($this->authorizeFunction)($query);
                 return $query
                     ->where('id', $id)
                     ->first();
