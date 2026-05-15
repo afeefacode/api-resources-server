@@ -152,14 +152,6 @@ class MutationActionModelResolver extends BaseMutationActionResolver
             );
 
             $this->_afterResolve($model);
-
-            // forward if present
-
-            if ($this->forwardCallback) {
-                $request = $this->getRequest();
-                ($this->forwardCallback)($request, $model);
-                return $request->dispatch();
-            }
         } else { // not existing and null passed
             $this->_afterResolve(null);
         }

@@ -416,6 +416,8 @@ class ModelResolver
 
                 $model = $model->fresh();
 
+                $this->assertAuthorized($model);
+
                 ($this->afterAddFunction)($model, $saveFields, $meta);
 
                 return $model;
@@ -431,6 +433,8 @@ class ModelResolver
                 }
 
                 $model = $model->fresh();
+
+                $this->assertAuthorized($model);
 
                 ($this->afterUpdateFunction)($model, $saveFields, $meta);
             })
@@ -461,6 +465,16 @@ class ModelResolver
                     ->resourceType($apiRequest->getResource()::type())
                     ->actionName('get');
             });
+    }
+
+    protected function assertAuthorized(Model $model): void
+    {
+        $query = $this->ModelClass::query();
+        ($this->authorizeFunction)($query);
+
+        if (!$query->where('id', $model->id)->exists()) {
+            throw new NotFoundException('Model not found');
+        }
     }
 
     protected function getRelationCounts(QueryActionResolver $r): array

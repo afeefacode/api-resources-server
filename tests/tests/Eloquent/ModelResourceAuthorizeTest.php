@@ -17,6 +17,7 @@ class ModelResourceAuthorizeTest extends ApiResourcesEloquentTest
     {
         parent::setUp();
         AuthorizeAuthorResource::$allowedIds = [];
+        AuthorizeAuthorResource::$allowedNames = [];
     }
 
     public function test_authorize_filters_list_and_count_all()
@@ -148,14 +149,95 @@ class ModelResourceAuthorizeTest extends ApiResourcesEloquentTest
         $this->assertCount(3, $data);
         $this->assertEquals(3, $meta['count_all']);
     }
+
+    public function test_authorize_add_allowed_attributes_creates_model()
+    {
+        AuthorizeAuthorResource::$allowedNames = ['Allowed Writer'];
+
+        $api = (new ApiResources())->getApi(BlogApi::class);
+        $api->getResources()->add(AuthorizeAuthorResource::class);
+
+        $result = $api->requestFromInput([
+            'resource' => 'Blog.AuthorResource',
+            'action' => 'save',
+            'data' => [
+                'name' => 'Allowed Writer',
+                'email' => 'allowed@writer'
+            ],
+            'fields' => ['name' => true]
+        ]);
+
+        ['data' => $data] = $result;
+
+        $this->assertEquals('Allowed Writer', $data['name']);
+        $this->assertEquals(1, Author::count());
+    }
+
+    public function test_authorize_add_forbidden_attributes_throws_and_rolls_back()
+    {
+        AuthorizeAuthorResource::$allowedNames = ['Allowed Writer'];
+
+        $api = (new ApiResources())->getApi(BlogApi::class);
+        $api->getResources()->add(AuthorizeAuthorResource::class);
+
+        $this->expectException(NotFoundException::class);
+
+        try {
+            $api->requestFromInput([
+                'resource' => 'Blog.AuthorResource',
+                'action' => 'save',
+                'data' => [
+                    'name' => 'Forbidden Writer',
+                    'email' => 'forbidden@writer'
+                ],
+                'fields' => ['name' => true]
+            ]);
+        } finally {
+            // Transaction must have rolled back — no row left behind.
+            $this->assertEquals(0, Author::count());
+        }
+    }
+
+    public function test_authorize_update_mutation_into_forbidden_throws_and_rolls_back()
+    {
+        $author = Author::factory()->create(['name' => 'Allowed Writer']);
+
+        // Initial state is reachable; update tries to mutate the row out of
+        // the reachable set. Post-state check must catch that.
+        AuthorizeAuthorResource::$allowedNames = ['Allowed Writer'];
+
+        $api = (new ApiResources())->getApi(BlogApi::class);
+        $api->getResources()->add(AuthorizeAuthorResource::class);
+
+        $this->expectException(NotFoundException::class);
+
+        try {
+            $api->requestFromInput([
+                'resource' => 'Blog.AuthorResource',
+                'action' => 'save',
+                'params' => ['id' => $author->id],
+                'data' => ['name' => 'Forbidden Writer'],
+                'fields' => ['name' => true]
+            ]);
+        } finally {
+            // Rollback: original name preserved.
+            $this->assertEquals('Allowed Writer', Author::find($author->id)->name);
+        }
+    }
 }
 
 class AuthorizeAuthorResource extends ResourcesAuthorResource
 {
     public static array $allowedIds = [];
+    public static array $allowedNames = [];
 
     protected function authorize(Builder $query): void
     {
-        $query->whereIn('id', self::$allowedIds);
+        if (!empty(self::$allowedIds)) {
+            $query->whereIn('id', self::$allowedIds);
+        }
+        if (!empty(self::$allowedNames)) {
+            $query->whereIn('name', self::$allowedNames);
+        }
     }
 }

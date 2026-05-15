@@ -58,14 +58,6 @@ class MutationActionResolver extends BaseMutationActionResolver
             }
         }
 
-        // forward if present
-
-        if ($this->forwardCallback) {
-            $request = $this->getRequest();
-            ($this->forwardCallback)($request, $result);
-            return $request->dispatch();
-        }
-
         return [
             'data' => $result
         ];

@@ -56,9 +56,24 @@ class BaseMutationActionResolver extends BaseActionResolver
 
     public function resolve(): array
     {
-        return $this->wrapInTransaction(function () {
+        $result = $this->wrapInTransaction(function () {
             return $this->_resolve();
         });
+
+        // forward dispatch runs OUTSIDE the transaction: the post-state
+        // authorize check inside the transaction has already approved the
+        // commit; forward is response-building only and must not be able
+        // to roll back a successful write.
+        if ($this->forwardCallback) {
+            $model = $result['data'] ?? null;
+            if ($model !== null) {
+                $request = $this->getRequest();
+                ($this->forwardCallback)($request, $model);
+                return $request->dispatch();
+            }
+        }
+
+        return $result;
     }
 
     protected function _resolve(): array
