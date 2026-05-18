@@ -8,6 +8,7 @@ use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\TestV2\V2TestCase;
 use Afeefa\ApiResources\V2\FieldBag as V2FieldBag;
+use Afeefa\ApiResources\Validator\Validators\LinkOneValidator;
 use Afeefa\ApiResources\Validator\Validators\StringValidator;
 
 use function Afeefa\ApiResources\Test\T;
@@ -18,15 +19,10 @@ class TestApi extends Api
     protected static string $type = 'Test.Api';
 }
 
-use const Afeefa\ApiResources\V2\CREATE;
-use const Afeefa\ApiResources\V2\READ;
-use const Afeefa\ApiResources\V2\UPDATE;
-
 class V2SchemaCompatibilityTest extends V2TestCase
 {
     public function test_schema_simple_attributes()
     {
-        // v1 type
         $v1Type = $this->typeBuilder()->type(
             'Test.V1Type',
             function (FieldBag $fields) {
@@ -36,13 +32,12 @@ class V2SchemaCompatibilityTest extends V2TestCase
             }
         )->get();
 
-        // v2 type
         $v2Type = $this->v2TypeBuilder()->type(
             'Test.V2Type',
             function (V2FieldBag $fields) {
                 $fields
-                    ->string('title')->on(READ)
-                    ->string('name')->on(READ);
+                    ->string('title')->write(false)
+                    ->string('name')->write(false);
             }
         )->get();
 
@@ -54,7 +49,6 @@ class V2SchemaCompatibilityTest extends V2TestCase
 
     public function test_schema_with_mutation_fields()
     {
-        // v1 type with update and create fields
         $v1Type = $this->typeBuilder()->type(
             'Test.V1Type',
             function (FieldBag $fields) {
@@ -68,12 +62,11 @@ class V2SchemaCompatibilityTest extends V2TestCase
             }
         )->get();
 
-        // v2 equivalent
+        // V2: Default-Mitgliedschaft in allen drei Bags.
         $v2Type = $this->v2TypeBuilder()->type(
             'Test.V2Type',
             function (V2FieldBag $fields) {
-                $fields
-                    ->string('title')->on(READ, UPDATE, CREATE);
+                $fields->string('title');
             }
         )->get();
 
@@ -85,7 +78,6 @@ class V2SchemaCompatibilityTest extends V2TestCase
 
     public function test_schema_with_validators()
     {
-        // v1 type
         $v1Type = $this->typeBuilder()->type(
             'Test.V1Type',
             function (FieldBag $fields) {
@@ -101,15 +93,13 @@ class V2SchemaCompatibilityTest extends V2TestCase
             }
         )->get();
 
-        // v2 equivalent
         $v2Type = $this->v2TypeBuilder()->type(
             'Test.V2Type',
             function (V2FieldBag $fields) {
                 $fields
-                    ->string('title')->on(READ, UPDATE, CREATE)
-                        ->onMutation(validate: function (StringValidator $v) {
-                            $v->filled()->min(2)->max(100);
-                        });
+                    ->string('title')->write(validate: function (StringValidator $v) {
+                        $v->filled()->min(2)->max(100);
+                    });
             }
         )->get();
 
@@ -121,7 +111,6 @@ class V2SchemaCompatibilityTest extends V2TestCase
 
     public function test_schema_with_relations()
     {
-        // v1 type
         $v1Type = $this->typeBuilder()->type(
             'Test.V1Type',
             function (FieldBag $fields) {
@@ -129,12 +118,11 @@ class V2SchemaCompatibilityTest extends V2TestCase
             }
         )->get();
 
-        // v2 type
         $v2Type = $this->v2TypeBuilder()->type(
             'Test.V2Type',
             function (V2FieldBag $fields) {
                 $fields
-                    ->hasOne('author', T('Test.Author'))->on(READ);
+                    ->hasOne('author', T('Test.Author'))->write(false);
             }
         )->get();
 
@@ -146,7 +134,6 @@ class V2SchemaCompatibilityTest extends V2TestCase
 
     public function test_schema_with_link_relation()
     {
-        // v1 type: hasOne in fields, linkOne in updateFields
         $v1Type = $this->typeBuilder()->type(
             'Test.V1Type',
             function (FieldBag $fields) {
@@ -160,13 +147,229 @@ class V2SchemaCompatibilityTest extends V2TestCase
             }
         )->get();
 
-        // v2 equivalent with mode
         $v2Type = $this->v2TypeBuilder()->type(
             'Test.V2Type',
             function (V2FieldBag $fields) {
                 $fields
-                    ->hasOne('category', T('Test.Category'))->on(READ, UPDATE, CREATE)
-                        ->onMutation(mode: 'link');
+                    ->hasOne('category', T('Test.Category'))->write(mode: ['link']);
+            }
+        )->get();
+
+        $this->assertEquals(
+            $v1Type->toSchemaJson(),
+            $v2Type->toSchemaJson()
+        );
+    }
+
+    public function test_schema_with_save_relation_mode_create()
+    {
+        // mode: ['create'] entspricht v1 hasOne in updateFields/createFields (kein Link).
+        $v1Type = $this->typeBuilder()->type(
+            'Test.V1Type',
+            function (FieldBag $fields) {
+                $fields->hasOne('address', T('Test.Address'));
+            },
+            function (FieldBag $updateFields) {
+                $updateFields->hasOne('address', T('Test.Address'));
+            },
+            function (FieldBag $createFields, FieldBag $updateFields) {
+                $createFields->from($updateFields, 'address');
+            }
+        )->get();
+
+        $v2Type = $this->v2TypeBuilder()->type(
+            'Test.V2Type',
+            function (V2FieldBag $fields) {
+                $fields
+                    ->hasOne('address', T('Test.Address'))->write(mode: ['create']);
+            }
+        )->get();
+
+        $this->assertEquals(
+            $v1Type->toSchemaJson(),
+            $v2Type->toSchemaJson()
+        );
+    }
+
+    public function test_schema_with_link_or_create_relation_is_link_in_schema()
+    {
+        // mode: ['link', 'create'] enthaelt 'link' → Schema-seitig wie linkOne.
+        $v1Type = $this->typeBuilder()->type(
+            'Test.V1Type',
+            function (FieldBag $fields) {
+                $fields->hasOne('customer', T('Test.Customer'));
+            },
+            function (FieldBag $updateFields) {
+                $updateFields->linkOne('customer', T('Test.Customer'));
+            },
+            function (FieldBag $createFields, FieldBag $updateFields) {
+                $createFields->from($updateFields, 'customer');
+            }
+        )->get();
+
+        $v2Type = $this->v2TypeBuilder()->type(
+            'Test.V2Type',
+            function (V2FieldBag $fields) {
+                $fields
+                    ->hasOne('customer', T('Test.Customer'))->write(mode: ['link', 'create']);
+            }
+        )->get();
+
+        $this->assertEquals(
+            $v1Type->toSchemaJson(),
+            $v2Type->toSchemaJson()
+        );
+    }
+
+    public function test_schema_with_update_only_mode_is_not_link()
+    {
+        // mode: ['update'] enthaelt kein 'link' → Schema-seitig hasOne (kein Link-Flag).
+        // Im CREATE-Bag ist die Relation nicht erlaubt → wir schliessen sie aus.
+        $v1Type = $this->typeBuilder()->type(
+            'Test.V1Type',
+            function (FieldBag $fields) {
+                $fields->hasOne('settings', T('Test.Settings'));
+            },
+            function (FieldBag $updateFields) {
+                $updateFields->hasOne('settings', T('Test.Settings'));
+            }
+        )->get();
+
+        $v2Type = $this->v2TypeBuilder()->type(
+            'Test.V2Type',
+            function (V2FieldBag $fields) {
+                $fields
+                    ->hasOne('settings', T('Test.Settings'))->update(mode: ['update'])->create(false);
+            }
+        )->get();
+
+        $this->assertEquals(
+            $v1Type->toSchemaJson(),
+            $v2Type->toSchemaJson()
+        );
+    }
+
+    public function test_schema_with_link_or_update_mode_on_update_only()
+    {
+        // mode: ['link', 'update'] auf UPDATE → linkOne im UPDATE-Bag; nichts in CREATE.
+        $v1Type = $this->typeBuilder()->type(
+            'Test.V1Type',
+            function (FieldBag $fields) {
+                $fields->hasOne('lieferadresse', T('Test.Address'));
+            },
+            function (FieldBag $updateFields) {
+                $updateFields->linkOne('lieferadresse', T('Test.Address'));
+            }
+        )->get();
+
+        $v2Type = $this->v2TypeBuilder()->type(
+            'Test.V2Type',
+            function (V2FieldBag $fields) {
+                $fields
+                    ->hasOne('lieferadresse', T('Test.Address'))->update(mode: ['link', 'update'])->create(false);
+            }
+        )->get();
+
+        $this->assertEquals(
+            $v1Type->toSchemaJson(),
+            $v2Type->toSchemaJson()
+        );
+    }
+
+    public function test_schema_with_polymorphic_relation()
+    {
+        $v1Type = $this->typeBuilder()->type(
+            'Test.V1Type',
+            function (FieldBag $fields) {
+                $fields->hasOne('owner', [T('Test.Company'), T('Test.Contact')]);
+            },
+            function (FieldBag $updateFields) {
+                $updateFields->linkOne('owner', [T('Test.Company'), T('Test.Contact')]);
+            },
+            function (FieldBag $createFields, FieldBag $updateFields) {
+                $createFields->from($updateFields, 'owner');
+            }
+        )->get();
+
+        $v2Type = $this->v2TypeBuilder()->type(
+            'Test.V2Type',
+            function (V2FieldBag $fields) {
+                $fields
+                    ->hasOne('owner', [T('Test.Company'), T('Test.Contact')])
+                        ->write(mode: ['link']);
+            }
+        )->get();
+
+        $this->assertEquals(
+            $v1Type->toSchemaJson(),
+            $v2Type->toSchemaJson()
+        );
+    }
+
+    public function test_schema_with_options_request_on_non_link_relation()
+    {
+        $testApi = $this->container->get(TestApi::class);
+        $this->container->registerAlias($testApi, Api::class);
+
+        $optionsCallback = function (ApiRequest $request) {
+            $request
+                ->resourceType('Test.AddressResource')
+                ->actionName('list')
+                ->fields(['city' => true]);
+        };
+
+        // Inline-hasOne (kein Link) mit optionsRequest.
+        $v1Type = $this->typeBuilder()->type(
+            'Test.V1Type',
+            function (FieldBag $fields) use ($optionsCallback) {
+                $fields->hasOne('address', T('Test.Address'), function (Relation $r) use ($optionsCallback) {
+                    $r->optionsRequest($optionsCallback);
+                });
+            }
+        )->get();
+
+        $v2Type = $this->v2TypeBuilder()->type(
+            'Test.V2Type',
+            function (V2FieldBag $fields) use ($optionsCallback) {
+                $fields
+                    ->hasOne('address', T('Test.Address'))->write(false)
+                        ->optionsRequest($optionsCallback);
+            }
+        )->get();
+
+        $this->assertEquals(
+            $v1Type->toSchemaJson(),
+            $v2Type->toSchemaJson()
+        );
+    }
+
+    public function test_schema_with_required_validate_and_mode_combined()
+    {
+        $v1Type = $this->typeBuilder()->type(
+            'Test.V1Type',
+            function (FieldBag $fields) {
+                $fields->hasOne('gender', T('Test.Category'));
+            },
+            function (FieldBag $updateFields) {
+                $updateFields->linkOne('gender', T('Test.Category'), function (Relation $r) {
+                    $r->validate(fn (LinkOneValidator $v) => $v->filled())->required();
+                });
+            },
+            function (FieldBag $createFields, FieldBag $updateFields) {
+                $createFields->from($updateFields, 'gender');
+            }
+        )->get();
+
+        $v2Type = $this->v2TypeBuilder()->type(
+            'Test.V2Type',
+            function (V2FieldBag $fields) {
+                $fields
+                    ->hasOne('gender', T('Test.Category'))
+                        ->write(
+                            mode: ['link'],
+                            validate: fn (LinkOneValidator $v) => $v->filled(),
+                            required: true,
+                        );
             }
         )->get();
 
@@ -178,7 +381,6 @@ class V2SchemaCompatibilityTest extends V2TestCase
 
     public function test_schema_with_has_many_relation()
     {
-        // v1 type
         $v1Type = $this->typeBuilder()->type(
             'Test.V1Type',
             function (FieldBag $fields) {
@@ -186,12 +388,11 @@ class V2SchemaCompatibilityTest extends V2TestCase
             }
         )->get();
 
-        // v2 type
         $v2Type = $this->v2TypeBuilder()->type(
             'Test.V2Type',
             function (V2FieldBag $fields) {
                 $fields
-                    ->hasMany('tags', T('Test.Tag'))->on(READ);
+                    ->hasMany('tags', T('Test.Tag'))->write(false);
             }
         )->get();
 
@@ -203,7 +404,6 @@ class V2SchemaCompatibilityTest extends V2TestCase
 
     public function test_schema_mixed_operations()
     {
-        // v1 type: different fields for read vs mutation
         $v1Type = $this->typeBuilder()->type(
             'Test.V1Type',
             function (FieldBag $fields) {
@@ -221,14 +421,13 @@ class V2SchemaCompatibilityTest extends V2TestCase
             }
         )->get();
 
-        // v2 equivalent
         $v2Type = $this->v2TypeBuilder()->type(
             'Test.V2Type',
             function (V2FieldBag $fields) {
                 $fields
-                    ->string('title')->on(READ, UPDATE, CREATE)
-                    ->string('created_at')->on(READ)
-                    ->date('date_start')->on(CREATE);
+                    ->string('title')
+                    ->string('created_at')->write(false)
+                    ->date('date_start')->read(false)->update(false);
             }
         )->get();
 
@@ -252,13 +451,11 @@ class V2SchemaCompatibilityTest extends V2TestCase
             }
         )->get();
 
-        // v2 equivalent
         $v2Type = $this->v2TypeBuilder()->type(
             'Test.V2Type',
             function (V2FieldBag $fields) {
                 $fields
-                    ->string('name')->on(CREATE)
-                        ->onCreate(required: true);
+                    ->string('name')->read(false)->update(false)->create(required: true);
             }
         )->get();
 
@@ -271,7 +468,6 @@ class V2SchemaCompatibilityTest extends V2TestCase
     public function test_schema_with_options_request()
     {
         // ApiRequest::toSchemaJson() needs an Api with a static $type.
-        // Register a minimal test Api so the container can resolve Api::class.
         $testApi = $this->container->get(TestApi::class);
         $this->container->registerAlias($testApi, Api::class);
 
@@ -282,8 +478,6 @@ class V2SchemaCompatibilityTest extends V2TestCase
                 ->fields(['title' => true]);
         };
 
-        // v1 type: all three field bags must set optionsRequest explicitly to match v2 behavior
-        // (in v2, optionsRequest is global across all operations)
         $v1Type = $this->typeBuilder()->type(
             'Test.V1Type',
             function (FieldBag $fields) use ($optionsCallback) {
@@ -301,13 +495,12 @@ class V2SchemaCompatibilityTest extends V2TestCase
             }
         )->get();
 
-        // v2 equivalent: single definition with ->on() + ->onMutation(mode:'link') + optionsRequest
         $v2Type = $this->v2TypeBuilder()->type(
             'Test.V2Type',
             function (V2FieldBag $fields) use ($optionsCallback) {
                 $fields
-                    ->hasOne('category', T('Test.Category'))->on(READ, UPDATE, CREATE)
-                        ->onMutation(mode: 'link')
+                    ->hasOne('category', T('Test.Category'))
+                        ->write(mode: ['link'])
                         ->optionsRequest($optionsCallback);
             }
         )->get();

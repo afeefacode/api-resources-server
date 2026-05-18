@@ -15,95 +15,99 @@ class FieldBag extends V1FieldBag
 
     protected ?Field $lastField = null;
 
-    // === v2 methods that delegate to lastField ===
+    // === Delegation auf das zuletzt erzeugte Field ===
 
-    public function on(Operation ...$operations): static
+    public function read(Closure|false|null $configure = null): static
     {
-        $this->lastField->on(...$operations);
+        $this->assertLastField('read');
+        $this->lastField->read($configure);
         return $this;
     }
 
-    public function onMutation(?string $mode = null, $validate = null, ?bool $required = null): static
-    {
-        $this->lastField->onMutation($mode, $validate, $required);
+    public function write(
+        Closure|false|null $configure = null,
+        ?bool $required = null,
+        ?callable $validate = null,
+        ?array $mode = null,
+        mixed $default = Field::UNSET_DEFAULT,
+    ): static {
+        $this->assertLastField('write');
+        $this->lastField->write($configure, $required, $validate, $mode, $default);
         return $this;
     }
 
-    public function onUpdate(?string $mode = null, $validate = null, ?bool $required = null): static
-    {
-        $this->lastField->onUpdate($mode, $validate, $required);
+    public function update(
+        Closure|false|null $configure = null,
+        ?bool $required = null,
+        ?callable $validate = null,
+        ?array $mode = null,
+        mixed $default = Field::UNSET_DEFAULT,
+    ): static {
+        $this->assertLastField('update');
+        $this->lastField->update($configure, $required, $validate, $mode, $default);
         return $this;
     }
 
-    public function onCreate(?string $mode = null, $validate = null, ?bool $required = null): static
-    {
-        $this->lastField->onCreate($mode, $validate, $required);
-        return $this;
-    }
-
-    // === Delegation methods for field config (chaining from FieldBag) ===
-
-    public function validate($callback): static
-    {
-        $this->lastField->validate($callback);
-        return $this;
-    }
-
-    public function required(bool $required = true): static
-    {
-        $this->lastField->required($required);
-        return $this;
-    }
-
-    public function default($default): static
-    {
-        $this->lastField->default($default);
-        return $this;
-    }
-
-    public function resolve($classOrCallback, array $params = []): static
-    {
-        $this->lastField->resolve($classOrCallback, $params);
+    public function create(
+        Closure|false|null $configure = null,
+        ?bool $required = null,
+        ?callable $validate = null,
+        ?array $mode = null,
+        mixed $default = Field::UNSET_DEFAULT,
+    ): static {
+        $this->assertLastField('create');
+        $this->lastField->create($configure, $required, $validate, $mode, $default);
         return $this;
     }
 
     public function options(array $options): static
     {
+        $this->assertLastField('options');
         $this->lastField->options($options);
         return $this;
     }
 
-    public function optionsRequest(\Closure $callback): static
+    public function optionsRequest(Closure $callback): static
     {
+        $this->assertLastField('optionsRequest');
         $this->lastField->optionsRequest($callback);
         return $this;
     }
 
-    public function restrictTo(?string $restrictTo): static
+    public function setAdditionalSaveFields(Closure $callback): static
     {
-        if ($this->lastField instanceof Relation) {
-            $this->lastField->restrictTo($restrictTo);
-        }
+        $this->assertLastFieldIsRelation('setAdditionalSaveFields');
+        $this->lastField->setAdditionalSaveFields($callback);
         return $this;
     }
 
-    public function setAdditionalSaveFields(\Closure $callback): static
+    public function skipSaveRelatedIf(Closure $callback): static
     {
-        if ($this->lastField instanceof Relation) {
-            $this->lastField->setAdditionalSaveFields($callback);
-        }
+        $this->assertLastFieldIsRelation('skipSaveRelatedIf');
+        $this->lastField->skipSaveRelatedIf($callback);
         return $this;
     }
 
-    public function skipSaveRelatedIf(\Closure $callback): static
+    private function assertLastFieldIsRelation(string $method): void
     {
-        if ($this->lastField instanceof Relation) {
-            $this->lastField->skipSaveRelatedIf($callback);
+        if (!$this->lastField instanceof Relation) {
+            $name = $this->lastField?->getName() ?? '(no field)';
+            throw new \Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException(
+                "Field {$name}: {$method}() is only valid on relations, not on attributes."
+            );
         }
-        return $this;
     }
 
-    // === Conversion to v1 FieldBags ===
+    private function assertLastField(string $method): void
+    {
+        if ($this->lastField === null) {
+            throw new \Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException(
+                "FieldBag::{$method}() called before any field was defined — call ->string(), ->hasOne(), etc. first."
+            );
+        }
+    }
+
+    // === Konvertierung in die v1 FieldBags ===
 
     public function forOperation(Operation $operation): WritableFieldBag
     {
@@ -124,14 +128,14 @@ class FieldBag extends V1FieldBag
         return $v1Bag;
     }
 
-    // === Override v1 builder methods to create blueprints ===
+    // === v1 Builder-Methoden ueberschreiben, sodass Blueprints angelegt werden ===
 
     protected function _attribute(string $name, $classOrCallback, ?Closure $callback = null, $validate = null): static
     {
         $blueprint = new Attribute($name, $classOrCallback);
 
         if ($validate) {
-            $blueprint->validate($validate);
+            $blueprint->write(validate: $validate);
         }
 
         if ($callback) {
@@ -148,10 +152,9 @@ class FieldBag extends V1FieldBag
         $blueprint = new Relation($name, $TypeClassOrClassesOrMeta);
 
         if ($validate) {
-            $blueprint->validate($validate);
+            $blueprint->write(validate: $validate);
         }
 
-        // If a Closure callback was passed (e.g. from hasOne with callback), apply it to blueprint
         if ($classOrCallback instanceof Closure) {
             $classOrCallback($blueprint);
         }

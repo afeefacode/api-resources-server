@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\V2;
 
 use Afeefa\ApiResources\DI\Container;
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\Field as V1Field;
 use Afeefa\ApiResources\Field\Relation as V1Relation;
 use Afeefa\ApiResources\Type\Type as V1Type;
@@ -11,6 +12,18 @@ use Closure;
 
 class Relation extends Field
 {
+    public const MODE_LINK = 'link';
+
+    public const MODE_CREATE = 'create';
+
+    public const MODE_UPDATE = 'update';
+
+    protected const ALLOWED_MODE_VALUES = [
+        self::MODE_LINK,
+        self::MODE_CREATE,
+        self::MODE_UPDATE,
+    ];
+
     protected $TypeClassOrClasses;
 
     protected bool $isList = false;
@@ -21,60 +34,26 @@ class Relation extends Field
 
     protected ?Closure $skipSaveRelatedIfCallback = null;
 
-    // Per-Operation mode: 'link', 'save', 'link_or_save'
+    // Per-Operation mode: array<string> z.B. ['link', 'create'].
     protected array $perOpMode = [];
 
     public function __construct(string $name, $TypeClassOrClassesOrMeta)
     {
-        // Don't call parent constructor – Relation doesn't have a v1FieldClass
+        // Bewusst nicht parent::__construct — Relation hat keinen v1FieldClass.
         $this->name = $name;
 
-        // Unpack TypeMeta if present (from hasMany/linkOne/linkMany compatibility)
         if ($TypeClassOrClassesOrMeta instanceof TypeMeta) {
             $this->TypeClassOrClasses = $TypeClassOrClassesOrMeta->TypeClassOrClasses;
             $this->isList = $TypeClassOrClassesOrMeta->list;
-            // If link was set via TypeMeta (e.g. from linkOne()), store as default mode
+            // linkOne()/linkMany() als Factory: link-Mode wird fuer UPDATE+CREATE
+            // als Default gesetzt (READ-Relations brauchen kein link).
             if ($TypeClassOrClassesOrMeta->link) {
-                $this->perOpMode[Operation::UPDATE->value] = 'link';
-                $this->perOpMode[Operation::CREATE->value] = 'link';
+                $this->perOpMode[Operation::UPDATE->value] = [self::MODE_LINK];
+                $this->perOpMode[Operation::CREATE->value] = [self::MODE_LINK];
             }
         } else {
             $this->TypeClassOrClasses = $TypeClassOrClassesOrMeta;
         }
-    }
-
-    public function onMutation(?string $mode = null, $validate = null, ?bool $required = null): static
-    {
-        $this->setPerOperation([Operation::UPDATE, Operation::CREATE], $validate, $required);
-        if ($mode !== null) {
-            $this->perOpMode[Operation::UPDATE->value] = $mode;
-            $this->perOpMode[Operation::CREATE->value] = $mode;
-        }
-        return $this;
-    }
-
-    public function onUpdate(?string $mode = null, $validate = null, ?bool $required = null): static
-    {
-        $this->setPerOperation([Operation::UPDATE], $validate, $required);
-        if ($mode !== null) {
-            $this->perOpMode[Operation::UPDATE->value] = $mode;
-        }
-        return $this;
-    }
-
-    public function onCreate(?string $mode = null, $validate = null, ?bool $required = null): static
-    {
-        $this->setPerOperation([Operation::CREATE], $validate, $required);
-        if ($mode !== null) {
-            $this->perOpMode[Operation::CREATE->value] = $mode;
-        }
-        return $this;
-    }
-
-    public function restrictTo(?string $restrictTo): static
-    {
-        $this->restrictTo = $restrictTo;
-        return $this;
     }
 
     public function setAdditionalSaveFields(Closure $callback): static
@@ -89,72 +68,98 @@ class Relation extends Field
         return $this;
     }
 
+    // === Context-Bridge Overrides ===
+
+    /** @param Operation[] $ops */
+    public function setModeOn(array $ops, array $mode): void
+    {
+        $this->validateModeValue($mode);
+        foreach ($ops as $op) {
+            $this->validateModeForOperation($op, $mode);
+            $this->perOpMode[$op->value] = $mode;
+        }
+    }
+
+    public function setRestrictTo(?string $restrictTo): void
+    {
+        $this->restrictTo = $restrictTo;
+    }
+
     public function toV1Field(Operation $op, $owner, Container $container): V1Field
     {
         $isMutation = $op !== Operation::READ;
 
-        // Build TypeMeta wrapper based on mode and list flag
         $mode = $this->perOpMode[$op->value] ?? null;
-        $isLink = ($mode === 'link' || $mode === 'link_or_save');
+        $isLink = is_array($mode) && in_array(self::MODE_LINK, $mode, true);
 
         $typeArg = $this->TypeClassOrClasses;
         if ($this->isList) {
-            if ($isLink) {
-                $typeArg = V1Type::list(V1Type::link($typeArg));
-            } else {
-                $typeArg = V1Type::list($typeArg);
-            }
-        } else {
-            if ($isLink) {
-                $typeArg = V1Type::link($typeArg);
-            }
+            $typeArg = $isLink ? V1Type::list(V1Type::link($typeArg)) : V1Type::list($typeArg);
+        } elseif ($isLink) {
+            $typeArg = V1Type::link($typeArg);
         }
 
-        $v1Relation = $container->create(V1Relation::class, function (V1Relation $relation) use ($op, $isMutation, $owner, $typeArg) {
+        return $container->create(V1Relation::class, function (V1Relation $relation) use ($op, $isMutation, $owner, $typeArg) {
             $relation
                 ->name($this->name)
                 ->owner($owner)
                 ->isMutation($isMutation)
                 ->typeClassOrClassesOrMeta($typeArg);
 
-            // Apply validate: per-operation overrides global
-            $validate = $this->perOpValidate[$op->value] ?? $this->validate;
-            if ($validate) {
-                $relation->validate($validate);
+            if (isset($this->perOpValidate[$op->value])) {
+                $relation->validate($this->perOpValidate[$op->value]);
             }
 
-            // Apply required: per-operation overrides global
-            $required = $this->perOpRequired[$op->value] ?? $this->required;
-            if ($required) {
-                $relation->required($required);
+            if (($this->perOpRequired[$op->value] ?? false) === true) {
+                $relation->required(true);
             }
 
-            // Apply resolve
-            if ($this->resolve !== null) {
-                $relation->resolve($this->resolve, $this->resolveParams);
+            if (isset($this->perOpResolve[$op->value])) {
+                $resolve = $this->perOpResolve[$op->value];
+                $relation->resolve($resolve['callback'], $resolve['params']);
             }
 
-            // Apply restrictTo
             if ($this->restrictTo !== null) {
                 $relation->restrictTo($this->restrictTo);
             }
 
-            // Apply additionalSaveFields
             if ($this->additionalSaveFieldsCallback) {
                 $relation->setAdditionalSaveFields($this->additionalSaveFieldsCallback);
             }
 
-            // Apply skipSaveRelatedIf
             if ($this->skipSaveRelatedIfCallback) {
                 $relation->skipSaveRelatedIf($this->skipSaveRelatedIfCallback);
             }
 
-            // Apply optionsRequest
             if ($this->optionsRequestCallback) {
                 $relation->optionsRequest($this->optionsRequestCallback);
             }
         });
+    }
 
-        return $v1Relation;
+    protected function validateModeValue(array $mode): void
+    {
+        if (count($mode) === 0) {
+            throw new InvalidConfigurationException(
+                "Relation {$this->name}: mode must contain at least one value."
+            );
+        }
+        foreach ($mode as $value) {
+            if (!in_array($value, self::ALLOWED_MODE_VALUES, true)) {
+                $allowed = implode(', ', self::ALLOWED_MODE_VALUES);
+                throw new InvalidConfigurationException(
+                    "Relation {$this->name}: invalid mode value '{$value}', allowed: {$allowed}."
+                );
+            }
+        }
+    }
+
+    protected function validateModeForOperation(Operation $op, array $mode): void
+    {
+        if ($op === Operation::CREATE && in_array(self::MODE_UPDATE, $mode, true)) {
+            throw new InvalidConfigurationException(
+                "Relation {$this->name}: mode 'update' is not allowed when creating the parent."
+            );
+        }
     }
 }

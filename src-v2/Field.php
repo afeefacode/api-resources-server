@@ -3,39 +3,55 @@
 namespace Afeefa\ApiResources\V2;
 
 use Afeefa\ApiResources\DI\Container;
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\Field as V1Field;
+use Afeefa\ApiResources\V2\Field\OpContext;
+use Afeefa\ApiResources\V2\Field\ReadContext;
+use Afeefa\ApiResources\V2\Field\WriteContext;
 use Closure;
 
 class Field
 {
+    /**
+     * Sentinel fuer "default kwarg nicht uebergeben". Trennt explizit null ("kein Default")
+     * von "Argument wurde weggelassen".
+     */
+    public const UNSET_DEFAULT = '__field_default_unset__';
+
     protected string $name;
 
     /**
-     * @var string|Closure v1 Field class or factory callback
+     * v1 Field class or factory callback. null only on Relation, which overrides toV1Field.
+     *
+     * @var string|Closure|null
      */
-    protected $v1FieldClass;
+    protected $v1FieldClass = null;
 
-    protected array $operations = [];
+    // Default-Mitgliedschaft: ein Field ist in allen drei Bags.
+    protected bool $inRead = true;
 
-    // Global config
-    protected $validate = null;
+    protected bool $inUpdate = true;
 
-    protected bool $required = false;
+    protected bool $inCreate = true;
 
-    protected $default = null;
+    // Operationen, die explizit per (false) ausgeschlossen wurden. Jede spaetere
+    // Aussage zu derselben Operation (auch das blosse "->read()" ohne Args) ist
+    // Widerspruch und wirft.
+    protected array $explicitlyExcluded = [];
 
-    protected $resolve = null;
+    // Per-Operation-Konfiguration, gekeyed mit Operation->value.
+    protected array $perOpRequired = [];
 
-    protected array $resolveParams = [];
+    protected array $perOpValidate = [];
 
+    protected array $perOpDefault = [];
+
+    protected array $perOpResolve = [];
+
+    // Feld-global (gilt fuer Read und Save gleichermassen).
     protected array $options = [];
 
     protected ?Closure $optionsRequestCallback = null;
-
-    // Per-Operation overrides (keyed by Operation->value)
-    protected array $perOpValidate = [];
-
-    protected array $perOpRequired = [];
 
     public function __construct(string $name, string $v1FieldClass)
     {
@@ -43,53 +59,104 @@ class Field
         $this->v1FieldClass = $v1FieldClass;
     }
 
-    public function on(Operation ...$operations): static
+    public function getName(): string
     {
-        $this->operations = array_merge($this->operations, $operations);
+        return $this->name;
+    }
+
+    public function read(Closure|false|null $configure = null): static
+    {
+        if ($configure === false) {
+            $this->inRead = false;
+            $this->explicitlyExcluded[Operation::READ->value] = true;
+            return $this;
+        }
+        $this->assertNotExcluded([Operation::READ], 'read');
+        $this->inRead = true;
+        if ($configure instanceof Closure) {
+            $configure(new ReadContext($this));
+        }
         return $this;
     }
 
-    public function onMutation(?string $mode = null, $validate = null, ?bool $required = null): static
-    {
-        $this->setPerOperation([Operation::UPDATE, Operation::CREATE], $validate, $required);
+    public function write(
+        Closure|false|null $configure = null,
+        ?bool $required = null,
+        ?callable $validate = null,
+        ?array $mode = null,
+        mixed $default = self::UNSET_DEFAULT,
+    ): static {
+        if ($configure === false) {
+            $this->inUpdate = false;
+            $this->inCreate = false;
+            $this->explicitlyExcluded[Operation::UPDATE->value] = true;
+            $this->explicitlyExcluded[Operation::CREATE->value] = true;
+            return $this;
+        }
+        $this->assertNotExcluded([Operation::UPDATE, Operation::CREATE], 'write');
+        $this->inUpdate = true;
+        $this->inCreate = true;
+        $this->applyKwargs([Operation::UPDATE, Operation::CREATE], $required, $validate, $mode, $default);
+        if ($configure instanceof Closure) {
+            $configure(new WriteContext($this));
+        }
         return $this;
     }
 
-    public function onUpdate(?string $mode = null, $validate = null, ?bool $required = null): static
-    {
-        $this->setPerOperation([Operation::UPDATE], $validate, $required);
+    public function update(
+        Closure|false|null $configure = null,
+        ?bool $required = null,
+        ?callable $validate = null,
+        ?array $mode = null,
+        mixed $default = self::UNSET_DEFAULT,
+    ): static {
+        if ($configure === false) {
+            $this->inUpdate = false;
+            $this->explicitlyExcluded[Operation::UPDATE->value] = true;
+            return $this;
+        }
+        $this->assertNotExcluded([Operation::UPDATE], 'update');
+        $this->inUpdate = true;
+        $this->applyKwargs([Operation::UPDATE], $required, $validate, $mode, $default);
+        if ($configure instanceof Closure) {
+            $configure(new OpContext($this, [Operation::UPDATE]));
+        }
         return $this;
     }
 
-    public function onCreate(?string $mode = null, $validate = null, ?bool $required = null): static
-    {
-        $this->setPerOperation([Operation::CREATE], $validate, $required);
+    public function create(
+        Closure|false|null $configure = null,
+        ?bool $required = null,
+        ?callable $validate = null,
+        ?array $mode = null,
+        mixed $default = self::UNSET_DEFAULT,
+    ): static {
+        if ($configure === false) {
+            $this->inCreate = false;
+            $this->explicitlyExcluded[Operation::CREATE->value] = true;
+            return $this;
+        }
+        $this->assertNotExcluded([Operation::CREATE], 'create');
+        $this->inCreate = true;
+        $this->applyKwargs([Operation::CREATE], $required, $validate, $mode, $default);
+        if ($configure instanceof Closure) {
+            $configure(new OpContext($this, [Operation::CREATE]));
+        }
         return $this;
     }
 
-    public function validate($callback): static
+    /**
+     * @param Operation[] $ops
+     */
+    protected function assertNotExcluded(array $ops, string $method): void
     {
-        $this->validate = $callback;
-        return $this;
-    }
-
-    public function required(bool $required = true): static
-    {
-        $this->required = $required;
-        return $this;
-    }
-
-    public function default($default): static
-    {
-        $this->default = $default;
-        return $this;
-    }
-
-    public function resolve($classOrCallback, array $params = []): static
-    {
-        $this->resolve = $classOrCallback;
-        $this->resolveParams = $params;
-        return $this;
+        foreach ($ops as $op) {
+            if ($this->explicitlyExcluded[$op->value] ?? false) {
+                throw new InvalidConfigurationException(
+                    "Field {$this->name}: cannot call {$method}() after {$op->value} was explicitly excluded via (false)."
+                );
+            }
+        }
     }
 
     public function options(array $options): static
@@ -106,64 +173,111 @@ class Field
 
     public function appliesToOperation(Operation $op): bool
     {
-        return in_array($op, $this->operations);
+        return match ($op) {
+            Operation::READ => $this->inRead,
+            Operation::UPDATE => $this->inUpdate,
+            Operation::CREATE => $this->inCreate,
+        };
+    }
+
+    // === Context-Bridge ===
+    // @internal — aufgerufen von ReadContext / OpContext / WriteContext.
+    // Nicht Teil der Schema-Autor-Surface; assertNotExcluded() ist nur auf dem
+    // oeffentlichen read/write/update/create-Pfad aktiv, nicht hier.
+
+    public function setRequiredOn(Operation $op, bool $required): void
+    {
+        $this->perOpRequired[$op->value] = $required;
+    }
+
+    public function setValidateOn(Operation $op, callable $validate): void
+    {
+        $this->perOpValidate[$op->value] = $validate;
+    }
+
+    public function setDefaultOn(Operation $op, mixed $default): void
+    {
+        $this->perOpDefault[$op->value] = $default;
+    }
+
+    public function setResolveOn(Operation $op, $classOrCallback, array $params = []): void
+    {
+        $this->perOpResolve[$op->value] = ['callback' => $classOrCallback, 'params' => $params];
+    }
+
+    /** @param Operation[] $ops */
+    public function setModeOn(array $ops, array $mode): void
+    {
+        throw new InvalidConfigurationException(
+            "Field {$this->name}: mode is only valid for relations."
+        );
+    }
+
+    public function setRestrictTo(?string $restrictTo): void
+    {
+        throw new InvalidConfigurationException(
+            "Field {$this->name}: restrictTo is only valid for relations."
+        );
     }
 
     public function toV1Field(Operation $op, $owner, Container $container): V1Field
     {
         $isMutation = $op !== Operation::READ;
 
-        $v1Field = $container->create($this->v1FieldClass, function (V1Field $field) use ($op, $isMutation, $owner) {
+        return $container->create($this->v1FieldClass, function (V1Field $field) use ($op, $isMutation, $owner) {
             $field
                 ->name($this->name)
                 ->owner($owner)
                 ->isMutation($isMutation);
 
-            // Apply validate: per-operation overrides global
-            $validate = $this->perOpValidate[$op->value] ?? $this->validate;
-            if ($validate) {
-                $field->validate($validate);
+            if (isset($this->perOpValidate[$op->value])) {
+                $field->validate($this->perOpValidate[$op->value]);
             }
 
-            // Apply required: per-operation overrides global
-            $required = $this->perOpRequired[$op->value] ?? $this->required;
-            if ($required) {
-                $field->required($required);
+            if (($this->perOpRequired[$op->value] ?? false) === true) {
+                $field->required(true);
             }
 
-            // Apply default
-            if ($this->default !== null) {
-                $field->default($this->default);
+            if (array_key_exists($op->value, $this->perOpDefault)) {
+                $field->default($this->perOpDefault[$op->value]);
             }
 
-            // Apply resolve
-            if ($this->resolve !== null) {
-                $field->resolve($this->resolve, $this->resolveParams);
+            if (isset($this->perOpResolve[$op->value])) {
+                $resolve = $this->perOpResolve[$op->value];
+                $field->resolve($resolve['callback'], $resolve['params']);
             }
 
-            // Apply options
             if (count($this->options)) {
                 $field->options($this->options);
             }
 
-            // Apply optionsRequest
             if ($this->optionsRequestCallback) {
                 $field->optionsRequest($this->optionsRequestCallback);
             }
         });
-
-        return $v1Field;
     }
 
-    protected function setPerOperation(array $operations, $validate, ?bool $required): void
-    {
-        foreach ($operations as $op) {
-            if ($validate !== null) {
-                $this->perOpValidate[$op->value] = $validate;
-            }
+    /** @param Operation[] $ops */
+    protected function applyKwargs(
+        array $ops,
+        ?bool $required,
+        ?callable $validate,
+        ?array $mode,
+        mixed $default,
+    ): void {
+        foreach ($ops as $op) {
             if ($required !== null) {
-                $this->perOpRequired[$op->value] = $required;
+                $this->setRequiredOn($op, $required);
             }
+            if ($validate !== null) {
+                $this->setValidateOn($op, $validate);
+            }
+            if ($default !== self::UNSET_DEFAULT) {
+                $this->setDefaultOn($op, $default);
+            }
+        }
+        if ($mode !== null) {
+            $this->setModeOn($ops, $mode);
         }
     }
 }

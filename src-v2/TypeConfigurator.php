@@ -2,26 +2,79 @@
 
 namespace Afeefa\ApiResources\V2;
 
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Type\Type;
+use Closure;
 
+/**
+ * Api-level Konfiguration eines Types.
+ *
+ * Bewusst schlanke Surface: `only()` als breiter Subset-Filter, `field()` als
+ * Per-Feld-Werkzeug. Strukturelle Aenderungen (mode, restrictTo, Felder hinzufuegen)
+ * gehoeren in den Type bzw. in overrideTypes().
+ *
+ * Aufrufe werden in Reihenfolge gesammelt und in `apply()` sequentiell ausgefuehrt.
+ * Jede Operation validiert dabei gegen den aktuellen Stand der drei Bags — Verweise
+ * auf nicht (mehr) existierende Felder werfen `InvalidConfigurationException`.
+ */
 class TypeConfigurator
 {
-    private ?array $onlyFields = null;
+    /** @var array<int, Closure(Type): void> */
+    private array $operations = [];
 
-    private bool $readOnly = false;
-
-    /** @var FieldConfigurator[] */
+    /** @var array<string, FieldConfigurator> */
     private array $fieldConfigs = [];
 
-    public function only(array $fields): static
+    public function only(array $fieldNames): static
     {
-        $this->onlyFields = $fields;
+        if (count($fieldNames) === 0) {
+            throw new InvalidConfigurationException(
+                'TypeConfigurator only(): requires at least one field name.'
+            );
+        }
+        $this->operations[] = function (Type $type) use ($fieldNames): void {
+            $this->assertFieldsExistSomewhere($type, $fieldNames, 'only');
+
+            foreach ($this->bagsOf($type) as $bag) {
+                foreach (array_keys($bag->getEntries()) as $name) {
+                    if (!in_array($name, $fieldNames, true)) {
+                        $bag->remove($name);
+                    }
+                }
+            }
+        };
         return $this;
     }
 
-    public function readOnly(): static
+    /**
+     * Schaltet Felder pauschal read-only (entfernt sie aus UPDATE + CREATE).
+     *
+     * Ohne Argument trifft es alle zum Apply-Zeitpunkt im Type verbliebenen Felder
+     * — die typische „Read-only Portal"-Konfiguration. Mit Array trifft es nur die
+     * aufgelisteten Felder, unbekannte Namen werfen analog `only()`.
+     */
+    public function readOnly(?array $fieldNames = null): static
     {
-        $this->readOnly = true;
+        if ($fieldNames !== null && count($fieldNames) === 0) {
+            throw new InvalidConfigurationException(
+                'TypeConfigurator readOnly(): requires at least one field name, or omit the argument to target all fields.'
+            );
+        }
+        $this->operations[] = function (Type $type) use ($fieldNames): void {
+            if ($fieldNames !== null) {
+                $this->assertFieldsExistSomewhere($type, $fieldNames, 'readOnly');
+                $targets = $fieldNames;
+            } else {
+                $targets = $this->allFieldNames($type);
+            }
+            foreach ([$type->getUpdateFields(), $type->getCreateFields()] as $bag) {
+                foreach ($targets as $name) {
+                    if ($bag->has($name)) {
+                        $bag->remove($name);
+                    }
+                }
+            }
+        };
         return $this;
     }
 
@@ -30,48 +83,58 @@ class TypeConfigurator
         if (!isset($this->fieldConfigs[$name])) {
             $this->fieldConfigs[$name] = new FieldConfigurator();
         }
+        $fc = $this->fieldConfigs[$name];
+        // Jeder field()-Aufruf scheduled eine eigene Validierungs- und Apply-Operation.
+        // Damit wird auch ein zweiter `field('note')` nach einem zwischengeschalteten
+        // `only(['title'])` zur Apply-Zeit als Widerspruch erkannt — analog zum
+        // Re-Aktivierungs-Check am Field selbst (Review Runde 1, Punkt 3).
+        $this->operations[] = function (Type $type) use ($name, $fc): void {
+            $this->assertFieldsExistSomewhere($type, [$name], 'field');
+            $fc->applyTo($type, $name, strict: true);
+        };
         return $this->fieldConfigs[$name];
     }
 
     public function apply(Type $type): void
     {
-        // 1. Felder auf Subset einschränken
-        if ($this->onlyFields !== null) {
-            foreach (array_keys($type->getFields()->getEntries()) as $name) {
-                if (!in_array($name, $this->onlyFields)) {
-                    $type->getFields()->remove($name);
-                }
-            }
-            foreach (array_keys($type->getUpdateFields()->getEntries()) as $name) {
-                if (!in_array($name, $this->onlyFields)) {
-                    $type->getUpdateFields()->remove($name);
-                }
-            }
-            foreach (array_keys($type->getCreateFields()->getEntries()) as $name) {
-                if (!in_array($name, $this->onlyFields)) {
-                    $type->getCreateFields()->remove($name);
-                }
-            }
+        foreach ($this->operations as $op) {
+            $op($type);
         }
+    }
 
-        // 2. Mutations deaktivieren
-        if ($this->readOnly) {
-            foreach (array_keys($type->getUpdateFields()->getEntries()) as $name) {
-                $type->getUpdateFields()->remove($name);
-            }
-            foreach (array_keys($type->getCreateFields()->getEntries()) as $name) {
-                $type->getCreateFields()->remove($name);
-            }
+    private function assertFieldsExistSomewhere(Type $type, array $fieldNames, string $context): void
+    {
+        $allNames = $this->allFieldNames($type);
+        $unknown = array_values(array_diff($fieldNames, $allNames));
+        if (count($unknown) === 0) {
+            return;
         }
+        $unknownList = implode(', ', $unknown);
+        $knownList = $allNames ? implode(', ', $allNames) : '(none)';
+        throw new InvalidConfigurationException(
+            "TypeConfigurator {$context}(): unknown field(s) [{$unknownList}] on type {$type::type()}. "
+            . "Known fields at this point: [{$knownList}]."
+        );
+    }
 
-        // 3. Feld-spezifische Konfiguration (required, validate) anwenden
-        foreach ($this->fieldConfigs as $name => $fieldConfig) {
-            if ($type->getUpdateFields()->has($name)) {
-                $fieldConfig->applyToField($type->getUpdateField($name), Operation::UPDATE);
-            }
-            if ($type->getCreateFields()->has($name)) {
-                $fieldConfig->applyToField($type->getCreateField($name), Operation::CREATE);
+    /** @return string[] */
+    private function allFieldNames(Type $type): array
+    {
+        $names = [];
+        foreach ($this->bagsOf($type) as $bag) {
+            foreach (array_keys($bag->getEntries()) as $name) {
+                $names[$name] = true;
             }
         }
+        return array_keys($names);
+    }
+
+    private function bagsOf(Type $type): array
+    {
+        return [
+            $type->getFields(),
+            $type->getUpdateFields(),
+            $type->getCreateFields(),
+        ];
     }
 }
