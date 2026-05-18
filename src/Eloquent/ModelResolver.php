@@ -414,11 +414,17 @@ class ModelResolver
 
                 $model->save();
 
+                // Reload the model so DB-side defaults are visible to the after-* hooks.
+                // Eloquent does not hydrate column defaults that the consumer did not
+                // pass in $saveFields. Example: a migration adds `is_active BOOLEAN
+                // DEFAULT true`; a consumer creates a record without is_active in
+                // $saveFields. The DB row has is_active=true, but $model->is_active is
+                // null until fresh() reloads it — an afterResolve branching on it would
+                // silently take the wrong path.
+                // See commit 76b2fa89 for the original incident.
                 $model = $model->fresh();
 
                 ($this->afterAddFunction)($model, $saveFields, $meta);
-
-                $model = $model->fresh();
 
                 $this->assertAuthorized($model);
 
@@ -434,11 +440,17 @@ class ModelResolver
                     $model->save();
                 }
 
+                // Reload the model so DB-side defaults are visible to the after-* hooks.
+                // Eloquent does not hydrate column defaults that the consumer did not
+                // pass in $saveFields. Example: a migration adds `is_active BOOLEAN
+                // DEFAULT true`; a consumer creates a record without is_active in
+                // $saveFields. The DB row has is_active=true, but $model->is_active is
+                // null until fresh() reloads it — an afterResolve branching on it would
+                // silently take the wrong path.
+                // See commit 76b2fa89 for the original incident.
                 $model = $model->fresh();
 
                 ($this->afterUpdateFunction)($model, $saveFields, $meta);
-
-                $model = $model->fresh();
 
                 $this->assertAuthorized($model);
             })
