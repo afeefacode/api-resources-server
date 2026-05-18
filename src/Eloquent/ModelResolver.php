@@ -416,9 +416,11 @@ class ModelResolver
 
                 $model = $model->fresh();
 
-                $this->assertAuthorized($model);
-
                 ($this->afterAddFunction)($model, $saveFields, $meta);
+
+                $model = $model->fresh();
+
+                $this->assertAuthorized($model);
 
                 return $model;
             })
@@ -434,9 +436,11 @@ class ModelResolver
 
                 $model = $model->fresh();
 
-                $this->assertAuthorized($model);
-
                 ($this->afterUpdateFunction)($model, $saveFields, $meta);
+
+                $model = $model->fresh();
+
+                $this->assertAuthorized($model);
             })
 
             ->delete(function (Model $model) use ($meta) {

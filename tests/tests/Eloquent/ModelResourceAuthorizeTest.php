@@ -10,6 +10,8 @@ use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Article;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Author;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Resources\AuthorResource as ResourcesAuthorResource;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use stdClass;
 
 class ModelResourceAuthorizeTest extends ApiResourcesEloquentTest
 {
@@ -18,6 +20,8 @@ class ModelResourceAuthorizeTest extends ApiResourcesEloquentTest
         parent::setUp();
         AuthorizeAuthorResource::$allowedIds = [];
         AuthorizeAuthorResource::$allowedNames = [];
+        AuthorizeAuthorResource::$renameInAfterAddTo = null;
+        AuthorizeAuthorResource::$renameInAfterUpdateTo = null;
     }
 
     public function test_authorize_filters_list_and_count_all()
@@ -224,12 +228,73 @@ class ModelResourceAuthorizeTest extends ApiResourcesEloquentTest
             $this->assertEquals('Allowed Writer', Author::find($author->id)->name);
         }
     }
+
+    public function test_authorize_post_state_runs_after_afterAdd_so_defaults_count()
+    {
+        // The saved row would NOT pass authorize on its own — the row only
+        // becomes authorized after afterAdd sets the authorize-relevant
+        // column. The post-state check must run after afterAdd, otherwise
+        // the create fails for resources that set required defaults there
+        // (e.g. team_id assigned post-create).
+        AuthorizeAuthorResource::$allowedNames = ['Promoted Author'];
+        AuthorizeAuthorResource::$renameInAfterAddTo = 'Promoted Author';
+
+        $api = (new ApiResources())->getApi(BlogApi::class);
+        $api->getResources()->add(AuthorizeAuthorResource::class);
+
+        $result = $api->requestFromInput([
+            'resource' => 'Blog.AuthorResource',
+            'action' => 'save',
+            'data' => [
+                'name' => 'Initial Name',
+                'email' => 'initial@writer'
+            ],
+            'fields' => ['name' => true]
+        ]);
+
+        ['data' => $data] = $result;
+
+        $this->assertEquals('Promoted Author', $data['name']);
+        $this->assertEquals(1, Author::count());
+        $this->assertEquals('Promoted Author', Author::first()->name);
+    }
+
+    public function test_authorize_post_state_runs_after_afterUpdate_so_defaults_count()
+    {
+        $author = Author::factory()->create(['name' => 'Initial Name']);
+
+        // Initial state passes (name 'Initial Name' is in allowedNames).
+        // The update writes 'Mid-Flight Name' to the DB — that would NOT
+        // pass authorize. afterUpdate then rewrites the name to 'Promoted
+        // Author', which IS allowed. The post-state check has to run after
+        // afterUpdate; otherwise it sees 'Mid-Flight Name' and throws.
+        AuthorizeAuthorResource::$allowedNames = ['Initial Name', 'Promoted Author'];
+        AuthorizeAuthorResource::$renameInAfterUpdateTo = 'Promoted Author';
+
+        $api = (new ApiResources())->getApi(BlogApi::class);
+        $api->getResources()->add(AuthorizeAuthorResource::class);
+
+        $result = $api->requestFromInput([
+            'resource' => 'Blog.AuthorResource',
+            'action' => 'save',
+            'params' => ['id' => $author->id],
+            'data' => ['name' => 'Mid-Flight Name'],
+            'fields' => ['name' => true]
+        ]);
+
+        ['data' => $data] = $result;
+
+        $this->assertEquals('Promoted Author', $data['name']);
+        $this->assertEquals('Promoted Author', Author::find($author->id)->name);
+    }
 }
 
 class AuthorizeAuthorResource extends ResourcesAuthorResource
 {
     public static array $allowedIds = [];
     public static array $allowedNames = [];
+    public static ?string $renameInAfterAddTo = null;
+    public static ?string $renameInAfterUpdateTo = null;
 
     protected function authorize(Builder $query): void
     {
@@ -238,6 +303,22 @@ class AuthorizeAuthorResource extends ResourcesAuthorResource
         }
         if (!empty(self::$allowedNames)) {
             $query->whereIn('name', self::$allowedNames);
+        }
+    }
+
+    protected function afterAdd(Model $model, array $saveFields, stdClass $meta): void
+    {
+        if (self::$renameInAfterAddTo !== null) {
+            $model->name = self::$renameInAfterAddTo;
+            $model->save();
+        }
+    }
+
+    protected function afterUpdate(Model $model, array $saveFields, stdClass $meta): void
+    {
+        if (self::$renameInAfterUpdateTo !== null) {
+            $model->name = self::$renameInAfterUpdateTo;
+            $model->save();
         }
     }
 }
