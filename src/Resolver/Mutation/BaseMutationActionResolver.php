@@ -63,14 +63,12 @@ class BaseMutationActionResolver extends BaseActionResolver
         // forward dispatch runs OUTSIDE the transaction: the post-state
         // authorize check inside the transaction has already approved the
         // commit; forward is response-building only and must not be able
-        // to roll back a successful write.
+        // to roll back a successful write. Subclasses that have nothing
+        // to forward to (e.g. delete) clear the callback in _resolve().
         if ($this->forwardCallback) {
-            $model = $result['data'] ?? null;
-            if ($model !== null) {
-                $request = $this->getRequest();
-                ($this->forwardCallback)($request, $model);
-                return $request->dispatch();
-            }
+            $request = $this->getRequest();
+            ($this->forwardCallback)($request, $result['data'] ?? null);
+            return $request->dispatch();
         }
 
         return $result;

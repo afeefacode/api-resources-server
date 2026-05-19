@@ -132,6 +132,7 @@ class MutationActionModelResolver extends BaseMutationActionResolver
             ($this->deleteCallback)($existingModel);
 
             $this->_afterResolve(null);
+            $this->forwardCallback = null; // nothing to forward to after delete
         } elseif ($fieldsToSave !== null) { // do not add/update model if not existings && fields=null
             $model = $this->resolveModel(
                 $existingModel,
@@ -154,6 +155,7 @@ class MutationActionModelResolver extends BaseMutationActionResolver
             $this->_afterResolve($model);
         } else { // not existing and null passed
             $this->_afterResolve(null);
+            $this->forwardCallback = null; // no model created
         }
 
         return [

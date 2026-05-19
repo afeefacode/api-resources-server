@@ -12,6 +12,7 @@ use Afeefa\ApiResources\Field\Relation;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\MutationActionResolver;
 use Afeefa\ApiResources\Resolver\MutationRelationHasOneResolver;
+use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Afeefa\ApiResources\Test\MutationTest;
 use function Afeefa\ApiResources\Test\T;
 use Closure;
@@ -442,5 +443,78 @@ class MutationActionResolverTest extends MutationTest
         );
 
         $this->request($api);
+    }
+
+    // Regression: save() may return null (per the documented contract — see
+    // "Save ... must return a ModelInterface object or null" validator). When
+    // ->forward('get') is configured, the forward dispatch must still fire and
+    // build the response. The opposite would silently send {"data": null} to
+    // the client even though the write succeeded.
+    public function test_forward_fires_when_save_returns_null()
+    {
+        $api = $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) {
+            $addType('TYPE', fn () => null);
+            $addResource('RES', function (Closure $addAction, Closure $addQuery, Closure $addMutation) {
+                $addQuery('get', T('TYPE'), function (Action $action) {
+                    $action->resolve(function (QueryActionResolver $r) {
+                        $r->get(function () {
+                            $this->testWatcher->info('get');
+                            return Model::fromSingle('TYPE', ['id' => 'from-get']);
+                        });
+                    });
+                });
+                $addMutation('ACT', T('TYPE'), function (Action $action) {
+                    $action->resolve(function (MutationActionResolver $r) {
+                        $r
+                            ->save(function () {
+                                $this->testWatcher->info('save');
+                                // no return — the sprint-shared/asylberatung-shared pattern:
+                                // save mutates and persists, forward('get') re-reads the model
+                            })
+                            ->forward('get');
+                    });
+                });
+            });
+        })->get();
+
+        $result = $this->request($api);
+
+        $this->assertEquals(['save', 'get'], $this->testWatcher->info);
+        $this->assertNotNull($result['data'], 'forward("get") must fire even when save() returns null');
+        $this->assertEquals('from-get', $result['data']->id);
+    }
+
+    // Closure-form variant: forward must also fire and receive null as $model
+    // when save returned null. The closure decides what to do with that.
+    public function test_forward_closure_fires_when_save_returns_null()
+    {
+        $modelArg = 'unset';
+
+        $api = $this->apiBuilder()->api('API', function (Closure $addResource, Closure $addType) use (&$modelArg) {
+            $addType('TYPE', fn () => null);
+            $addResource('RES', function (Closure $addAction, Closure $addQuery, Closure $addMutation) use (&$modelArg) {
+                $addQuery('get', T('TYPE'), function (Action $action) {
+                    $action->resolve(function (QueryActionResolver $r) {
+                        $r->get(fn () => Model::fromSingle('TYPE', ['id' => 'from-get']));
+                    });
+                });
+                $addMutation('ACT', T('TYPE'), function (Action $action) use (&$modelArg) {
+                    $action->resolve(function (MutationActionResolver $r) use (&$modelArg) {
+                        $r
+                            ->save(fn () => null)
+                            ->forward(function (ApiRequest $request, $model) use (&$modelArg) {
+                                $modelArg = $model;
+                                $request->actionName('get');
+                            });
+                    });
+                });
+            });
+        })->get();
+
+        $result = $this->request($api);
+
+        $this->assertNull($modelArg);
+        $this->assertNotNull($result['data']);
+        $this->assertEquals('from-get', $result['data']->id);
     }
 }
