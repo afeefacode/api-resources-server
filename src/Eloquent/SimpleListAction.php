@@ -185,28 +185,35 @@ class SimpleListAction extends Action
 
                 // pagination
 
-                /** @var PageSizeFilter */
-                $pageSizeFilter = $action->getFilter('page_size');
+                if ($request->isUnbounded()) {
+                    // Return every matching row (no limit/offset). Reachable only via
+                    // the PHP API (ApiRequest::unbounded()), never from the request body.
+                    $usedFilters['page'] = 1;
+                    $usedFilters['page_size'] = $countSearch;
+                } else {
+                    /** @var PageSizeFilter */
+                    $pageSizeFilter = $action->getFilter('page_size');
 
-                $page = $filters['page'] ?? 1;
-                $pageSize = $filters['page_size'] ?? null;
+                    $page = $filters['page'] ?? 1;
+                    $pageSize = $filters['page_size'] ?? null;
 
-                if ($action->hasParam('page_size') && ($params['page_size'] ?? null)) {
-                    $pageSize = $params['page_size'];
+                    if ($action->hasParam('page_size') && ($params['page_size'] ?? null)) {
+                        $pageSize = $params['page_size'];
+                    }
+
+                    if (!$pageSizeFilter->hasPageSize($pageSize)) {
+                        $pageSize = $pageSizeFilter->getDefaultValue();
+                    }
+
+                    [$offset, $pageSize, $page] = $this->pageToLimit($page, $pageSize, $countSearch);
+
+                    $query
+                        ->limit($pageSize)
+                        ->offset($offset);
+
+                    $usedFilters['page'] = $page;
+                    $usedFilters['page_size'] = $pageSize;
                 }
-
-                if (!$pageSizeFilter->hasPageSize($pageSize)) {
-                    $pageSize = $pageSizeFilter->getDefaultValue();
-                }
-
-                [$offset, $pageSize, $page] = $this->pageToLimit($page, $pageSize, $countSearch);
-
-                $query
-                    ->limit($pageSize)
-                    ->offset($offset);
-
-                $usedFilters['page'] = $page;
-                $usedFilters['page_size'] = $pageSize;
 
                 // select $selectFields before counts, since withCount()
                 // will add a '*' column by default, which we don't want.

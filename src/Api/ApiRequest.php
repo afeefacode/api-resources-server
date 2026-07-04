@@ -35,6 +35,8 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     protected ?array $fieldsToSave = [];
 
+    protected bool $unbounded = false;
+
     public function fromInput(?array $input = null): ApiRequest
     {
         $input ??= json_decode(file_get_contents('php://input'), true);
@@ -191,6 +193,27 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     public function getFieldsToSave(): ?array
     {
         return $this->fieldsToSave;
+    }
+
+    /**
+     * Return the full, unpaginated list result (no limit/offset applied).
+     *
+     * This is intended for server-initiated exports that need every matching
+     * row in a single request instead of paging through the result set.
+     *
+     * By design this flag is settable only through the PHP API and is NOT read
+     * in fromInput(): a client cannot enable it via the request body and thus
+     * cannot bypass the page size limit of the normal list endpoint.
+     */
+    public function unbounded(bool $unbounded = true): ApiRequest
+    {
+        $this->unbounded = $unbounded;
+        return $this;
+    }
+
+    public function isUnbounded(): bool
+    {
+        return $this->unbounded;
     }
 
     public function dispatch(): array
