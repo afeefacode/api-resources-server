@@ -186,10 +186,38 @@ class SimpleListAction extends Action
                 // pagination
 
                 if ($request->isUnbounded()) {
-                    // Return every matching row (no limit/offset). Reachable only via
-                    // the PHP API (ApiRequest::unbounded()), never from the request body.
-                    $usedFilters['page'] = 1;
-                    $usedFilters['page_size'] = $countSearch;
+                    // Server-initiated override of the pagination config. Reachable
+                    // only via the PHP API (ApiRequest::unbounded()), never from the
+                    // request body. The counts above are already computed, so this
+                    // only affects which rows are returned, not count_*.
+                    $unboundedPageSize = $request->getUnboundedPageSize();
+                    $unboundedLimit = $request->getUnboundedLimit();
+
+                    if ($unboundedPageSize === null) {
+                        // no page size given: return every matching row
+                        $usedFilters['page'] = 1;
+                        $usedFilters['page_size'] = $countSearch;
+
+                        if ($unboundedLimit !== null) {
+                            $query->limit($unboundedLimit);
+                        }
+                    } else {
+                        // paginate with the given page size, bypassing the whitelist
+                        $page = $filters['page'] ?? 1;
+                        [$offset, $pageSize, $page] = $this->pageToLimit($page, $unboundedPageSize, $countSearch);
+
+                        // hard upper bound on total rows served: never read past $unboundedLimit
+                        if ($unboundedLimit !== null && $offset + $pageSize > $unboundedLimit) {
+                            $pageSize = max(0, $unboundedLimit - $offset);
+                        }
+
+                        $query
+                            ->limit($pageSize)
+                            ->offset($offset);
+
+                        $usedFilters['page'] = $page;
+                        $usedFilters['page_size'] = $pageSize;
+                    }
                 } else {
                     /** @var PageSizeFilter */
                     $pageSizeFilter = $action->getFilter('page_size');

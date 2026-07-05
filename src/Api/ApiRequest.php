@@ -37,6 +37,10 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
 
     protected bool $unbounded = false;
 
+    protected ?int $unboundedPageSize = null;
+
+    protected ?int $unboundedLimit = null;
+
     public function fromInput(?array $input = null): ApiRequest
     {
         $input ??= json_decode(file_get_contents('php://input'), true);
@@ -196,24 +200,44 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     }
 
     /**
-     * Return the full, unpaginated list result (no limit/offset applied).
+     * Let server-initiated code override the list pagination configuration.
      *
-     * This is intended for server-initiated exports that need every matching
-     * row in a single request instead of paging through the result set.
+     * This is intended for server-initiated exports that need to read more than
+     * the normal, whitelisted page size allows.
      *
-     * By design this flag is settable only through the PHP API and is NOT read
-     * in fromInput(): a client cannot enable it via the request body and thus
+     * - no arguments: return every matching row (no limit/offset);
+     * - $pageSize: use this page size even if it is outside the action's page
+     *   size whitelist, still paginating via the page filter;
+     * - $limit: a hard upper bound on the total number of rows served (applied
+     *   as a SQL limit), so paging never reads beyond it.
+     *
+     * By design this is settable only through the PHP API and is NOT read in
+     * fromInput(): a client cannot enable it via the request body and thus
      * cannot bypass the page size limit of the normal list endpoint.
      */
-    public function unbounded(bool $unbounded = true): ApiRequest
+    public function unbounded(?int $pageSize = null, ?int $limit = null): ApiRequest
     {
-        $this->unbounded = $unbounded;
+        $this->unbounded = true;
+        // Guard against < 1 (e.g. a legacy bool call coerced to 0/1 without
+        // strict_types): a page size of 0 would divide by zero in pageToLimit().
+        $this->unboundedPageSize = $pageSize === null ? null : max($pageSize, 1);
+        $this->unboundedLimit = $limit === null ? null : max($limit, 1);
         return $this;
     }
 
     public function isUnbounded(): bool
     {
         return $this->unbounded;
+    }
+
+    public function getUnboundedPageSize(): ?int
+    {
+        return $this->unboundedPageSize;
+    }
+
+    public function getUnboundedLimit(): ?int
+    {
+        return $this->unboundedLimit;
     }
 
     public function dispatch(): array
