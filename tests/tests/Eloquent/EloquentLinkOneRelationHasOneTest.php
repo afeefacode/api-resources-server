@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Tests\Eloquent\Blog;
 
+use Afeefa\ApiResources\Api\NotFoundException;
 use Afeefa\ApiResources\ApiResources;
 use Afeefa\ApiResources\Test\Eloquent\ApiResourcesEloquentTest;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Api\BlogApi;
@@ -32,16 +33,20 @@ class EloquentLinkOneRelationHasOneTest extends ApiResourcesEloquentTest
     {
         $profile = Profile::factory()->create();
 
-        $this->save(
-            id: $profile->id,
-            data: [
-                'author' => [
-                    'id' => 'does_not_exist'
-                ]
-            ]
-        );
+        $this->expectException(NotFoundException::class);
 
-        $this->assertAuthor($profile->id, []);
+        try {
+            $this->save(
+                id: $profile->id,
+                data: [
+                    'author' => [
+                        'id' => 'does_not_exist'
+                    ]
+                ]
+            );
+        } finally {
+            $this->assertAuthor($profile->id, []);
+        }
     }
 
     public function test_set_empty()
@@ -87,13 +92,17 @@ class EloquentLinkOneRelationHasOneTest extends ApiResourcesEloquentTest
 
     public function test_create_set_not_exists()
     {
-        $profile = $this->create([
-            'author' => [
-                'id' => 'does_not_exist'
-            ]
-        ]);
+        $this->expectException(NotFoundException::class);
 
-        $this->assertAuthor($profile->id, []);
+        try {
+            $this->create([
+                'author' => [
+                    'id' => 'does_not_exist'
+                ]
+            ]);
+        } finally {
+            $this->assertEquals(0, Profile::count());
+        }
     }
 
     public function test_create_set_empty()

@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Tests\Eloquent\Blog;
 
+use Afeefa\ApiResources\Api\NotFoundException;
 use Afeefa\ApiResources\ApiResources;
 use Afeefa\ApiResources\Test\Eloquent\ApiResourcesEloquentTest;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Api\BlogApi;
@@ -39,16 +40,21 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
     {
         $author = $this->createAuthorWithTags(2);
 
-        $this->save(
-            id: $author->id,
-            data: [
-                'tags' => [
-                    ['id' => 'does_not_exist']
-                ]
-            ]
-        );
+        $this->expectException(NotFoundException::class);
 
-        $this->assertTags($author->id, []);
+        try {
+            $this->save(
+                id: $author->id,
+                data: [
+                    'tags' => [
+                        ['id' => 'does_not_exist']
+                    ]
+                ]
+            );
+        } finally {
+            // The save is rolled back as a whole, so the existing links stay.
+            $this->assertTags($author->id, ['1' => 'tag1', '2' => 'tag2']);
+        }
     }
 
     public function test_set_many()
@@ -62,8 +68,7 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
             data: [
                 'tags' => [
                     ['id' => '3'],
-                    ['id' => '4'],
-                    ['id' => 'does_not_exist']
+                    ['id' => '4']
                 ]
             ]
         );
@@ -107,16 +112,20 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
     {
         $author = $this->createAuthorWithTags(2);
 
-        $this->save(
-            id: $author->id,
-            data: [
-                'tags#add' => [
-                    ['id' => 'does_not_exist']
-                ]
-            ]
-        );
+        $this->expectException(NotFoundException::class);
 
-        $this->assertTags($author->id, ['1' => 'tag1', '2' => 'tag2']);
+        try {
+            $this->save(
+                id: $author->id,
+                data: [
+                    'tags#add' => [
+                        ['id' => 'does_not_exist']
+                    ]
+                ]
+            );
+        } finally {
+            $this->assertTags($author->id, ['1' => 'tag1', '2' => 'tag2']);
+        }
     }
 
     public function test_add_many()
@@ -130,8 +139,7 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
             data: [
                 'tags#add' => [
                     ['id' => '3'],
-                    ['id' => '4'],
-                    ['id' => 'does_not_exist']
+                    ['id' => '4']
                 ]
             ]
         );
@@ -204,13 +212,18 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
 
     public function test_create_set_one_not_exists()
     {
-        $author = $this->create([
-            'tags' => [
-                ['id' => 'does_not_exist']
-            ]
-        ]);
+        $this->expectException(NotFoundException::class);
 
-        $this->assertTags($author->id, []);
+        try {
+            $this->create([
+                'tags' => [
+                    ['id' => 'does_not_exist']
+                ]
+            ]);
+        } finally {
+            // Nothing was created: the owner save rolls back with the link.
+            $this->assertEquals(0, Author::count());
+        }
     }
 
     public function test_create_set_many()
@@ -220,8 +233,7 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
         $author = $this->create([
             'tags' => [
                 ['id' => '1'],
-                ['id' => '2'],
-                ['id' => 'does_not_exist']
+                ['id' => '2']
             ]
         ]);
 
@@ -256,13 +268,17 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
 
     public function test_create_add_one_not_exists()
     {
-        $author = $this->create([
-            'tags#add' => [
-                ['id' => 'does_not_exist']
-            ]
-        ]);
+        $this->expectException(NotFoundException::class);
 
-        $this->assertTags($author->id, []);
+        try {
+            $this->create([
+                'tags#add' => [
+                    ['id' => 'does_not_exist']
+                ]
+            ]);
+        } finally {
+            $this->assertEquals(0, Author::count());
+        }
     }
 
     public function test_create_add_many()
@@ -272,8 +288,7 @@ class EloquentLinkManyRelationMorphToManyTest extends ApiResourcesEloquentTest
         $author = $this->create([
             'tags#add' => [
                 ['id' => '1'],
-                ['id' => '2'],
-                ['id' => 'does_not_exist']
+                ['id' => '2']
             ]
         ]);
 

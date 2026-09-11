@@ -29,6 +29,9 @@ class Api implements ContainerAwareInterface
     /** @var TypeConfigurator[] */
     protected array $typeConfigurators = [];
 
+    /** @var array<int, true> spl_object_id of every type instance already configured */
+    protected array $configuredTypeObjectIds = [];
+
     public function created(): void
     {
         $this->container->registerAlias($this, self::class);
@@ -38,6 +41,7 @@ class Api implements ContainerAwareInterface
 
         $this->overriddenTypes = $this->overrideTypes();
         $this->configureTypes();
+        $this->configureAuth();
     }
 
     public function debug($debug = true): static
@@ -112,11 +116,7 @@ class Api implements ContainerAwareInterface
             ->overrideTypes($this->overriddenTypes)
             ->createUsedTypesForApi($this);
 
-        foreach ($this->typeConfigurators as $typeClass => $configurator) {
-            if (isset($usedTypes[$typeClass])) {
-                $configurator->apply($usedTypes[$typeClass]);
-            }
-        }
+        $this->applyTypeConfigurators($usedTypes);
 
         $usedValidators = $this->createAllUsedValidators($usedTypes);
 
@@ -146,12 +146,69 @@ class Api implements ContainerAwareInterface
         ];
     }
 
+    /**
+     * Applies the configuration collected in configureTypes() to the given type
+     * instances.
+     *
+     * Called from toSchemaJson() and from ApiRequest::dispatch(): the configuration
+     * has to reach the same type instances the resolvers read their field bags from,
+     * otherwise a field excluded via write(false) would disappear from the schema but
+     * stay writable in a save request.
+     *
+     * Types are container singletons, and the operations are not idempotent (removing
+     * an already removed field throws), so each instance is configured only once.
+     *
+     * @param Type[] $types keyed by type name
+     */
+    public function applyTypeConfigurators(array $types): void
+    {
+        foreach ($this->typeConfigurators as $typeName => $configurator) {
+            if (!isset($types[$typeName])) {
+                continue;
+            }
+
+            $type = $types[$typeName];
+            $objectId = spl_object_id($type);
+            if (isset($this->configuredTypeObjectIds[$objectId])) {
+                continue;
+            }
+
+            $configurator->apply($type);
+            $this->configuredTypeObjectIds[$objectId] = true;
+        }
+    }
+
     public function configureType(string $typeClass): TypeConfigurator
     {
-        if (!isset($this->typeConfigurators[$typeClass])) {
-            $this->typeConfigurators[$typeClass] = new TypeConfigurator();
+        // Keyed by type string, not by class: a project may swap the class for this
+        // type via overrideTypes(), and the configuration has to follow the type.
+        $typeName = $typeClass::type();
+        if (!isset($this->typeConfigurators[$typeName])) {
+            $this->typeConfigurators[$typeName] = new TypeConfigurator();
         }
-        return $this->typeConfigurators[$typeClass];
+        return $this->typeConfigurators[$typeName];
+    }
+
+    /**
+     * Registers the authorization rules of a type.
+     *
+     * $all is a shorthand for read + write, so a rule that describes a plain
+     * data scope is a single call. A repeated call for the same type returns
+     * the same configurator and adds to it, just like configureType(): a
+     * library registers its rule, a project refines it, neither erases the
+     * other. Replacing instead of refining is AuthConfigurator::reset().
+     */
+    public function authorize(string $typeClass, ?Closure $all = null): AuthConfigurator
+    {
+        $configurator = $this->container->get(Authorizator::class)->configure($typeClass);
+
+        if ($all) {
+            $configurator
+                ->read($all)
+                ->write($all);
+        }
+
+        return $configurator;
     }
 
     protected function resources(ResourceBag $resources): void
@@ -164,6 +221,10 @@ class Api implements ContainerAwareInterface
     }
 
     protected function configureTypes(): void
+    {
+    }
+
+    protected function configureAuth(): void
     {
     }
 

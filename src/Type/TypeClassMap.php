@@ -66,9 +66,9 @@ class TypeClassMap implements ContainerAwareInterface
             $typeName = $TypeClass::type();
             $TypeClass = $this->overriddenTypes[$typeName] ?? $TypeClass;
 
-            if (!isset($types[$TypeClass])) {
+            if (!isset($types[$typeName])) {
                 $type = $this->container->get($TypeClass);
-                $types[$TypeClass] = $type;
+                $types[$typeName] = $type;
                 $this->add(get_class($type));
 
                 $RelatedTypeClasses = $type->getAllRelatedTypeClasses();

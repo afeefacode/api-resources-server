@@ -3,6 +3,7 @@
 namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Api\ApiRequest;
+use Afeefa\ApiResources\Api\Authorizator;
 use Afeefa\ApiResources\Api\NotFoundException;
 use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
@@ -11,6 +12,7 @@ use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
 use Afeefa\ApiResources\Resolver\ActionResult;
 use Afeefa\ApiResources\Resolver\MutationActionModelResolver;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
+use Afeefa\ApiResources\V2\Operation;
 use Closure;
 use Illuminate\Database\Capsule\Manager as DB;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
@@ -21,6 +23,7 @@ class ModelResolver
     protected ModelType $type;
     protected string $ModelClass;
     protected string $relationName;
+    protected ?Authorizator $authorizator = null;
 
     protected Closure $scopeFunction;
     protected Closure $authorizeFunction;
@@ -45,6 +48,16 @@ class ModelResolver
     {
         $this->type = $type;
         $this->ModelClass = $type::$ModelClass;
+        return $this;
+    }
+
+    /**
+     * The resolver is built with new() and is not container aware, so the
+     * authorizator is handed in by whoever creates it.
+     */
+    public function authorizator(?Authorizator $authorizator): ModelResolver
+    {
+        $this->authorizator = $authorizator;
         return $this;
     }
 
@@ -182,6 +195,7 @@ class ModelResolver
                 // authorize
 
                 ($this->authorizeFunction)($query);
+                $this->applyAuthorize($query, Operation::READ);
 
                 // scope
 
@@ -379,6 +393,7 @@ class ModelResolver
                 // authorize
 
                 ($this->authorizeFunction)($query);
+                $this->applyAuthorize($query, Operation::READ);
 
                 // select $selectFields before counts, since withCount()
                 // will add a '*' column by default, which we don't want.
@@ -430,8 +445,11 @@ class ModelResolver
             })
 
             ->get(function (string $id) {
+                // Loader in front of every update and delete: a row the read
+                // rule does not reach must not be saved either.
                 $query = $this->ModelClass::query();
                 ($this->authorizeFunction)($query);
+                $this->applyAuthorize($query, Operation::READ);
                 return $query
                     ->where('id', $id)
                     ->first();
@@ -461,7 +479,7 @@ class ModelResolver
 
                 ($this->afterAddFunction)($model, $saveFields, $meta);
 
-                $this->assertAuthorized($model);
+                $this->assertAuthorized($model, Operation::CREATE);
 
                 return $model;
             })
@@ -487,10 +505,14 @@ class ModelResolver
 
                 ($this->afterUpdateFunction)($model, $saveFields, $meta);
 
-                $this->assertAuthorized($model);
+                $this->assertAuthorized($model, Operation::UPDATE);
             })
 
             ->delete(function (Model $model) use ($meta) {
+                // Pre state check: the row still exists, so the delete rule is
+                // asked before it is gone.
+                $this->assertAuthorized($model, Operation::DELETE);
+
                 ($this->beforeDeleteFunction)($model, $meta);
 
                 $model->delete();
@@ -518,14 +540,24 @@ class ModelResolver
             });
     }
 
-    protected function assertAuthorized(Model $model): void
+    protected function assertAuthorized(Model $model, Operation $operation): void
     {
         $query = $this->ModelClass::query();
         ($this->authorizeFunction)($query);
+        $this->applyAuthorize($query, $operation);
 
         if (!$query->where('id', $model->id)->exists()) {
             throw new NotFoundException('Model not found');
         }
+    }
+
+    protected function applyAuthorize(EloquentBuilder $query, Operation $operation): void
+    {
+        $this->authorizator?->applyAuthorizeForTypeName(
+            $this->type::type(),
+            $operation,
+            new EloquentAuthContext($query)
+        );
     }
 
     protected function getRelationCounts(QueryActionResolver $r): array
@@ -536,9 +568,11 @@ class ModelResolver
             if (preg_match('/^count_(.+)/', $fieldName, $matches)) {
                 $countRelationName = $matches[1];
                 if ($this->type->hasRelation($countRelationName)) {
-                    $isEloquentRelationResolver = $this->type->getRelation($countRelationName)->getResolveParam('is_eloquent_relation');
+                    $relation = $this->type->getRelation($countRelationName);
+                    $isEloquentRelationResolver = $relation->getResolveParam('is_eloquent_relation');
                     if ($isEloquentRelationResolver) {
-                        $relationCounts[] = $countRelationName . ' as count_' . $countRelationName;
+                        $alias = $countRelationName . ' as count_' . $countRelationName;
+                        $relationCounts[$alias] = RelationCountAuthorizer::constraint($this->authorizator, $relation);
                     }
                 }
             }

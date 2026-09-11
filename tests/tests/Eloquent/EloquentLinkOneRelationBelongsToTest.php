@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Tests\Eloquent\Blog;
 
+use Afeefa\ApiResources\Api\NotFoundException;
 use Afeefa\ApiResources\ApiResources;
 use Afeefa\ApiResources\Test\Eloquent\ApiResourcesEloquentTest;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Api\BlogApi;
@@ -33,16 +34,20 @@ class EloquentLinkOneRelationBelongsToTest extends ApiResourcesEloquentTest
     {
         $author = Author::factory()->create();
 
-        $this->save(
-            id: $author->id,
-            data: [
-                'featured_tag' => [
-                    'id' => 'does_not_exist'
-                ]
-            ]
-        );
+        $this->expectException(NotFoundException::class);
 
-        $this->assertFeaturedTag($author->id, []);
+        try {
+            $this->save(
+                id: $author->id,
+                data: [
+                    'featured_tag' => [
+                        'id' => 'does_not_exist'
+                    ]
+                ]
+            );
+        } finally {
+            $this->assertFeaturedTag($author->id, []);
+        }
     }
 
     public function test_set_empty()
@@ -78,13 +83,17 @@ class EloquentLinkOneRelationBelongsToTest extends ApiResourcesEloquentTest
 
     public function test_create_set_not_exists()
     {
-        $author = $this->create([
-            'featured_tag' => [
-                'id' => 'does_not_exist'
-            ]
-        ]);
+        $this->expectException(NotFoundException::class);
 
-        $this->assertFeaturedTag($author->id, []);
+        try {
+            $this->create([
+                'featured_tag' => [
+                    'id' => 'does_not_exist'
+                ]
+            ]);
+        } finally {
+            $this->assertEquals(0, Author::count());
+        }
     }
 
     public function test_create_set_empty()

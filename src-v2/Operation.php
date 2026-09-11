@@ -7,8 +7,10 @@ enum Operation: string
     case READ = 'read';
     case UPDATE = 'update';
     case CREATE = 'create';
+    case DELETE = 'delete';
 }
 
 const READ = Operation::READ;
 const UPDATE = Operation::UPDATE;
 const CREATE = Operation::CREATE;
+const DELETE = Operation::DELETE;

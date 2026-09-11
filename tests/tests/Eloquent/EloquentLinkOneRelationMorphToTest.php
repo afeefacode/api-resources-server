@@ -2,6 +2,7 @@
 
 namespace Afeefa\ApiResources\Tests\Eloquent\Blog;
 
+use Afeefa\ApiResources\Api\NotFoundException;
 use Afeefa\ApiResources\ApiResources;
 use Afeefa\ApiResources\Eloquent\Model;
 use Afeefa\ApiResources\Test\Eloquent\ApiResourcesEloquentTest;
@@ -71,16 +72,20 @@ class EloquentLinkOneRelationMorphToTest extends ApiResourcesEloquentTest
     {
         $comment = Comment::factory()->for(Author::factory(), 'owner')->create();
 
-        $this->save(
-            id: $comment->id,
-            data: [
-                'owner' => [
-                    'id' => 'does_not_exist'
-                ]
-            ]
-        );
+        $this->expectException(NotFoundException::class);
 
-        $this->assertOwner($comment, ['1', Author::$type]);
+        try {
+            $this->save(
+                id: $comment->id,
+                data: [
+                    'owner' => [
+                        'id' => 'does_not_exist'
+                    ]
+                ]
+            );
+        } finally {
+            $this->assertOwner($comment, ['1', Author::$type]);
+        }
     }
 
     public function test_set_empty()
@@ -145,14 +150,19 @@ class EloquentLinkOneRelationMorphToTest extends ApiResourcesEloquentTest
 
     public function test_create_set_not_exists()
     {
-        $this->expectException(PDOException::class);
-        $this->expectExceptionMessageMatches("/Field 'owner_id' doesn't have a default value/");
+        // The unreachable id is rejected before the owner is written, so the
+        // request no longer fails on a missing owner_id further down.
+        $this->expectException(NotFoundException::class);
 
-        $this->create([
-            'owner' => [
-                'id' => 'does_not_exist'
-            ]
-        ]);
+        try {
+            $this->create([
+                'owner' => [
+                    'id' => 'does_not_exist'
+                ]
+            ]);
+        } finally {
+            $this->assertEquals(0, Comment::count());
+        }
     }
 
     public function test_create_set_empty()

@@ -4,6 +4,7 @@ namespace Afeefa\ApiResources\Eloquent;
 
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Api\ApiRequest;
+use Afeefa\ApiResources\Api\Authorizator;
 use Afeefa\ApiResources\Filter\FilterBag;
 use Afeefa\ApiResources\Filter\Filters\KeywordFilter;
 use Afeefa\ApiResources\Filter\Filters\OrderFilter;
@@ -12,6 +13,7 @@ use Afeefa\ApiResources\Filter\Filters\PageSizeFilter;
 use Afeefa\ApiResources\Filter\Filters\SelectFilter;
 use Afeefa\ApiResources\Resolver\ActionResult;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
+use Afeefa\ApiResources\V2\Operation;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -306,13 +308,27 @@ class SimpleListAction extends Action
 
     protected function getBaseQuery(): ?Builder
     {
+        $query = null;
+
         if ($this->queryFunction ?? null) {
-            return ($this->queryFunction)();
+            $query = ($this->queryFunction)();
         } elseif ($this->response->getTypeClass()) {
             $type = new ($this->response->getTypeClass());
-            return $type::$ModelClass::query();
+            $query = $type::$ModelClass::query();
         }
-        return null;
+
+        // The action builds list, filters, search and counts itself, but it
+        // knows its target type - so the rule of that type applies here just as
+        // it does in a model resolver.
+        if ($query && $this->response->getTypeClass()) {
+            $this->container->get(Authorizator::class)->applyAuthorize(
+                $this->response->getTypeClass(),
+                Operation::READ,
+                new EloquentAuthContext($query)
+            );
+        }
+
+        return $query;
     }
 
     protected function getRelationCounts(QueryActionResolver $r): array
@@ -326,9 +342,14 @@ class SimpleListAction extends Action
                 if (preg_match('/^count_(.+)/', $fieldName, $matches)) {
                     $countRelationName = $matches[1];
                     if ($type->hasRelation($countRelationName)) {
-                        $isEloquentRelationResolver = $this->type->getRelation($countRelationName)->getResolveParam('is_eloquent_relation');
+                        $relation = $type->getRelation($countRelationName);
+                        $isEloquentRelationResolver = $relation->getResolveParam('is_eloquent_relation');
                         if ($isEloquentRelationResolver) {
-                            $relationCounts[] = $countRelationName . ' as count_' . $countRelationName;
+                            $alias = $countRelationName . ' as count_' . $countRelationName;
+                            $relationCounts[$alias] = RelationCountAuthorizer::constraint(
+                                $this->container->get(Authorizator::class),
+                                $relation
+                            );
                         }
                     }
                 }

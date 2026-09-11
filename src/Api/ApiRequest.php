@@ -245,9 +245,15 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
         $action = $this->getAction();
 
         // find and register all necessary types
-        $this->container->get(TypeClassMap::class)
+        $usedTypes = $this->container->get(TypeClassMap::class)
             ->overrideTypes($this->api->getOverriddenTypes())
             ->createUsedTypesForAction($action);
+
+        // Apply the api level type configuration to the very instances the resolvers
+        // read below. Schema and data request are separate HTTP requests with separate
+        // containers, so a configuration applied in toSchemaJson() alone would not
+        // reach this request.
+        $this->api->applyTypeConfigurators($usedTypes);
 
         $resolveCallback = $action->getResolve();
 

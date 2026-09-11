@@ -5,6 +5,7 @@ namespace Afeefa\ApiResources\Eloquent;
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\Action\ActionBag;
 use Afeefa\ApiResources\Action\ActionParams;
+use Afeefa\ApiResources\Api\Authorizator;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Field\Fields\IdAttribute;
 use Afeefa\ApiResources\Model\ModelInterface;
@@ -153,6 +154,7 @@ class ModelResource extends Resource
         $type = $this->container->get($this->ModelTypeClass);
         return (new ModelResolver())
             ->type($type)
+            ->authorizator($this->container->get(Authorizator::class))
             ->scope(function (Builder $query, array $params) {
                 $this->scope($query, $params);
             })
