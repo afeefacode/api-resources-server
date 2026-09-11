@@ -71,9 +71,15 @@ class AuthConfigurator
         return $this->rules[$operation->value] ?? null;
     }
 
+    /**
+     * A new rule replaces the one registered before for the same operation, but
+     * keeps hold of it: the new closure can ask for it as PreviousAuthRule and
+     * decide itself when it applies.
+     */
     protected function set(Operation $operation, Closure $closure): static
     {
-        $this->rules[$operation->value] = new AuthRule($closure);
+        $previous = $this->rules[$operation->value] ?? null;
+        $this->rules[$operation->value] = new AuthRule($closure, $previous);
         return $this;
     }
 }

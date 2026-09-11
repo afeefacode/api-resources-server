@@ -17,7 +17,8 @@ use function Afeefa\ApiResources\DI\getCallbackArgumentTypes;
 class AuthRule
 {
     public function __construct(
-        protected Closure $closure
+        protected Closure $closure,
+        protected ?AuthRule $previous = null
     ) {
     }
 
@@ -58,7 +59,11 @@ class AuthRule
 
         $arguments = [$context];
         foreach (array_slice($TypeClasses, 1) as $TypeClass) {
-            $arguments[] = $container->get($TypeClass);
+            // The earlier rule of this slot is not a container entry: it belongs
+            // to this rule alone and differs per type and operation.
+            $arguments[] = $TypeClass === PreviousAuthRule::class
+                ? new PreviousAuthRule($this->previous, $container)
+                : $container->get($TypeClass);
         }
 
         ($this->closure)(...$arguments);
