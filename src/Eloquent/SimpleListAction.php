@@ -321,7 +321,7 @@ class SimpleListAction extends Action
         // knows its target type - so the rule of that type applies here just as
         // it does in a model resolver.
         if ($query && $this->response->getTypeClass()) {
-            $this->container->get(Authorizator::class)->applyAuthorize(
+            $this->container->get(Authorizator::class)->applyAuthorizeType(
                 $this->response->getTypeClass(),
                 Operation::READ,
                 new EloquentAuthContext($query)

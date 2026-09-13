@@ -12,7 +12,7 @@ use function Afeefa\ApiResources\DI\getCallbackArgumentTypes;
  * A single registered authorization closure, or a slot closed with false.
  *
  * @internal Consumers register rules via Api::authorize() and apply them via
- * Authorizator::applyAuthorize().
+ * Authorizator::applyAuthorizeType().
  */
 class AuthRule
 {

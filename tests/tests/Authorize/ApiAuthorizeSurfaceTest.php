@@ -384,7 +384,7 @@ class FileListResource extends Resource
 
                     if (static::$applyAuthorize) {
                         $context = new FileAuthContext();
-                        $authorizator->applyAuthorize(FileType::class, Operation::READ, $context);
+                        $authorizator->applyAuthorizeType(FileType::class, Operation::READ, $context);
                         $files = $context->apply($files);
                     }
 

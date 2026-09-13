@@ -5,8 +5,10 @@ namespace Afeefa\ApiResources\Api;
 use Afeefa\ApiResources\Action\Action;
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Resource\ResourceBag;
+use Afeefa\ApiResources\Type\Type;
 use Afeefa\ApiResources\Type\TypeClassMap;
 use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
 use Afeefa\ApiResources\V2\TypeConfigurator;
@@ -190,17 +192,41 @@ class Api implements ContainerAwareInterface
     }
 
     /**
-     * Registers the authorization rules of a type.
+     * Registers the authorization rules of a type or of a resource.
+     *
+     * Which of the two is given decides how far the rule reaches. A type rule
+     * is asked wherever the type is read or written, in a nested relation as
+     * well. A resource rule is asked only where that resource is addressed
+     * directly - in its list, its get and its save:
+     *
+     *     $this->authorize(AccountType::class)->read(...);      // everywhere
+     *     $this->authorize(AccountResource::class)->read(...);  // direct calls only
      *
      * $all is a shorthand for read + write, so a rule that describes a plain
-     * data scope is a single call. A repeated call for the same type returns
-     * the same configurator and adds to it, just like configureType(): a
-     * library registers its rule, a project refines it, neither erases the
-     * other. Replacing instead of refining is AuthConfigurator::reset().
+     * data scope is a single call. A repeated call for the same type or
+     * resource returns the same configurator and adds to it, just like
+     * configureType(): a library registers its rule, a project refines it,
+     * neither erases the other. Replacing instead of refining is
+     * AuthConfigurator::reset().
      */
-    public function authorize(string $typeClass, ?Closure $all = null): AuthConfigurator
+    public function authorize(string $TypeOrResourceClass, ?Closure $all = null): AuthConfigurator
     {
-        $configurator = $this->container->get(Authorizator::class)->configure($typeClass);
+        $authorizator = $this->container->get(Authorizator::class);
+
+        if (is_subclass_of($TypeOrResourceClass, Resource::class)) {
+            // The instance is handed over so that a locked action can be
+            // checked against the actions the resource actually has. A
+            // resource this api does not serve has none to check against.
+            $resourceType = $TypeOrResourceClass::type();
+            $resource = $this->resources->has($resourceType) ? $this->resources->get($resourceType) : null;
+            $configurator = $authorizator->configureResource($TypeOrResourceClass, $resource);
+        } elseif (is_subclass_of($TypeOrResourceClass, Type::class)) {
+            $configurator = $authorizator->configureType($TypeOrResourceClass);
+        } else {
+            throw new InvalidConfigurationException(
+                'authorize() takes a type or a resource, ' . $TypeOrResourceClass . ' is neither.'
+            );
+        }
 
         if ($all) {
             $configurator

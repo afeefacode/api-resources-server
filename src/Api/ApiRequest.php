@@ -244,6 +244,13 @@ class ApiRequest implements ContainerAwareInterface, ToSchemaJsonInterface, Json
     {
         $action = $this->getAction();
 
+        // A locked action is refused here, before the resolver runs and
+        // therefore before anything is written. This is the only check that
+        // covers an action of a resource's own: the framework does not see
+        // into it, but it does see that it was called.
+        $this->container->get(Authorizator::class)
+            ->assertActionNotForbidden($this->resourceType, $this->actionName);
+
         // find and register all necessary types
         $usedTypes = $this->container->get(TypeClassMap::class)
             ->overrideTypes($this->api->getOverriddenTypes())

@@ -162,7 +162,7 @@ class EloquentAuthContext extends AuthContext
             $relationName,
             $ModelClasses,
             function (EloquentBuilder $query, string $ModelClass) use ($authorizator, $operation, $typeNameOfModelClass): void {
-                $authorizator->applyAuthorizeForTypeName(
+                $authorizator->applyAuthorizeTypeByName(
                     $typeNameOfModelClass[$ModelClass],
                     $operation,
                     new EloquentAuthContext($query)

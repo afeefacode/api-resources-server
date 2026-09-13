@@ -4,6 +4,7 @@ namespace Afeefa\ApiResources\Api;
 
 use Afeefa\ApiResources\DI\ContainerAwareInterface;
 use Afeefa\ApiResources\DI\ContainerAwareTrait;
+use Afeefa\ApiResources\Resource\Resource;
 use Afeefa\ApiResources\Type\Type;
 use Afeefa\ApiResources\Type\TypeClassMap;
 use Afeefa\ApiResources\V2\Operation;
@@ -22,6 +23,9 @@ class Authorizator implements ContainerAwareInterface
     /** @var array<string, AuthConfigurator> keyed by type string */
     protected array $configurators = [];
 
+    /** @var array<string, ResourceAuthConfigurator> keyed by resource type string */
+    protected array $resourceConfigurators = [];
+
     /** @var array<string, true> keyed by "type.relation", see narrowRelationOnce() */
     protected array $narrowedRelations = [];
 
@@ -35,13 +39,31 @@ class Authorizator implements ContainerAwareInterface
      *
      * @internal registration goes through Api::authorize()
      */
-    public function configure(string $typeClass): AuthConfigurator
+    public function configureType(string $typeClass): AuthConfigurator
     {
         $typeName = $typeClass::type();
         if (!isset($this->configurators[$typeName])) {
-            $this->configurators[$typeName] = new AuthConfigurator();
+            $this->configurators[$typeName] = new AuthConfigurator($typeName);
         }
         return $this->configurators[$typeName];
+    }
+
+    /**
+     * Returns the configurator of the given resource, creating it on first call.
+     *
+     * Keyed by the type string of the resource, so a project that swaps a
+     * resource of a library for a subclass of it keeps the rule, exactly as a
+     * type does.
+     *
+     * @internal registration goes through Api::authorize()
+     */
+    public function configureResource(string $ResourceClass, ?Resource $resource = null): ResourceAuthConfigurator
+    {
+        $resourceType = $ResourceClass::type();
+        if (!isset($this->resourceConfigurators[$resourceType])) {
+            $this->resourceConfigurators[$resourceType] = new ResourceAuthConfigurator($resourceType, $resource);
+        }
+        return $this->resourceConfigurators[$resourceType];
     }
 
     /**
@@ -51,27 +73,57 @@ class Authorizator implements ContainerAwareInterface
      * works with Eloquent builds an EloquentAuthContext around their query,
      * every other data source brings its own context.
      */
-    public function applyAuthorize(string $typeClass, Operation $operation, AuthContext $context): void
+    public function applyAuthorizeType(string $typeClass, Operation $operation, AuthContext $context): void
     {
-        $this->applyAuthorizeForTypeName($typeClass::type(), $operation, $context);
+        $this->applyAuthorizeTypeByName($typeClass::type(), $operation, $context);
     }
 
     /**
-     * Same as applyAuthorize(), for paths that only know the type string - a
+     * Same as applyAuthorizeType(), for paths that only know the type string - a
      * nested read knows its target type by name, a saved model carries it in
      * Model::$type.
      *
      * @internal
      */
-    public function applyAuthorizeForTypeName(string $typeName, Operation $operation, AuthContext $context): void
+    public function applyAuthorizeTypeByName(string $typeName, Operation $operation, AuthContext $context): void
     {
-        $rule = $this->getAuthorize($typeName, $operation);
+        $this->runRule($this->getTypeAuthorize($typeName, $operation), $typeName, $context);
+    }
+
+    /**
+     * Applies the rule the given resource registered for that operation.
+     *
+     * Only for the paths on which the resource is addressed directly: its
+     * list, its get and its save. A nested relation reaches the type, not the
+     * resource, and is therefore untouched by it.
+     */
+    public function applyAuthorizeResource(string $ResourceClass, Operation $operation, AuthContext $context): void
+    {
+        $this->applyAuthorizeResourceByName($ResourceClass::type(), $operation, $context);
+    }
+
+    /**
+     * Same as applyAuthorizeResource(), for paths that only know the type
+     * string of the resource.
+     *
+     * @internal
+     */
+    public function applyAuthorizeResourceByName(string $resourceType, Operation $operation, AuthContext $context): void
+    {
+        $this->runRule($this->getResourceAuthorize($resourceType, $operation), $resourceType, $context);
+    }
+
+    /**
+     * Runs one rule on the given context, or does nothing without a rule.
+     */
+    protected function runRule(?AuthRule $rule, string $name, AuthContext $context): void
+    {
         if (!$rule) {
             return;
         }
 
         $this->ruleDepth++;
-        $context->beginRuleOf($typeName, $this);
+        $context->beginRuleOf($name, $this);
 
         try {
             $rule->call($context, $this->container);
@@ -137,7 +189,7 @@ class Authorizator implements ContainerAwareInterface
      *
      * @internal
      */
-    public function getAuthorize(string $typeName, Operation $operation): ?AuthRule
+    public function getTypeAuthorize(string $typeName, Operation $operation): ?AuthRule
     {
         return ($this->configurators[$typeName] ?? null)?->getRule($operation);
     }
@@ -145,9 +197,9 @@ class Authorizator implements ContainerAwareInterface
     /**
      * Whether the slot was closed with false, e.g. create(false).
      */
-    public function isForbidden(string $typeName, Operation $operation): bool
+    public function isTypeForbidden(string $typeName, Operation $operation): bool
     {
-        return $this->getAuthorize($typeName, $operation)?->isForbidden() ?? false;
+        return $this->getTypeAuthorize($typeName, $operation)?->isForbidden() ?? false;
     }
 
     /**
@@ -157,15 +209,62 @@ class Authorizator implements ContainerAwareInterface
      *
      * @internal called by the resolvers in front of add, update and delete
      */
-    public function assertNotForbidden(string $typeName, Operation $operation): void
+    public function assertTypeNotForbidden(string $typeName, Operation $operation): void
     {
-        if ($this->isForbidden($typeName, $operation)) {
+        if ($this->isTypeForbidden($typeName, $operation)) {
             throw new NotFoundException('Model not found');
         }
     }
 
-    public function hasAuthorize(string $typeName, Operation $operation): bool
+    public function hasTypeAuthorize(string $typeName, Operation $operation): bool
     {
-        return $this->getAuthorize($typeName, $operation) !== null;
+        return $this->getTypeAuthorize($typeName, $operation) !== null;
+    }
+
+    /**
+     * Returns the rule the resource registered for that operation, or null.
+     *
+     * @internal
+     */
+    public function getResourceAuthorize(string $resourceType, Operation $operation): ?AuthRule
+    {
+        return ($this->resourceConfigurators[$resourceType] ?? null)?->getRule($operation);
+    }
+
+    /**
+     * Throws when the operation is closed for direct calls of this resource,
+     * before any data is written.
+     *
+     * @internal called by the resolvers in front of add, update and delete
+     */
+    public function assertResourceNotForbidden(string $resourceType, Operation $operation): void
+    {
+        if ($this->getResourceAuthorize($resourceType, $operation)?->isForbidden()) {
+            throw new NotFoundException('Model not found');
+        }
+    }
+
+    /**
+     * Whether that action of that resource was locked with
+     * ResourceAuthConfigurator::action().
+     */
+    public function isActionForbidden(string $resourceType, string $actionName): bool
+    {
+        return ($this->resourceConfigurators[$resourceType] ?? null)?->isActionForbidden($actionName) ?? false;
+    }
+
+    /**
+     * Throws when the action is locked, before the action runs.
+     *
+     * Answers like a rule that denies: a locked action must not be
+     * distinguishable from one that does not exist.
+     *
+     * @internal called by ApiRequest::dispatch()
+     */
+    public function assertActionNotForbidden(string $resourceType, string $actionName): void
+    {
+        if ($this->isActionForbidden($resourceType, $actionName)) {
+            throw new NotFoundException('Model not found');
+        }
     }
 }

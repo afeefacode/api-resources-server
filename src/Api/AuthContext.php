@@ -29,7 +29,7 @@ abstract class AuthContext
      * here are both known - on every path, including the ones that never see a
      * type instance (see EloquentAuthContext::authorizeMorph()).
      *
-     * @internal called by Authorizator::applyAuthorizeForTypeName()
+     * @internal called by Authorizator::applyAuthorizeTypeByName()
      */
     public function beginRuleOf(string $typeName, Authorizator $authorizator): void
     {
@@ -44,7 +44,7 @@ abstract class AuthContext
      * guarantee instead of a claim: a context that is handed on afterwards -
      * kept by a caller, applied a second time - carries nothing over.
      *
-     * @internal called by Authorizator::applyAuthorizeForTypeName()
+     * @internal called by Authorizator::applyAuthorizeTypeByName()
      */
     public function ruleDone(): void
     {

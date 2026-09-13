@@ -34,7 +34,7 @@ class RelationCountAuthorizer
                 return;
             }
 
-            $authorizator->applyAuthorizeForTypeName(
+            $authorizator->applyAuthorizeTypeByName(
                 $typeNames[0],
                 Operation::READ,
                 new EloquentAuthContext($query)

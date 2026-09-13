@@ -155,6 +155,7 @@ class ModelResource extends Resource
         return (new ModelResolver())
             ->type($type)
             ->authorizator($this->container->get(Authorizator::class))
+            ->resourceType($this::type())
             ->scope(function (Builder $query, array $params) {
                 $this->scope($query, $params);
             })

@@ -97,7 +97,7 @@ class ModelRelationResolver
                             $relationCounts,
                             $r->getParams(),
                             function (EloquentRelation $relation) use ($authorizator, $typeName) {
-                                $authorizator->applyAuthorizeForTypeName(
+                                $authorizator->applyAuthorizeTypeByName(
                                     $typeName,
                                     Operation::READ,
                                     new EloquentAuthContext($relation, $this->getTargetTable($relation, $typeName))
@@ -361,7 +361,7 @@ class ModelRelationResolver
             return;
         }
 
-        $authorizator->applyAuthorizeForTypeName(
+        $authorizator->applyAuthorizeTypeByName(
             $relation->getRelatedType()->getAllTypeNames()[0],
             Operation::READ,
             new EloquentAuthContext($eloquentRelation)
@@ -388,12 +388,12 @@ class ModelRelationResolver
         $blocked = [];
 
         foreach ($this->sortRelatedByType($models) as $typeName => $modelsOfType) {
-            if (!$authorizator->hasAuthorize($typeName, Operation::READ)) {
+            if (!$authorizator->hasTypeAuthorize($typeName, Operation::READ)) {
                 continue;
             }
 
             $query = $modelsOfType[0]->newQuery();
-            $authorizator->applyAuthorizeForTypeName($typeName, Operation::READ, new EloquentAuthContext($query));
+            $authorizator->applyAuthorizeTypeByName($typeName, Operation::READ, new EloquentAuthContext($query));
 
             $keyName = $modelsOfType[0]->getQualifiedKeyName();
             $keys = array_map(fn (Model $model) => $model->getKey(), $modelsOfType);
@@ -444,7 +444,7 @@ class ModelRelationResolver
             return;
         }
 
-        $authorizator->assertNotForbidden($model->apiResourcesGetType(), $operation);
+        $authorizator->assertTypeNotForbidden($model->apiResourcesGetType(), $operation);
     }
 
     /**
@@ -460,12 +460,12 @@ class ModelRelationResolver
         }
 
         $typeName = $model->apiResourcesGetType();
-        if (!$authorizator->hasAuthorize($typeName, $operation)) {
+        if (!$authorizator->hasTypeAuthorize($typeName, $operation)) {
             return;
         }
 
         $query = $model->newQuery();
-        $authorizator->applyAuthorizeForTypeName($typeName, $operation, new EloquentAuthContext($query));
+        $authorizator->applyAuthorizeTypeByName($typeName, $operation, new EloquentAuthContext($query));
 
         if (!$query->whereKey($model->getKey())->exists()) {
             throw new NotFoundException('Model not found');
@@ -486,12 +486,12 @@ class ModelRelationResolver
         }
 
         $typeName = $ownerType::type();
-        if (!$authorizator->hasAuthorize($typeName, Operation::UPDATE)) {
+        if (!$authorizator->hasTypeAuthorize($typeName, Operation::UPDATE)) {
             return;
         }
 
         $query = $owner->newQuery();
-        $authorizator->applyAuthorizeForTypeName($typeName, Operation::UPDATE, new EloquentAuthContext($query));
+        $authorizator->applyAuthorizeTypeByName($typeName, Operation::UPDATE, new EloquentAuthContext($query));
 
         if (!$query->whereKey($owner->getKey())->exists()) {
             throw new NotFoundException('Model not found');
@@ -510,7 +510,7 @@ class ModelRelationResolver
     {
         $query = $RelatedClass::query();
 
-        $authorizator?->applyAuthorizeForTypeName(
+        $authorizator?->applyAuthorizeTypeByName(
             $typeName,
             Operation::READ,
             new EloquentAuthContext($query)

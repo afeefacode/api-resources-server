@@ -2,11 +2,13 @@
 
 namespace Afeefa\ApiResources\Api;
 
+use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
 use Afeefa\ApiResources\V2\Operation;
 use Closure;
 
 /**
- * Holds the authorization rules of one type, one slot per operation.
+ * Holds the authorization rules of one type, one slot per operation. A
+ * resource is configured with the same words, see ResourceAuthConfigurator.
  *
  * A slot that was never set means full access to that operation (allow by
  * default), just like a type that was never registered at all.
@@ -24,6 +26,15 @@ class AuthConfigurator
 {
     /** @var array<string, AuthRule> keyed by Operation::value */
     protected array $rules = [];
+
+    /**
+     * $name is the type or resource this configurator belongs to, used in
+     * error messages.
+     */
+    public function __construct(
+        protected string $name = ''
+    ) {
+    }
 
     public function read(Closure $closure): static
     {
@@ -58,6 +69,22 @@ class AuthConfigurator
     public function delete(Closure|false $closure): static
     {
         return $this->set(Operation::DELETE, $closure);
+    }
+
+    /**
+     * Locks a single action of a resource, see ResourceAuthConfigurator.
+     *
+     * Lives here so that Api::authorize() can declare one return type for
+     * both kinds of rule: a type and a resource are configured with the same
+     * words, and only a resource has actions. A type says so instead of
+     * leaving the call to an editor's underline.
+     */
+    public function action(string $name, Closure|false $closed): static
+    {
+        throw new InvalidConfigurationException(
+            'action() locks an action of a resource, and ' . $this->name
+            . ' is a type. Operations of a type are read, write, update, create and delete.'
+        );
     }
 
     /**
