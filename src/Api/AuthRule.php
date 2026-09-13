@@ -9,22 +9,31 @@ use Closure;
 use function Afeefa\ApiResources\DI\getCallbackArgumentTypes;
 
 /**
- * A single registered authorization closure.
+ * A single registered authorization closure, or a slot closed with false.
  *
  * @internal Consumers register rules via Api::authorize() and apply them via
  * Authorizator::applyAuthorize().
  */
 class AuthRule
 {
+    /**
+     * Without a closure the operation is forbidden altogether, see
+     * AuthConfigurator::create(false).
+     */
     public function __construct(
-        protected Closure $closure,
+        protected ?Closure $closure,
         protected ?AuthRule $previous = null
     ) {
     }
 
-    public function getClosure(): Closure
+    public function getClosure(): ?Closure
     {
         return $this->closure;
+    }
+
+    public function isForbidden(): bool
+    {
+        return $this->closure === null;
     }
 
     /**
@@ -39,6 +48,10 @@ class AuthRule
      */
     public function call(AuthContext $context, Container $container): void
     {
+        if ($this->isForbidden()) { // wherever a closed slot is still asked, it denies
+            $context->deny();
+        }
+
         $TypeClasses = getCallbackArgumentTypes($this->closure);
 
         if (count($TypeClasses) === 0) { // rule does not care about the context

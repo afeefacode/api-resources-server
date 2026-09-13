@@ -13,6 +13,12 @@ use Closure;
  *
  * Slots are filled in call order, so a per-op call after write() narrows that
  * single operation while the others keep the umbrella rule.
+ *
+ * A mutating slot takes false instead of a closure: the operation does not
+ * exist for this type. A closure can only decide about a row, and the row of a
+ * create exists only after the insert - a rule that denies every create would
+ * therefore run too late, or not at all when the insert already fails. A closed
+ * slot is asked before any data is written.
  */
 class AuthConfigurator
 {
@@ -31,7 +37,7 @@ class AuthConfigurator
      * save only - a field cannot be deleted on its own. On type level delete
      * mutates data just as update and create do.
      */
-    public function write(Closure $closure): static
+    public function write(Closure|false $closure): static
     {
         return $this
             ->update($closure)
@@ -39,17 +45,17 @@ class AuthConfigurator
             ->delete($closure);
     }
 
-    public function update(Closure $closure): static
+    public function update(Closure|false $closure): static
     {
         return $this->set(Operation::UPDATE, $closure);
     }
 
-    public function create(Closure $closure): static
+    public function create(Closure|false $closure): static
     {
         return $this->set(Operation::CREATE, $closure);
     }
 
-    public function delete(Closure $closure): static
+    public function delete(Closure|false $closure): static
     {
         return $this->set(Operation::DELETE, $closure);
     }
@@ -76,10 +82,10 @@ class AuthConfigurator
      * keeps hold of it: the new closure can ask for it as PreviousAuthRule and
      * decide itself when it applies.
      */
-    protected function set(Operation $operation, Closure $closure): static
+    protected function set(Operation $operation, Closure|false $closure): static
     {
         $previous = $this->rules[$operation->value] ?? null;
-        $this->rules[$operation->value] = new AuthRule($closure, $previous);
+        $this->rules[$operation->value] = new AuthRule($closure === false ? null : $closure, $previous);
         return $this;
     }
 }

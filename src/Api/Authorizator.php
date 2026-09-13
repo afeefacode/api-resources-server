@@ -142,6 +142,28 @@ class Authorizator implements ContainerAwareInterface
         return ($this->configurators[$typeName] ?? null)?->getRule($operation);
     }
 
+    /**
+     * Whether the slot was closed with false, e.g. create(false).
+     */
+    public function isForbidden(string $typeName, Operation $operation): bool
+    {
+        return $this->getAuthorize($typeName, $operation)?->isForbidden() ?? false;
+    }
+
+    /**
+     * Throws when the operation is closed for the type, before any data is
+     * written. Answers like a rule that denies, so a closed operation cannot be
+     * told apart from a row that is out of reach.
+     *
+     * @internal called by the resolvers in front of add, update and delete
+     */
+    public function assertNotForbidden(string $typeName, Operation $operation): void
+    {
+        if ($this->isForbidden($typeName, $operation)) {
+            throw new NotFoundException('Model not found');
+        }
+    }
+
     public function hasAuthorize(string $typeName, Operation $operation): bool
     {
         return $this->getAuthorize($typeName, $operation) !== null;

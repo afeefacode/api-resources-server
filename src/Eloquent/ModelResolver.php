@@ -456,6 +456,8 @@ class ModelResolver
             })
 
             ->add(function (string $typeName, array $saveFields) use ($meta) {
+                $this->authorizator?->assertNotForbidden($this->type::type(), Operation::CREATE);
+
                 $model = new $this->ModelClass();
 
                 $saveFields = ($this->beforeAddFunction)($model, $saveFields, $meta);
@@ -485,6 +487,8 @@ class ModelResolver
             })
 
             ->update(function (Model $model, array $saveFields) use ($meta) {
+                $this->authorizator?->assertNotForbidden($this->type::type(), Operation::UPDATE);
+
                 $saveFields = ($this->beforeUpdateFunction)($model, $saveFields, $meta);
 
                 if (!empty($saveFields)) {
@@ -509,6 +513,8 @@ class ModelResolver
             })
 
             ->delete(function (Model $model) use ($meta) {
+                $this->authorizator?->assertNotForbidden($this->type::type(), Operation::DELETE);
+
                 // Pre state check: the row still exists, so the delete rule is
                 // asked before it is gone.
                 $this->assertAuthorized($model, Operation::DELETE);

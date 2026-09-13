@@ -139,6 +139,7 @@ class ModelRelationResolver
                 ->addBeforeOwner(function (string $typeName, array $saveFields) use ($r, $authorizator) {
                     $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation())->relation();
                     $relatedModel = $eloquentRelation->getRelated();
+                    $this->assertNotForbidden($authorizator, $relatedModel, Operation::CREATE);
                     if (!empty($saveFields)) {
                         $relatedModel->fillable(array_keys($saveFields));
                         $relatedModel->fill($saveFields);
@@ -160,6 +161,7 @@ class ModelRelationResolver
             ->add(function (Model $owner, string $typeName, array $saveFields) use ($r, $authorizator) {
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
                 $relatedModel = $eloquentRelation->getRelated();
+                $this->assertNotForbidden($authorizator, $relatedModel, Operation::CREATE);
                 if (!empty($saveFields)) {
                     $relatedModel->fillable(array_keys($saveFields));
                     $relatedModel->fill($saveFields);
@@ -170,6 +172,7 @@ class ModelRelationResolver
                 return $relatedModel;
             })
             ->update(function (Model $owner, Model $modelToUpdate, array $saveFields) use ($r, $authorizator) {
+                $this->assertNotForbidden($authorizator, $modelToUpdate, Operation::UPDATE);
                 if (!empty($saveFields)) {
                     $modelToUpdate->fillable(array_keys($saveFields));
                     $modelToUpdate->fill($saveFields);
@@ -178,6 +181,7 @@ class ModelRelationResolver
                 $this->assertModelAuthorized($authorizator, $modelToUpdate, Operation::UPDATE);
             })
             ->delete(function (Model $owner, Model $modelToDelete) use ($r, $authorizator) {
+                $this->assertNotForbidden($authorizator, $modelToDelete, Operation::DELETE);
                 $this->assertModelAuthorized($authorizator, $modelToDelete, Operation::DELETE);
                 $modelToDelete->delete();
             });
@@ -210,6 +214,7 @@ class ModelRelationResolver
             ->add(function (Model $owner, string $typeName, array $saveFields) use ($r, $authorizator) {
                 $eloquentRelation = $this->getEloquentRelationWrapper($r->getRelation(), $owner)->relation();
                 $relatedModel = $eloquentRelation->getRelated();
+                $this->assertNotForbidden($authorizator, $relatedModel, Operation::CREATE);
                 if (!empty($saveFields)) {
                     $relatedModel->fillable(array_keys($saveFields));
                     $relatedModel->fill($saveFields);
@@ -220,6 +225,7 @@ class ModelRelationResolver
                 return $relatedModel;
             })
             ->update(function (Model $owner, Model $modelToUpdate, array $saveFields) use ($r, $authorizator) {
+                $this->assertNotForbidden($authorizator, $modelToUpdate, Operation::UPDATE);
                 if (!empty($saveFields)) {
                     $modelToUpdate->fillable(array_keys($saveFields));
                     $modelToUpdate->fill($saveFields);
@@ -228,6 +234,7 @@ class ModelRelationResolver
                 $this->assertModelAuthorized($authorizator, $modelToUpdate, Operation::UPDATE);
             })
             ->delete(function (Model $owner, Model $modelToDelete) use ($r, $authorizator) {
+                $this->assertNotForbidden($authorizator, $modelToDelete, Operation::DELETE);
                 $this->assertModelAuthorized($authorizator, $modelToDelete, Operation::DELETE);
                 $modelToDelete->delete();
             });
@@ -425,6 +432,19 @@ class ModelRelationResolver
             $modelsByType[$model->apiResourcesGetType()][] = $model;
         }
         return $modelsByType;
+    }
+
+    /**
+     * Stops a nested save before anything is written when the operation is
+     * closed for the type of the model, see AuthConfigurator::create(false).
+     */
+    protected function assertNotForbidden(?Authorizator $authorizator, Model $model, Operation $operation): void
+    {
+        if (!$authorizator || !$model instanceof ModelInterface) {
+            return;
+        }
+
+        $authorizator->assertNotForbidden($model->apiResourcesGetType(), $operation);
     }
 
     /**
