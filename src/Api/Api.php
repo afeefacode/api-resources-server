@@ -11,6 +11,7 @@ use Afeefa\ApiResources\Resource\ResourceBag;
 use Afeefa\ApiResources\Type\Type;
 use Afeefa\ApiResources\Type\TypeClassMap;
 use Afeefa\ApiResources\Utils\HasStaticTypeTrait;
+use Afeefa\ApiResources\V2\Operation;
 use Afeefa\ApiResources\V2\TypeConfigurator;
 use Closure;
 
@@ -128,9 +129,29 @@ class Api implements ContainerAwareInterface
         // debug_dump($typeClassMap);
         // $this->container->dumpEntries();
 
+        $authorizator = $this->container->get(Authorizator::class);
+
         $types = [];
         foreach ($usedTypes as $type) {
-            $types[$type::type()] = $type->toSchemaJson();
+            $json = $type->toSchemaJson();
+
+            // A closed operation leaves its field bag out. The client reads
+            // both bags as optional and then has nothing to build a form
+            // from - which is exactly what a create(false) says.
+            //
+            // Only a rule of the type itself does this: it holds on every
+            // path. A resource rule closes the operation for its own calls
+            // alone, and the bags of a type are shared by every resource that
+            // exposes it.
+            if ($authorizator->isTypeForbidden($type::type(), Operation::CREATE)) {
+                unset($json['create_fields']);
+            }
+
+            if ($authorizator->isTypeForbidden($type::type(), Operation::UPDATE)) {
+                unset($json['update_fields']);
+            }
+
+            $types[$type::type()] = $json;
         }
 
         $validators = [];

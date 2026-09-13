@@ -8,6 +8,7 @@ use Afeefa\ApiResources\Api\Api;
 use Afeefa\ApiResources\Api\ApiRequest;
 use Afeefa\ApiResources\Api\Authorizator;
 use Afeefa\ApiResources\Api\NotFoundException;
+use Afeefa\ApiResources\ApiResources;
 use Afeefa\ApiResources\Eloquent\EloquentAuthContext;
 use Afeefa\ApiResources\Eloquent\ModelResource;
 use Afeefa\ApiResources\Exception\Exceptions\InvalidConfigurationException;
@@ -15,6 +16,7 @@ use Afeefa\ApiResources\Field\FieldBag;
 use Afeefa\ApiResources\Model\Model;
 use Afeefa\ApiResources\Resolver\QueryActionResolver;
 use Afeefa\ApiResources\Resource\Resource;
+use Afeefa\ApiResources\Resource\ResourceBag;
 use Afeefa\ApiResources\Test\Eloquent\ApiResourcesAuthorizeTest;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Article;
 use Afeefa\ApiResources\Test\Fixtures\Blog\Models\Author;
@@ -240,6 +242,66 @@ class ApiAuthorizeResourceTest extends ApiResourcesAuthorizeTest
         ]);
     }
 
+    // schema
+
+    public function test_a_locked_action_is_missing_from_the_schema()
+    {
+        $api = $this->schemaApi(fn (Api $api) => $api->authorize(AuthorResource::class)->action('list', false));
+
+        $actions = $api->toSchemaJson()['resources']['Blog.AuthorResource'];
+
+        $this->assertArrayNotHasKey('list', $actions);
+        $this->assertArrayHasKey('get', $actions);
+        $this->assertArrayHasKey('save', $actions);
+    }
+
+    public function test_a_resource_whose_only_action_is_locked_is_missing_entirely()
+    {
+        $api = $this->schemaApi(fn (Api $api) => $api->authorize(RoleListResource::class)->action('list_roles', false));
+
+        $resources = $api->toSchemaJson()['resources'];
+
+        $this->assertArrayNotHasKey('Blog.RoleListResource', $resources);
+        $this->assertArrayHasKey('Blog.AuthorResource', $resources);
+    }
+
+    public function test_without_a_lock_every_action_is_in_the_schema()
+    {
+        $actions = $this->schemaApi()->toSchemaJson()['resources']['Blog.AuthorResource'];
+
+        $this->assertEqualsCanonicalizing(['list', 'get', 'save'], array_keys($actions));
+    }
+
+    public function test_a_closed_create_leaves_the_create_fields_out_of_the_schema()
+    {
+        $api = $this->schemaApi(fn (Api $api) => $api->authorize(AuthorType::class)->create(false));
+
+        $type = $api->toSchemaJson()['types']['Blog.Author'];
+
+        $this->assertArrayNotHasKey('create_fields', $type);
+        $this->assertArrayHasKey('update_fields', $type);
+        $this->assertArrayHasKey('fields', $type);
+    }
+
+    public function test_a_closed_update_leaves_the_update_fields_out_of_the_schema()
+    {
+        $api = $this->schemaApi(fn (Api $api) => $api->authorize(AuthorType::class)->update(false));
+
+        $type = $api->toSchemaJson()['types']['Blog.Author'];
+
+        $this->assertArrayNotHasKey('update_fields', $type);
+        $this->assertArrayHasKey('create_fields', $type);
+    }
+
+    public function test_a_resource_that_closes_create_keeps_the_create_fields_of_the_type()
+    {
+        // the bags of a type belong to every resource that exposes it - a rule
+        // for one resource cannot speak for the others
+        $api = $this->schemaApi(fn (Api $api) => $api->authorize(AuthorResource::class)->create(false));
+
+        $this->assertArrayHasKey('create_fields', $api->toSchemaJson()['types']['Blog.Author']);
+    }
+
     // registration
 
     public function test_a_closure_for_an_action_throws()
@@ -357,6 +419,16 @@ class ApiAuthorizeResourceTest extends ApiResourcesAuthorizeTest
     }
 
     /**
+     * An api of its own for the schema tests: the blog api registers a
+     * resource without a model type, so its schema cannot be built at all.
+     */
+    protected function schemaApi(?Closure $configureAuth = null): Api
+    {
+        SchemaAuthorApi::$configureAuthCallback = $configureAuth;
+        return (new ApiResources())->getApi(SchemaAuthorApi::class);
+    }
+
+    /**
      * @return Author[]
      */
     protected function threeAuthors(): array
@@ -379,6 +451,27 @@ class ApiAuthorizeResourceTest extends ApiResourcesAuthorizeTest
 
 class ProjectAuthorResource extends AuthorResource
 {
+}
+
+class SchemaAuthorApi extends Api
+{
+    public static ?Closure $configureAuthCallback = null;
+
+    protected static string $type = 'Blog.SchemaAuthorApi';
+
+    protected function resources(ResourceBag $resources): void
+    {
+        $resources
+            ->add(AuthorResource::class)
+            ->add(RoleListResource::class);
+    }
+
+    protected function configureAuth(): void
+    {
+        if (static::$configureAuthCallback) {
+            (static::$configureAuthCallback)($this);
+        }
+    }
 }
 
 class RoleType extends Type
