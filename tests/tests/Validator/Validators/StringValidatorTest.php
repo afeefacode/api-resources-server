@@ -95,7 +95,8 @@ class StringValidatorTest extends TestCase
 
         foreach ([
             'a',
-            'if'
+            'if',
+            'ää' // two characters, not four bytes
         ] as $value) {
             $this->assertFalse($validator->validateRule('min', $value));
         }
@@ -156,7 +157,8 @@ class StringValidatorTest extends TestCase
         foreach ([
             '', // filled not required
             'test',
-            'value'
+            'value',
+            'äöüßé' // five characters, not ten bytes
         ] as $value) {
             $this->assertTrue($validator->validateRule('max', $value));
         }

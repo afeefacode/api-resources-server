@@ -93,7 +93,7 @@ class StringValidator extends Validator
                     return true;
                 }
                 // empty value validated in filled rule
-                if ($value && strlen($value) < $min) {
+                if ($value && mb_strlen($value) < $min) {
                     return false;
                 }
                 return true;
@@ -106,7 +106,7 @@ class StringValidator extends Validator
                     return true;
                 }
                 // empty value cannot exceed max
-                if ($value && strlen($value) > $max) {
+                if ($value && mb_strlen($value) > $max) {
                     return false;
                 }
                 return true;
