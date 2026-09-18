@@ -27,7 +27,6 @@ class ModelResolver
     protected ?string $resourceType = null;
 
     protected Closure $scopeFunction;
-    protected Closure $authorizeFunction;
     protected Closure $paramFunction;
     protected Closure $getParamFunction;
     protected Closure $filterFunction;
@@ -84,12 +83,6 @@ class ModelResolver
     public function scope(Closure $scopeFunction): ModelResolver
     {
         $this->scopeFunction = $scopeFunction;
-        return $this;
-    }
-
-    public function authorize(Closure $authorizeFunction): ModelResolver
-    {
-        $this->authorizeFunction = $authorizeFunction;
         return $this;
     }
 
@@ -206,9 +199,6 @@ class ModelResolver
 
                 $query = $this->ModelClass::query();
 
-                // authorize
-
-                ($this->authorizeFunction)($query);
                 $this->applyAuthorizeType($query, Operation::READ);
 
                 // scope
@@ -404,9 +394,6 @@ class ModelResolver
                 /** @var EloquentBuilder */
                 $query = $this->ModelClass::query();
 
-                // authorize
-
-                ($this->authorizeFunction)($query);
                 $this->applyAuthorizeType($query, Operation::READ);
 
                 // select $selectFields before counts, since withCount()
@@ -462,7 +449,6 @@ class ModelResolver
                 // Loader in front of every update and delete: a row the read
                 // rule does not reach must not be saved either.
                 $query = $this->ModelClass::query();
-                ($this->authorizeFunction)($query);
                 $this->applyAuthorizeType($query, Operation::READ);
                 return $query
                     ->where('id', $id)
@@ -563,7 +549,6 @@ class ModelResolver
     protected function assertAuthorized(Model $model, Operation $operation): void
     {
         $query = $this->ModelClass::query();
-        ($this->authorizeFunction)($query);
         $this->applyAuthorizeType($query, $operation);
 
         if (!$query->where('id', $model->id)->exists()) {

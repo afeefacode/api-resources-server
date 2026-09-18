@@ -72,10 +72,6 @@ class ModelResource extends Resource
     {
     }
 
-    protected function authorize(Builder $query): void
-    {
-    }
-
     protected function param(string $name, $value, Builder $query): void
     {
         $query->where($name, $value);
@@ -158,9 +154,6 @@ class ModelResource extends Resource
             ->resourceType($this::type())
             ->scope(function (Builder $query, array $params) {
                 $this->scope($query, $params);
-            })
-            ->authorize(function (Builder $query) {
-                $this->authorize($query);
             })
             ->param(function (string $name, $value, Builder $query) {
                 $this->param($name, $value, $query);
